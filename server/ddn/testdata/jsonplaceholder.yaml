@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../../../docs/rest_proxy.schema.json
+settings:
+  headers: {}
+  forwardHeaders:
+    request: []
+    response: []
+servers:
+  - url:
+      value: https://jsonplaceholder.typicode.com
+paths:
+  /albums:
+    get:
+      operationId: getAlbums
+      summary: "Get albums summary"
+      description: "Get albums"
+      proxy:
+        type: rest
+  /posts/{id}:
+    get:
+      operationId: getPostById
+      description: "Get post by ID"
+      proxy:
+        type: rest

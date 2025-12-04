@@ -1,0 +1,3738 @@
+kind: DataConnectorLink
+version: v1
+definition:
+  name: mypostgres
+  url:
+    readWriteUrls:
+      read:
+        valueFromEnv: APP_MYPOSTGRES_READ_URL
+      write:
+        valueFromEnv: APP_MYPOSTGRES_WRITE_URL
+  headers:
+    Authorization:
+      valueFromEnv: APP_MYPOSTGRES_AUTHORIZATION_HEADER
+  schema:
+    version: v0.2
+    schema:
+      capabilities:
+        query:
+          aggregates:
+            count_scalar_type: int8
+      collections:
+        - arguments: {}
+          name: album
+          type: album
+          uniqueness_constraints:
+            album_pkey:
+              unique_columns:
+                - album_id
+        - arguments: {}
+          name: artist
+          type: artist
+          uniqueness_constraints:
+            artist_pkey:
+              unique_columns:
+                - artist_id
+        - arguments: {}
+          name: customer
+          type: customer
+          uniqueness_constraints:
+            customer_pkey:
+              unique_columns:
+                - customer_id
+        - arguments: {}
+          name: employee
+          type: employee
+          uniqueness_constraints:
+            employee_pkey:
+              unique_columns:
+                - employee_id
+        - arguments: {}
+          name: genre
+          type: genre
+          uniqueness_constraints:
+            genre_pkey:
+              unique_columns:
+                - genre_id
+        - arguments: {}
+          name: invoice
+          type: invoice
+          uniqueness_constraints:
+            invoice_pkey:
+              unique_columns:
+                - invoice_id
+        - arguments: {}
+          name: invoice_line
+          type: invoice_line
+          uniqueness_constraints:
+            invoice_line_pkey:
+              unique_columns:
+                - invoice_line_id
+        - arguments: {}
+          name: media_type
+          type: media_type
+          uniqueness_constraints:
+            media_type_pkey:
+              unique_columns:
+                - media_type_id
+        - arguments: {}
+          name: playlist
+          type: playlist
+          uniqueness_constraints:
+            playlist_pkey:
+              unique_columns:
+                - playlist_id
+        - arguments: {}
+          name: playlist_track
+          type: playlist_track
+          uniqueness_constraints:
+            playlist_track_pkey:
+              unique_columns:
+                - playlist_id
+                - track_id
+        - arguments: {}
+          name: track
+          type: track
+          uniqueness_constraints:
+            track_pkey:
+              unique_columns:
+                - track_id
+      functions: []
+      object_types:
+        album:
+          fields:
+            album_id:
+              type:
+                name: int4
+                type: named
+            artist_id:
+              type:
+                name: int4
+                type: named
+            title:
+              type:
+                name: varchar
+                type: named
+          foreign_keys:
+            album_artist_id_fkey:
+              column_mapping:
+                artist_id:
+                  - artist_id
+              foreign_collection: artist
+        artist:
+          fields:
+            artist_id:
+              type:
+                name: int4
+                type: named
+            name:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        customer:
+          fields:
+            address:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            city:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            company:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            country:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            customer_id:
+              type:
+                name: int4
+                type: named
+            email:
+              type:
+                name: varchar
+                type: named
+            fax:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            first_name:
+              type:
+                name: varchar
+                type: named
+            last_name:
+              type:
+                name: varchar
+                type: named
+            phone:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            postal_code:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            state:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            support_rep_id:
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+          foreign_keys:
+            customer_support_rep_id_fkey:
+              column_mapping:
+                support_rep_id:
+                  - employee_id
+              foreign_collection: employee
+        delete_album_by_album_id_response:
+          description: Responses from the 'delete_album_by_album_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: album
+                  type: named
+                type: array
+          foreign_keys: {}
+        delete_artist_by_artist_id_response:
+          description: Responses from the 'delete_artist_by_artist_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: artist
+                  type: named
+                type: array
+          foreign_keys: {}
+        delete_customer_by_customer_id_response:
+          description: Responses from the 'delete_customer_by_customer_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: customer
+                  type: named
+                type: array
+          foreign_keys: {}
+        delete_employee_by_employee_id_response:
+          description: Responses from the 'delete_employee_by_employee_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: employee
+                  type: named
+                type: array
+          foreign_keys: {}
+        delete_genre_by_genre_id_response:
+          description: Responses from the 'delete_genre_by_genre_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: genre
+                  type: named
+                type: array
+          foreign_keys: {}
+        delete_invoice_by_invoice_id_response:
+          description: Responses from the 'delete_invoice_by_invoice_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: invoice
+                  type: named
+                type: array
+          foreign_keys: {}
+        delete_invoice_line_by_invoice_line_id_response:
+          description: Responses from the 'delete_invoice_line_by_invoice_line_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: invoice_line
+                  type: named
+                type: array
+          foreign_keys: {}
+        delete_media_type_by_media_type_id_response:
+          description: Responses from the 'delete_media_type_by_media_type_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: media_type
+                  type: named
+                type: array
+          foreign_keys: {}
+        delete_playlist_by_playlist_id_response:
+          description: Responses from the 'delete_playlist_by_playlist_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: playlist
+                  type: named
+                type: array
+          foreign_keys: {}
+        delete_playlist_track_by_playlist_id_and_track_id_response:
+          description: Responses from the 'delete_playlist_track_by_playlist_id_and_track_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: playlist_track
+                  type: named
+                type: array
+          foreign_keys: {}
+        delete_track_by_track_id_response:
+          description: Responses from the 'delete_track_by_track_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: track
+                  type: named
+                type: array
+          foreign_keys: {}
+        employee:
+          fields:
+            address:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            birth_date:
+              type:
+                type: nullable
+                underlying_type:
+                  name: timestamp
+                  type: named
+            city:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            country:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            email:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            employee_id:
+              type:
+                name: int4
+                type: named
+            fax:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            first_name:
+              type:
+                name: varchar
+                type: named
+            hire_date:
+              type:
+                type: nullable
+                underlying_type:
+                  name: timestamp
+                  type: named
+            last_name:
+              type:
+                name: varchar
+                type: named
+            phone:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            postal_code:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            reports_to:
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+            state:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            title:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys:
+            employee_reports_to_fkey:
+              column_mapping:
+                reports_to:
+                  - employee_id
+              foreign_collection: employee
+        genre:
+          fields:
+            genre_id:
+              type:
+                name: int4
+                type: named
+            name:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        insert_album_object:
+          fields:
+            album_id:
+              type:
+                name: int4
+                type: named
+            artist_id:
+              type:
+                name: int4
+                type: named
+            title:
+              type:
+                name: varchar
+                type: named
+          foreign_keys: {}
+        insert_album_response:
+          description: Responses from the 'insert_album' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: album
+                  type: named
+                type: array
+          foreign_keys: {}
+        insert_artist_object:
+          fields:
+            artist_id:
+              type:
+                name: int4
+                type: named
+            name:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        insert_artist_response:
+          description: Responses from the 'insert_artist' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: artist
+                  type: named
+                type: array
+          foreign_keys: {}
+        insert_customer_object:
+          fields:
+            address:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            city:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            company:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            country:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            customer_id:
+              type:
+                name: int4
+                type: named
+            email:
+              type:
+                name: varchar
+                type: named
+            fax:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            first_name:
+              type:
+                name: varchar
+                type: named
+            last_name:
+              type:
+                name: varchar
+                type: named
+            phone:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            postal_code:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            state:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            support_rep_id:
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+          foreign_keys: {}
+        insert_customer_response:
+          description: Responses from the 'insert_customer' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: customer
+                  type: named
+                type: array
+          foreign_keys: {}
+        insert_employee_object:
+          fields:
+            address:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            birth_date:
+              type:
+                type: nullable
+                underlying_type:
+                  name: timestamp
+                  type: named
+            city:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            country:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            email:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            employee_id:
+              type:
+                name: int4
+                type: named
+            fax:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            first_name:
+              type:
+                name: varchar
+                type: named
+            hire_date:
+              type:
+                type: nullable
+                underlying_type:
+                  name: timestamp
+                  type: named
+            last_name:
+              type:
+                name: varchar
+                type: named
+            phone:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            postal_code:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            reports_to:
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+            state:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            title:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        insert_employee_response:
+          description: Responses from the 'insert_employee' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: employee
+                  type: named
+                type: array
+          foreign_keys: {}
+        insert_genre_object:
+          fields:
+            genre_id:
+              type:
+                name: int4
+                type: named
+            name:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        insert_genre_response:
+          description: Responses from the 'insert_genre' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: genre
+                  type: named
+                type: array
+          foreign_keys: {}
+        insert_invoice_line_object:
+          fields:
+            invoice_id:
+              type:
+                name: int4
+                type: named
+            invoice_line_id:
+              type:
+                name: int4
+                type: named
+            quantity:
+              type:
+                name: int4
+                type: named
+            track_id:
+              type:
+                name: int4
+                type: named
+            unit_price:
+              type:
+                name: numeric
+                type: named
+          foreign_keys: {}
+        insert_invoice_line_response:
+          description: Responses from the 'insert_invoice_line' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: invoice_line
+                  type: named
+                type: array
+          foreign_keys: {}
+        insert_invoice_object:
+          fields:
+            billing_address:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            billing_city:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            billing_country:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            billing_postal_code:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            billing_state:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            customer_id:
+              type:
+                name: int4
+                type: named
+            invoice_date:
+              type:
+                name: timestamp
+                type: named
+            invoice_id:
+              type:
+                name: int4
+                type: named
+            total:
+              type:
+                name: numeric
+                type: named
+          foreign_keys: {}
+        insert_invoice_response:
+          description: Responses from the 'insert_invoice' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: invoice
+                  type: named
+                type: array
+          foreign_keys: {}
+        insert_media_type_object:
+          fields:
+            media_type_id:
+              type:
+                name: int4
+                type: named
+            name:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        insert_media_type_response:
+          description: Responses from the 'insert_media_type' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: media_type
+                  type: named
+                type: array
+          foreign_keys: {}
+        insert_playlist_object:
+          fields:
+            name:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            playlist_id:
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        insert_playlist_response:
+          description: Responses from the 'insert_playlist' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: playlist
+                  type: named
+                type: array
+          foreign_keys: {}
+        insert_playlist_track_object:
+          fields:
+            playlist_id:
+              type:
+                name: int4
+                type: named
+            track_id:
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        insert_playlist_track_response:
+          description: Responses from the 'insert_playlist_track' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: playlist_track
+                  type: named
+                type: array
+          foreign_keys: {}
+        insert_track_object:
+          fields:
+            album_id:
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+            bytes:
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+            composer:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            genre_id:
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+            media_type_id:
+              type:
+                name: int4
+                type: named
+            milliseconds:
+              type:
+                name: int4
+                type: named
+            name:
+              type:
+                name: varchar
+                type: named
+            track_id:
+              type:
+                name: int4
+                type: named
+            unit_price:
+              type:
+                name: numeric
+                type: named
+          foreign_keys: {}
+        insert_track_response:
+          description: Responses from the 'insert_track' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: track
+                  type: named
+                type: array
+          foreign_keys: {}
+        invoice:
+          fields:
+            billing_address:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            billing_city:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            billing_country:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            billing_postal_code:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            billing_state:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            customer_id:
+              type:
+                name: int4
+                type: named
+            invoice_date:
+              type:
+                name: timestamp
+                type: named
+            invoice_id:
+              type:
+                name: int4
+                type: named
+            total:
+              type:
+                name: numeric
+                type: named
+          foreign_keys:
+            invoice_customer_id_fkey:
+              column_mapping:
+                customer_id:
+                  - customer_id
+              foreign_collection: customer
+        invoice_line:
+          fields:
+            invoice_id:
+              type:
+                name: int4
+                type: named
+            invoice_line_id:
+              type:
+                name: int4
+                type: named
+            quantity:
+              type:
+                name: int4
+                type: named
+            track_id:
+              type:
+                name: int4
+                type: named
+            unit_price:
+              type:
+                name: numeric
+                type: named
+          foreign_keys:
+            invoice_line_invoice_id_fkey:
+              column_mapping:
+                invoice_id:
+                  - invoice_id
+              foreign_collection: invoice
+            invoice_line_track_id_fkey:
+              column_mapping:
+                track_id:
+                  - track_id
+              foreign_collection: track
+        media_type:
+          fields:
+            media_type_id:
+              type:
+                name: int4
+                type: named
+            name:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        playlist:
+          fields:
+            name:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            playlist_id:
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        playlist_track:
+          fields:
+            playlist_id:
+              type:
+                name: int4
+                type: named
+            track_id:
+              type:
+                name: int4
+                type: named
+          foreign_keys:
+            playlist_track_playlist_id_fkey:
+              column_mapping:
+                playlist_id:
+                  - playlist_id
+              foreign_collection: playlist
+            playlist_track_track_id_fkey:
+              column_mapping:
+                track_id:
+                  - track_id
+              foreign_collection: track
+        track:
+          fields:
+            album_id:
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+            bytes:
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+            composer:
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+            genre_id:
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+            media_type_id:
+              type:
+                name: int4
+                type: named
+            milliseconds:
+              type:
+                name: int4
+                type: named
+            name:
+              type:
+                name: varchar
+                type: named
+            track_id:
+              type:
+                name: int4
+                type: named
+            unit_price:
+              type:
+                name: numeric
+                type: named
+          foreign_keys:
+            track_album_id_fkey:
+              column_mapping:
+                album_id:
+                  - album_id
+              foreign_collection: album
+            track_genre_id_fkey:
+              column_mapping:
+                genre_id:
+                  - genre_id
+              foreign_collection: genre
+            track_media_type_id_fkey:
+              column_mapping:
+                media_type_id:
+                  - media_type_id
+              foreign_collection: media_type
+        update_album_by_album_id_response:
+          description: Responses from the 'update_album_by_album_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: album
+                  type: named
+                type: array
+          foreign_keys: {}
+        update_album_by_album_id_update_columns:
+          description: Update the columns of the 'album' collection
+          fields:
+            album_id:
+              description: Update the 'album_id' column in the 'album' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_album_album_id
+                  type: named
+            artist_id:
+              description: Update the 'artist_id' column in the 'album' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_album_artist_id
+                  type: named
+            title:
+              description: Update the 'title' column in the 'album' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_album_title
+                  type: named
+          foreign_keys: {}
+        update_artist_by_artist_id_response:
+          description: Responses from the 'update_artist_by_artist_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: artist
+                  type: named
+                type: array
+          foreign_keys: {}
+        update_artist_by_artist_id_update_columns:
+          description: Update the columns of the 'artist' collection
+          fields:
+            artist_id:
+              description: Update the 'artist_id' column in the 'artist' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_artist_artist_id
+                  type: named
+            name:
+              description: Update the 'name' column in the 'artist' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_artist_name
+                  type: named
+          foreign_keys: {}
+        update_column_album_album_id:
+          description: Update the 'album_id' column in the 'album' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_album_artist_id:
+          description: Update the 'artist_id' column in the 'album' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_album_title:
+          description: Update the 'title' column in the 'album' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: varchar
+                type: named
+          foreign_keys: {}
+        update_column_artist_artist_id:
+          description: Update the 'artist_id' column in the 'artist' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_artist_name:
+          description: Update the 'name' column in the 'artist' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_customer_address:
+          description: Update the 'address' column in the 'customer' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_customer_city:
+          description: Update the 'city' column in the 'customer' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_customer_company:
+          description: Update the 'company' column in the 'customer' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_customer_country:
+          description: Update the 'country' column in the 'customer' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_customer_customer_id:
+          description: Update the 'customer_id' column in the 'customer' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_customer_email:
+          description: Update the 'email' column in the 'customer' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: varchar
+                type: named
+          foreign_keys: {}
+        update_column_customer_fax:
+          description: Update the 'fax' column in the 'customer' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_customer_first_name:
+          description: Update the 'first_name' column in the 'customer' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: varchar
+                type: named
+          foreign_keys: {}
+        update_column_customer_last_name:
+          description: Update the 'last_name' column in the 'customer' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: varchar
+                type: named
+          foreign_keys: {}
+        update_column_customer_phone:
+          description: Update the 'phone' column in the 'customer' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_customer_postal_code:
+          description: Update the 'postal_code' column in the 'customer' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_customer_state:
+          description: Update the 'state' column in the 'customer' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_customer_support_rep_id:
+          description: Update the 'support_rep_id' column in the 'customer' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+          foreign_keys: {}
+        update_column_employee_address:
+          description: Update the 'address' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_employee_birth_date:
+          description: Update the 'birth_date' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: timestamp
+                  type: named
+          foreign_keys: {}
+        update_column_employee_city:
+          description: Update the 'city' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_employee_country:
+          description: Update the 'country' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_employee_email:
+          description: Update the 'email' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_employee_employee_id:
+          description: Update the 'employee_id' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_employee_fax:
+          description: Update the 'fax' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_employee_first_name:
+          description: Update the 'first_name' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: varchar
+                type: named
+          foreign_keys: {}
+        update_column_employee_hire_date:
+          description: Update the 'hire_date' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: timestamp
+                  type: named
+          foreign_keys: {}
+        update_column_employee_last_name:
+          description: Update the 'last_name' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: varchar
+                type: named
+          foreign_keys: {}
+        update_column_employee_phone:
+          description: Update the 'phone' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_employee_postal_code:
+          description: Update the 'postal_code' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_employee_reports_to:
+          description: Update the 'reports_to' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+          foreign_keys: {}
+        update_column_employee_state:
+          description: Update the 'state' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_employee_title:
+          description: Update the 'title' column in the 'employee' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_genre_genre_id:
+          description: Update the 'genre_id' column in the 'genre' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_genre_name:
+          description: Update the 'name' column in the 'genre' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_invoice_billing_address:
+          description: Update the 'billing_address' column in the 'invoice' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_invoice_billing_city:
+          description: Update the 'billing_city' column in the 'invoice' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_invoice_billing_country:
+          description: Update the 'billing_country' column in the 'invoice' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_invoice_billing_postal_code:
+          description: Update the 'billing_postal_code' column in the 'invoice' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_invoice_billing_state:
+          description: Update the 'billing_state' column in the 'invoice' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_invoice_customer_id:
+          description: Update the 'customer_id' column in the 'invoice' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_invoice_invoice_date:
+          description: Update the 'invoice_date' column in the 'invoice' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: timestamp
+                type: named
+          foreign_keys: {}
+        update_column_invoice_invoice_id:
+          description: Update the 'invoice_id' column in the 'invoice' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_invoice_line_invoice_id:
+          description: Update the 'invoice_id' column in the 'invoice_line' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_invoice_line_invoice_line_id:
+          description: Update the 'invoice_line_id' column in the 'invoice_line' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_invoice_line_quantity:
+          description: Update the 'quantity' column in the 'invoice_line' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_invoice_line_track_id:
+          description: Update the 'track_id' column in the 'invoice_line' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_invoice_line_unit_price:
+          description: Update the 'unit_price' column in the 'invoice_line' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: numeric
+                type: named
+          foreign_keys: {}
+        update_column_invoice_total:
+          description: Update the 'total' column in the 'invoice' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: numeric
+                type: named
+          foreign_keys: {}
+        update_column_media_type_media_type_id:
+          description: Update the 'media_type_id' column in the 'media_type' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_media_type_name:
+          description: Update the 'name' column in the 'media_type' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_playlist_name:
+          description: Update the 'name' column in the 'playlist' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_playlist_playlist_id:
+          description: Update the 'playlist_id' column in the 'playlist' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_playlist_track_playlist_id:
+          description: Update the 'playlist_id' column in the 'playlist_track' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_playlist_track_track_id:
+          description: Update the 'track_id' column in the 'playlist_track' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_track_album_id:
+          description: Update the 'album_id' column in the 'track' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+          foreign_keys: {}
+        update_column_track_bytes:
+          description: Update the 'bytes' column in the 'track' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+          foreign_keys: {}
+        update_column_track_composer:
+          description: Update the 'composer' column in the 'track' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: varchar
+                  type: named
+          foreign_keys: {}
+        update_column_track_genre_id:
+          description: Update the 'genre_id' column in the 'track' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+          foreign_keys: {}
+        update_column_track_media_type_id:
+          description: Update the 'media_type_id' column in the 'track' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_track_milliseconds:
+          description: Update the 'milliseconds' column in the 'track' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_track_name:
+          description: Update the 'name' column in the 'track' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: varchar
+                type: named
+          foreign_keys: {}
+        update_column_track_track_id:
+          description: Update the 'track_id' column in the 'track' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: int4
+                type: named
+          foreign_keys: {}
+        update_column_track_unit_price:
+          description: Update the 'unit_price' column in the 'track' collection
+          fields:
+            _set:
+              description: Set the column to this value
+              type:
+                name: numeric
+                type: named
+          foreign_keys: {}
+        update_customer_by_customer_id_response:
+          description: Responses from the 'update_customer_by_customer_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: customer
+                  type: named
+                type: array
+          foreign_keys: {}
+        update_customer_by_customer_id_update_columns:
+          description: Update the columns of the 'customer' collection
+          fields:
+            address:
+              description: Update the 'address' column in the 'customer' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_customer_address
+                  type: named
+            city:
+              description: Update the 'city' column in the 'customer' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_customer_city
+                  type: named
+            company:
+              description: Update the 'company' column in the 'customer' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_customer_company
+                  type: named
+            country:
+              description: Update the 'country' column in the 'customer' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_customer_country
+                  type: named
+            customer_id:
+              description: Update the 'customer_id' column in the 'customer' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_customer_customer_id
+                  type: named
+            email:
+              description: Update the 'email' column in the 'customer' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_customer_email
+                  type: named
+            fax:
+              description: Update the 'fax' column in the 'customer' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_customer_fax
+                  type: named
+            first_name:
+              description: Update the 'first_name' column in the 'customer' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_customer_first_name
+                  type: named
+            last_name:
+              description: Update the 'last_name' column in the 'customer' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_customer_last_name
+                  type: named
+            phone:
+              description: Update the 'phone' column in the 'customer' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_customer_phone
+                  type: named
+            postal_code:
+              description: Update the 'postal_code' column in the 'customer' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_customer_postal_code
+                  type: named
+            state:
+              description: Update the 'state' column in the 'customer' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_customer_state
+                  type: named
+            support_rep_id:
+              description: Update the 'support_rep_id' column in the 'customer' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_customer_support_rep_id
+                  type: named
+          foreign_keys: {}
+        update_employee_by_employee_id_response:
+          description: Responses from the 'update_employee_by_employee_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: employee
+                  type: named
+                type: array
+          foreign_keys: {}
+        update_employee_by_employee_id_update_columns:
+          description: Update the columns of the 'employee' collection
+          fields:
+            address:
+              description: Update the 'address' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_address
+                  type: named
+            birth_date:
+              description: Update the 'birth_date' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_birth_date
+                  type: named
+            city:
+              description: Update the 'city' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_city
+                  type: named
+            country:
+              description: Update the 'country' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_country
+                  type: named
+            email:
+              description: Update the 'email' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_email
+                  type: named
+            employee_id:
+              description: Update the 'employee_id' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_employee_id
+                  type: named
+            fax:
+              description: Update the 'fax' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_fax
+                  type: named
+            first_name:
+              description: Update the 'first_name' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_first_name
+                  type: named
+            hire_date:
+              description: Update the 'hire_date' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_hire_date
+                  type: named
+            last_name:
+              description: Update the 'last_name' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_last_name
+                  type: named
+            phone:
+              description: Update the 'phone' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_phone
+                  type: named
+            postal_code:
+              description: Update the 'postal_code' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_postal_code
+                  type: named
+            reports_to:
+              description: Update the 'reports_to' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_reports_to
+                  type: named
+            state:
+              description: Update the 'state' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_state
+                  type: named
+            title:
+              description: Update the 'title' column in the 'employee' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_employee_title
+                  type: named
+          foreign_keys: {}
+        update_genre_by_genre_id_response:
+          description: Responses from the 'update_genre_by_genre_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: genre
+                  type: named
+                type: array
+          foreign_keys: {}
+        update_genre_by_genre_id_update_columns:
+          description: Update the columns of the 'genre' collection
+          fields:
+            genre_id:
+              description: Update the 'genre_id' column in the 'genre' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_genre_genre_id
+                  type: named
+            name:
+              description: Update the 'name' column in the 'genre' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_genre_name
+                  type: named
+          foreign_keys: {}
+        update_invoice_by_invoice_id_response:
+          description: Responses from the 'update_invoice_by_invoice_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: invoice
+                  type: named
+                type: array
+          foreign_keys: {}
+        update_invoice_by_invoice_id_update_columns:
+          description: Update the columns of the 'invoice' collection
+          fields:
+            billing_address:
+              description: Update the 'billing_address' column in the 'invoice' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_billing_address
+                  type: named
+            billing_city:
+              description: Update the 'billing_city' column in the 'invoice' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_billing_city
+                  type: named
+            billing_country:
+              description: Update the 'billing_country' column in the 'invoice' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_billing_country
+                  type: named
+            billing_postal_code:
+              description: Update the 'billing_postal_code' column in the 'invoice' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_billing_postal_code
+                  type: named
+            billing_state:
+              description: Update the 'billing_state' column in the 'invoice' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_billing_state
+                  type: named
+            customer_id:
+              description: Update the 'customer_id' column in the 'invoice' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_customer_id
+                  type: named
+            invoice_date:
+              description: Update the 'invoice_date' column in the 'invoice' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_invoice_date
+                  type: named
+            invoice_id:
+              description: Update the 'invoice_id' column in the 'invoice' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_invoice_id
+                  type: named
+            total:
+              description: Update the 'total' column in the 'invoice' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_total
+                  type: named
+          foreign_keys: {}
+        update_invoice_line_by_invoice_line_id_response:
+          description: Responses from the 'update_invoice_line_by_invoice_line_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: invoice_line
+                  type: named
+                type: array
+          foreign_keys: {}
+        update_invoice_line_by_invoice_line_id_update_columns:
+          description: Update the columns of the 'invoice_line' collection
+          fields:
+            invoice_id:
+              description: Update the 'invoice_id' column in the 'invoice_line' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_line_invoice_id
+                  type: named
+            invoice_line_id:
+              description: Update the 'invoice_line_id' column in the 'invoice_line' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_line_invoice_line_id
+                  type: named
+            quantity:
+              description: Update the 'quantity' column in the 'invoice_line' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_line_quantity
+                  type: named
+            track_id:
+              description: Update the 'track_id' column in the 'invoice_line' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_line_track_id
+                  type: named
+            unit_price:
+              description: Update the 'unit_price' column in the 'invoice_line' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_invoice_line_unit_price
+                  type: named
+          foreign_keys: {}
+        update_media_type_by_media_type_id_response:
+          description: Responses from the 'update_media_type_by_media_type_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: media_type
+                  type: named
+                type: array
+          foreign_keys: {}
+        update_media_type_by_media_type_id_update_columns:
+          description: Update the columns of the 'media_type' collection
+          fields:
+            media_type_id:
+              description: Update the 'media_type_id' column in the 'media_type' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_media_type_media_type_id
+                  type: named
+            name:
+              description: Update the 'name' column in the 'media_type' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_media_type_name
+                  type: named
+          foreign_keys: {}
+        update_playlist_by_playlist_id_response:
+          description: Responses from the 'update_playlist_by_playlist_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: playlist
+                  type: named
+                type: array
+          foreign_keys: {}
+        update_playlist_by_playlist_id_update_columns:
+          description: Update the columns of the 'playlist' collection
+          fields:
+            name:
+              description: Update the 'name' column in the 'playlist' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_playlist_name
+                  type: named
+            playlist_id:
+              description: Update the 'playlist_id' column in the 'playlist' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_playlist_playlist_id
+                  type: named
+          foreign_keys: {}
+        update_playlist_track_by_playlist_id_and_track_id_response:
+          description: Responses from the 'update_playlist_track_by_playlist_id_and_track_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: playlist_track
+                  type: named
+                type: array
+          foreign_keys: {}
+        update_playlist_track_by_playlist_id_and_track_id_update_columns:
+          description: Update the columns of the 'playlist_track' collection
+          fields:
+            playlist_id:
+              description: Update the 'playlist_id' column in the 'playlist_track' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_playlist_track_playlist_id
+                  type: named
+            track_id:
+              description: Update the 'track_id' column in the 'playlist_track' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_playlist_track_track_id
+                  type: named
+          foreign_keys: {}
+        update_track_by_track_id_response:
+          description: Responses from the 'update_track_by_track_id' procedure
+          fields:
+            affected_rows:
+              description: The number of rows affected by the mutation
+              type:
+                name: int4
+                type: named
+            returning:
+              description: Data from rows affected by the mutation
+              type:
+                element_type:
+                  name: track
+                  type: named
+                type: array
+          foreign_keys: {}
+        update_track_by_track_id_update_columns:
+          description: Update the columns of the 'track' collection
+          fields:
+            album_id:
+              description: Update the 'album_id' column in the 'track' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_track_album_id
+                  type: named
+            bytes:
+              description: Update the 'bytes' column in the 'track' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_track_bytes
+                  type: named
+            composer:
+              description: Update the 'composer' column in the 'track' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_track_composer
+                  type: named
+            genre_id:
+              description: Update the 'genre_id' column in the 'track' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_track_genre_id
+                  type: named
+            media_type_id:
+              description: Update the 'media_type_id' column in the 'track' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_track_media_type_id
+                  type: named
+            milliseconds:
+              description: Update the 'milliseconds' column in the 'track' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_track_milliseconds
+                  type: named
+            name:
+              description: Update the 'name' column in the 'track' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_track_name
+                  type: named
+            track_id:
+              description: Update the 'track_id' column in the 'track' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_track_track_id
+                  type: named
+            unit_price:
+              description: Update the 'unit_price' column in the 'track' collection.
+              type:
+                type: nullable
+                underlying_type:
+                  name: update_column_track_unit_price
+                  type: named
+          foreign_keys: {}
+      procedures:
+        - arguments:
+            key_album_id:
+              type:
+                name: int4
+                type: named
+            pre_check:
+              description: Delete permission predicate over the 'album' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: album
+                  type: predicate
+          description: Delete any row on the 'album' collection using the 'album_id' key
+          name: delete_album_by_album_id
+          result_type:
+            name: delete_album_by_album_id_response
+            type: named
+        - arguments:
+            key_artist_id:
+              type:
+                name: int4
+                type: named
+            pre_check:
+              description: Delete permission predicate over the 'artist' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: artist
+                  type: predicate
+          description: Delete any row on the 'artist' collection using the 'artist_id' key
+          name: delete_artist_by_artist_id
+          result_type:
+            name: delete_artist_by_artist_id_response
+            type: named
+        - arguments:
+            key_customer_id:
+              type:
+                name: int4
+                type: named
+            pre_check:
+              description: Delete permission predicate over the 'customer' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: customer
+                  type: predicate
+          description: Delete any row on the 'customer' collection using the 'customer_id' key
+          name: delete_customer_by_customer_id
+          result_type:
+            name: delete_customer_by_customer_id_response
+            type: named
+        - arguments:
+            key_employee_id:
+              type:
+                name: int4
+                type: named
+            pre_check:
+              description: Delete permission predicate over the 'employee' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: employee
+                  type: predicate
+          description: Delete any row on the 'employee' collection using the 'employee_id' key
+          name: delete_employee_by_employee_id
+          result_type:
+            name: delete_employee_by_employee_id_response
+            type: named
+        - arguments:
+            key_genre_id:
+              type:
+                name: int4
+                type: named
+            pre_check:
+              description: Delete permission predicate over the 'genre' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: genre
+                  type: predicate
+          description: Delete any row on the 'genre' collection using the 'genre_id' key
+          name: delete_genre_by_genre_id
+          result_type:
+            name: delete_genre_by_genre_id_response
+            type: named
+        - arguments:
+            key_invoice_id:
+              type:
+                name: int4
+                type: named
+            pre_check:
+              description: Delete permission predicate over the 'invoice' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: invoice
+                  type: predicate
+          description: Delete any row on the 'invoice' collection using the 'invoice_id' key
+          name: delete_invoice_by_invoice_id
+          result_type:
+            name: delete_invoice_by_invoice_id_response
+            type: named
+        - arguments:
+            key_invoice_line_id:
+              type:
+                name: int4
+                type: named
+            pre_check:
+              description: Delete permission predicate over the 'invoice_line' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: invoice_line
+                  type: predicate
+          description: Delete any row on the 'invoice_line' collection using the 'invoice_line_id' key
+          name: delete_invoice_line_by_invoice_line_id
+          result_type:
+            name: delete_invoice_line_by_invoice_line_id_response
+            type: named
+        - arguments:
+            key_media_type_id:
+              type:
+                name: int4
+                type: named
+            pre_check:
+              description: Delete permission predicate over the 'media_type' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: media_type
+                  type: predicate
+          description: Delete any row on the 'media_type' collection using the 'media_type_id' key
+          name: delete_media_type_by_media_type_id
+          result_type:
+            name: delete_media_type_by_media_type_id_response
+            type: named
+        - arguments:
+            key_playlist_id:
+              type:
+                name: int4
+                type: named
+            pre_check:
+              description: Delete permission predicate over the 'playlist' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: playlist
+                  type: predicate
+          description: Delete any row on the 'playlist' collection using the 'playlist_id' key
+          name: delete_playlist_by_playlist_id
+          result_type:
+            name: delete_playlist_by_playlist_id_response
+            type: named
+        - arguments:
+            key_playlist_id:
+              type:
+                name: int4
+                type: named
+            key_track_id:
+              type:
+                name: int4
+                type: named
+            pre_check:
+              description: Delete permission predicate over the 'playlist_track' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: playlist_track
+                  type: predicate
+          description: Delete any row on the 'playlist_track' collection using the 'playlist_id' and 'track_id' keys
+          name: delete_playlist_track_by_playlist_id_and_track_id
+          result_type:
+            name: delete_playlist_track_by_playlist_id_and_track_id_response
+            type: named
+        - arguments:
+            key_track_id:
+              type:
+                name: int4
+                type: named
+            pre_check:
+              description: Delete permission predicate over the 'track' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: track
+                  type: predicate
+          description: Delete any row on the 'track' collection using the 'track_id' key
+          name: delete_track_by_track_id
+          result_type:
+            name: delete_track_by_track_id_response
+            type: named
+        - arguments:
+            objects:
+              type:
+                element_type:
+                  name: insert_album_object
+                  type: named
+                type: array
+            post_check:
+              description: Insert permission predicate over the 'album' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: album
+                  type: predicate
+          description: Insert into the album table
+          name: insert_album
+          result_type:
+            name: insert_album_response
+            type: named
+        - arguments:
+            objects:
+              type:
+                element_type:
+                  name: insert_artist_object
+                  type: named
+                type: array
+            post_check:
+              description: Insert permission predicate over the 'artist' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: artist
+                  type: predicate
+          description: Insert into the artist table
+          name: insert_artist
+          result_type:
+            name: insert_artist_response
+            type: named
+        - arguments:
+            objects:
+              type:
+                element_type:
+                  name: insert_customer_object
+                  type: named
+                type: array
+            post_check:
+              description: Insert permission predicate over the 'customer' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: customer
+                  type: predicate
+          description: Insert into the customer table
+          name: insert_customer
+          result_type:
+            name: insert_customer_response
+            type: named
+        - arguments:
+            objects:
+              type:
+                element_type:
+                  name: insert_employee_object
+                  type: named
+                type: array
+            post_check:
+              description: Insert permission predicate over the 'employee' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: employee
+                  type: predicate
+          description: Insert into the employee table
+          name: insert_employee
+          result_type:
+            name: insert_employee_response
+            type: named
+        - arguments:
+            objects:
+              type:
+                element_type:
+                  name: insert_genre_object
+                  type: named
+                type: array
+            post_check:
+              description: Insert permission predicate over the 'genre' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: genre
+                  type: predicate
+          description: Insert into the genre table
+          name: insert_genre
+          result_type:
+            name: insert_genre_response
+            type: named
+        - arguments:
+            objects:
+              type:
+                element_type:
+                  name: insert_invoice_object
+                  type: named
+                type: array
+            post_check:
+              description: Insert permission predicate over the 'invoice' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: invoice
+                  type: predicate
+          description: Insert into the invoice table
+          name: insert_invoice
+          result_type:
+            name: insert_invoice_response
+            type: named
+        - arguments:
+            objects:
+              type:
+                element_type:
+                  name: insert_invoice_line_object
+                  type: named
+                type: array
+            post_check:
+              description: Insert permission predicate over the 'invoice_line' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: invoice_line
+                  type: predicate
+          description: Insert into the invoice_line table
+          name: insert_invoice_line
+          result_type:
+            name: insert_invoice_line_response
+            type: named
+        - arguments:
+            objects:
+              type:
+                element_type:
+                  name: insert_media_type_object
+                  type: named
+                type: array
+            post_check:
+              description: Insert permission predicate over the 'media_type' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: media_type
+                  type: predicate
+          description: Insert into the media_type table
+          name: insert_media_type
+          result_type:
+            name: insert_media_type_response
+            type: named
+        - arguments:
+            objects:
+              type:
+                element_type:
+                  name: insert_playlist_object
+                  type: named
+                type: array
+            post_check:
+              description: Insert permission predicate over the 'playlist' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: playlist
+                  type: predicate
+          description: Insert into the playlist table
+          name: insert_playlist
+          result_type:
+            name: insert_playlist_response
+            type: named
+        - arguments:
+            objects:
+              type:
+                element_type:
+                  name: insert_playlist_track_object
+                  type: named
+                type: array
+            post_check:
+              description: Insert permission predicate over the 'playlist_track' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: playlist_track
+                  type: predicate
+          description: Insert into the playlist_track table
+          name: insert_playlist_track
+          result_type:
+            name: insert_playlist_track_response
+            type: named
+        - arguments:
+            objects:
+              type:
+                element_type:
+                  name: insert_track_object
+                  type: named
+                type: array
+            post_check:
+              description: Insert permission predicate over the 'track' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: track
+                  type: predicate
+          description: Insert into the track table
+          name: insert_track
+          result_type:
+            name: insert_track_response
+            type: named
+        - arguments:
+            key_album_id:
+              type:
+                name: int4
+                type: named
+            post_check:
+              description: Update permission post-condition predicate over the 'album' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: album
+                  type: predicate
+            pre_check:
+              description: Update permission pre-condition predicate over the 'album' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: album
+                  type: predicate
+            update_columns:
+              type:
+                name: update_album_by_album_id_update_columns
+                type: named
+          description: Update any row on the 'album' collection using the 'album_id' key
+          name: update_album_by_album_id
+          result_type:
+            name: update_album_by_album_id_response
+            type: named
+        - arguments:
+            key_artist_id:
+              type:
+                name: int4
+                type: named
+            post_check:
+              description: Update permission post-condition predicate over the 'artist' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: artist
+                  type: predicate
+            pre_check:
+              description: Update permission pre-condition predicate over the 'artist' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: artist
+                  type: predicate
+            update_columns:
+              type:
+                name: update_artist_by_artist_id_update_columns
+                type: named
+          description: Update any row on the 'artist' collection using the 'artist_id' key
+          name: update_artist_by_artist_id
+          result_type:
+            name: update_artist_by_artist_id_response
+            type: named
+        - arguments:
+            key_customer_id:
+              type:
+                name: int4
+                type: named
+            post_check:
+              description: Update permission post-condition predicate over the 'customer' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: customer
+                  type: predicate
+            pre_check:
+              description: Update permission pre-condition predicate over the 'customer' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: customer
+                  type: predicate
+            update_columns:
+              type:
+                name: update_customer_by_customer_id_update_columns
+                type: named
+          description: Update any row on the 'customer' collection using the 'customer_id' key
+          name: update_customer_by_customer_id
+          result_type:
+            name: update_customer_by_customer_id_response
+            type: named
+        - arguments:
+            key_employee_id:
+              type:
+                name: int4
+                type: named
+            post_check:
+              description: Update permission post-condition predicate over the 'employee' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: employee
+                  type: predicate
+            pre_check:
+              description: Update permission pre-condition predicate over the 'employee' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: employee
+                  type: predicate
+            update_columns:
+              type:
+                name: update_employee_by_employee_id_update_columns
+                type: named
+          description: Update any row on the 'employee' collection using the 'employee_id' key
+          name: update_employee_by_employee_id
+          result_type:
+            name: update_employee_by_employee_id_response
+            type: named
+        - arguments:
+            key_genre_id:
+              type:
+                name: int4
+                type: named
+            post_check:
+              description: Update permission post-condition predicate over the 'genre' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: genre
+                  type: predicate
+            pre_check:
+              description: Update permission pre-condition predicate over the 'genre' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: genre
+                  type: predicate
+            update_columns:
+              type:
+                name: update_genre_by_genre_id_update_columns
+                type: named
+          description: Update any row on the 'genre' collection using the 'genre_id' key
+          name: update_genre_by_genre_id
+          result_type:
+            name: update_genre_by_genre_id_response
+            type: named
+        - arguments:
+            key_invoice_id:
+              type:
+                name: int4
+                type: named
+            post_check:
+              description: Update permission post-condition predicate over the 'invoice' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: invoice
+                  type: predicate
+            pre_check:
+              description: Update permission pre-condition predicate over the 'invoice' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: invoice
+                  type: predicate
+            update_columns:
+              type:
+                name: update_invoice_by_invoice_id_update_columns
+                type: named
+          description: Update any row on the 'invoice' collection using the 'invoice_id' key
+          name: update_invoice_by_invoice_id
+          result_type:
+            name: update_invoice_by_invoice_id_response
+            type: named
+        - arguments:
+            key_invoice_line_id:
+              type:
+                name: int4
+                type: named
+            post_check:
+              description: Update permission post-condition predicate over the 'invoice_line' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: invoice_line
+                  type: predicate
+            pre_check:
+              description: Update permission pre-condition predicate over the 'invoice_line' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: invoice_line
+                  type: predicate
+            update_columns:
+              type:
+                name: update_invoice_line_by_invoice_line_id_update_columns
+                type: named
+          description: Update any row on the 'invoice_line' collection using the 'invoice_line_id' key
+          name: update_invoice_line_by_invoice_line_id
+          result_type:
+            name: update_invoice_line_by_invoice_line_id_response
+            type: named
+        - arguments:
+            key_media_type_id:
+              type:
+                name: int4
+                type: named
+            post_check:
+              description: Update permission post-condition predicate over the 'media_type' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: media_type
+                  type: predicate
+            pre_check:
+              description: Update permission pre-condition predicate over the 'media_type' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: media_type
+                  type: predicate
+            update_columns:
+              type:
+                name: update_media_type_by_media_type_id_update_columns
+                type: named
+          description: Update any row on the 'media_type' collection using the 'media_type_id' key
+          name: update_media_type_by_media_type_id
+          result_type:
+            name: update_media_type_by_media_type_id_response
+            type: named
+        - arguments:
+            key_playlist_id:
+              type:
+                name: int4
+                type: named
+            post_check:
+              description: Update permission post-condition predicate over the 'playlist' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: playlist
+                  type: predicate
+            pre_check:
+              description: Update permission pre-condition predicate over the 'playlist' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: playlist
+                  type: predicate
+            update_columns:
+              type:
+                name: update_playlist_by_playlist_id_update_columns
+                type: named
+          description: Update any row on the 'playlist' collection using the 'playlist_id' key
+          name: update_playlist_by_playlist_id
+          result_type:
+            name: update_playlist_by_playlist_id_response
+            type: named
+        - arguments:
+            key_playlist_id:
+              type:
+                name: int4
+                type: named
+            key_track_id:
+              type:
+                name: int4
+                type: named
+            post_check:
+              description: Update permission post-condition predicate over the 'playlist_track' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: playlist_track
+                  type: predicate
+            pre_check:
+              description: Update permission pre-condition predicate over the 'playlist_track' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: playlist_track
+                  type: predicate
+            update_columns:
+              type:
+                name: update_playlist_track_by_playlist_id_and_track_id_update_columns
+                type: named
+          description: Update any row on the 'playlist_track' collection using the 'playlist_id' and 'track_id' keys
+          name: update_playlist_track_by_playlist_id_and_track_id
+          result_type:
+            name: update_playlist_track_by_playlist_id_and_track_id_response
+            type: named
+        - arguments:
+            key_track_id:
+              type:
+                name: int4
+                type: named
+            post_check:
+              description: Update permission post-condition predicate over the 'track' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: track
+                  type: predicate
+            pre_check:
+              description: Update permission pre-condition predicate over the 'track' collection
+              type:
+                type: nullable
+                underlying_type:
+                  object_type_name: track
+                  type: predicate
+            update_columns:
+              type:
+                name: update_track_by_track_id_update_columns
+                type: named
+          description: Update any row on the 'track' collection using the 'track_id' key
+          name: update_track_by_track_id
+          result_type:
+            name: update_track_by_track_id_response
+            type: named
+      request_arguments: null
+      scalar_types:
+        int4:
+          aggregate_functions:
+            avg:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            bit_and:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+              type: custom
+            bit_or:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+              type: custom
+            bit_xor:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: int4
+                  type: named
+              type: custom
+            max:
+              type: max
+            min:
+              type: min
+            stddev:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            stddev_pop:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            stddev_samp:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            sum:
+              result_type: int8
+              type: sum
+            var_pop:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            var_samp:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            variance:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+          comparison_operators:
+            _eq:
+              type: equal
+            _gt:
+              type: greater_than
+            _gte:
+              type: greater_than_or_equal
+            _in:
+              type: in
+            _lt:
+              type: less_than
+            _lte:
+              type: less_than_or_equal
+            _neq:
+              argument_type:
+                name: int4
+                type: named
+              type: custom
+          extraction_functions: {}
+          representation:
+            type: int32
+        int8:
+          aggregate_functions:
+            avg:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            bit_and:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: int8
+                  type: named
+              type: custom
+            bit_or:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: int8
+                  type: named
+              type: custom
+            bit_xor:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: int8
+                  type: named
+              type: custom
+            max:
+              type: max
+            min:
+              type: min
+            stddev:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            stddev_pop:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            stddev_samp:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            sum:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            var_pop:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            var_samp:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            variance:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+          comparison_operators:
+            _eq:
+              type: equal
+            _gt:
+              type: greater_than
+            _gte:
+              type: greater_than_or_equal
+            _in:
+              type: in
+            _lt:
+              type: less_than
+            _lte:
+              type: less_than_or_equal
+            _neq:
+              argument_type:
+                name: int8
+                type: named
+              type: custom
+          extraction_functions: {}
+          representation:
+            type: int64
+        numeric:
+          aggregate_functions:
+            avg:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            max:
+              type: max
+            min:
+              type: min
+            stddev:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            stddev_pop:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            stddev_samp:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            sum:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            var_pop:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            var_samp:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+            variance:
+              result_type:
+                type: nullable
+                underlying_type:
+                  name: numeric
+                  type: named
+              type: custom
+          comparison_operators:
+            _eq:
+              type: equal
+            _gt:
+              type: greater_than
+            _gte:
+              type: greater_than_or_equal
+            _in:
+              type: in
+            _lt:
+              type: less_than
+            _lte:
+              type: less_than_or_equal
+            _neq:
+              argument_type:
+                name: numeric
+                type: named
+              type: custom
+          extraction_functions: {}
+          representation:
+            type: bigdecimal
+        text:
+          aggregate_functions:
+            max:
+              type: max
+            min:
+              type: min
+          comparison_operators:
+            _eq:
+              type: equal
+            _gt:
+              type: greater_than
+            _gte:
+              type: greater_than_or_equal
+            _ilike:
+              argument_type:
+                name: text
+                type: named
+              type: custom
+            _in:
+              type: in
+            _iregex:
+              argument_type:
+                name: text
+                type: named
+              type: custom
+            _like:
+              argument_type:
+                name: text
+                type: named
+              type: custom
+            _lt:
+              type: less_than
+            _lte:
+              type: less_than_or_equal
+            _neq:
+              argument_type:
+                name: text
+                type: named
+              type: custom
+            _nilike:
+              argument_type:
+                name: text
+                type: named
+              type: custom
+            _niregex:
+              argument_type:
+                name: text
+                type: named
+              type: custom
+            _nlike:
+              argument_type:
+                name: text
+                type: named
+              type: custom
+            _nregex:
+              argument_type:
+                name: text
+                type: named
+              type: custom
+            _regex:
+              argument_type:
+                name: text
+                type: named
+              type: custom
+            starts_with:
+              argument_type:
+                name: text
+                type: named
+              type: custom
+            ts_match_tt:
+              argument_type:
+                name: text
+                type: named
+              type: custom
+          extraction_functions: {}
+          representation:
+            type: string
+        timestamp:
+          aggregate_functions:
+            max:
+              type: max
+            min:
+              type: min
+          comparison_operators:
+            _eq:
+              type: equal
+            _gt:
+              type: greater_than
+            _gte:
+              type: greater_than_or_equal
+            _in:
+              type: in
+            _lt:
+              type: less_than
+            _lte:
+              type: less_than_or_equal
+            _neq:
+              argument_type:
+                name: timestamp
+                type: named
+              type: custom
+          extraction_functions: {}
+          representation:
+            type: timestamp
+        varchar:
+          aggregate_functions:
+            max:
+              type: max
+            min:
+              type: min
+          comparison_operators:
+            _eq:
+              type: equal
+            _gt:
+              type: greater_than
+            _gte:
+              type: greater_than_or_equal
+            _ilike:
+              argument_type:
+                name: varchar
+                type: named
+              type: custom
+            _in:
+              type: in
+            _iregex:
+              argument_type:
+                name: varchar
+                type: named
+              type: custom
+            _like:
+              argument_type:
+                name: varchar
+                type: named
+              type: custom
+            _lt:
+              type: less_than
+            _lte:
+              type: less_than_or_equal
+            _neq:
+              argument_type:
+                name: varchar
+                type: named
+              type: custom
+            _nilike:
+              argument_type:
+                name: varchar
+                type: named
+              type: custom
+            _niregex:
+              argument_type:
+                name: varchar
+                type: named
+              type: custom
+            _nlike:
+              argument_type:
+                name: varchar
+                type: named
+              type: custom
+            _nregex:
+              argument_type:
+                name: varchar
+                type: named
+              type: custom
+            _regex:
+              argument_type:
+                name: varchar
+                type: named
+              type: custom
+            starts_with:
+              argument_type:
+                name: varchar
+                type: named
+              type: custom
+            ts_match_tt:
+              argument_type:
+                name: varchar
+                type: named
+              type: custom
+          extraction_functions: {}
+          representation:
+            type: string
+    capabilities:
+      capabilities:
+        mutation:
+          explain: {}
+          transactional: {}
+        query:
+          aggregates: {}
+          exists:
+            nested_collections: {}
+          explain: {}
+          nested_fields:
+            aggregates: {}
+            filter_by: {}
+            order_by: {}
+          variables: {}
+        relationships:
+          nested:
+            array: {}
+          order_by_aggregate: {}
+          relation_comparisons: {}
+      version: 0.2.4

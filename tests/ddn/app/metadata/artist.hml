@@ -1,0 +1,126 @@
+---
+kind: ObjectType
+version: v1
+definition:
+  name: artist
+  fields:
+    - name: artist_id
+      type: int32!
+    - name: name
+      type: string
+  graphql:
+    typeName: artist
+    inputTypeName: artist_input
+  dataConnectorTypeMapping:
+    - dataConnectorName: mypostgres
+      dataConnectorObjectType: artist
+
+---
+kind: TypePermissions
+version: v1
+definition:
+  typeName: artist
+  permissions:
+    - role: admin
+      output:
+        allowedFields:
+          - artist_id
+          - name
+
+---
+kind: BooleanExpressionType
+version: v1
+definition:
+  name: artist_bool_exp
+  operand:
+    object:
+      type: artist
+      comparableFields:
+        - fieldName: artist_id
+          booleanExpressionType: int4_bool_exp
+        - fieldName: name
+          booleanExpressionType: varchar_bool_exp
+      comparableRelationships: []
+  logicalOperators:
+    enable: true
+  isNull:
+    enable: true
+  graphql:
+    typeName: artist_bool_exp
+
+---
+kind: AggregateExpression
+version: v1
+definition:
+  name: artist_agg_exp
+  operand:
+    object:
+      aggregatedType: artist
+      aggregatableFields:
+        - fieldName: artist_id
+          aggregateExpression: int4_agg_exp
+        - fieldName: name
+          aggregateExpression: varchar_agg_exp
+  count:
+    enable: true
+    returnType: int64
+  graphql:
+    selectTypeName: artist_agg_exp
+
+---
+kind: OrderByExpression
+version: v1
+definition:
+  name: artist_order_by_exp
+  operand:
+    object:
+      orderedType: artist
+      orderableFields:
+        - fieldName: artist_id
+          orderByExpression: int32_order_by_exp
+        - fieldName: name
+          orderByExpression: string_order_by_exp
+      orderableRelationships: []
+  graphql:
+    expressionTypeName: artist_order_by_exp
+
+---
+kind: Model
+version: v2
+definition:
+  name: artist
+  objectType: artist
+  source:
+    dataConnectorName: mypostgres
+    collection: artist
+  filterExpressionType: artist_bool_exp
+  aggregateExpression: artist_agg_exp
+  orderByExpression: artist_order_by_exp
+  graphql:
+    selectMany:
+      queryRootField: artist
+      subscription:
+        rootField: artist
+    selectUniques:
+      - queryRootField: artist_by_artist_id
+        uniqueIdentifier:
+          - artist_id
+        subscription:
+          rootField: artist_by_artist_id
+    filterInputTypeName: artist_filter_input
+    aggregate:
+      queryRootField: artist_aggregate
+      subscription:
+        rootField: artist_aggregate
+
+---
+kind: ModelPermissions
+version: v1
+definition:
+  modelName: artist
+  permissions:
+    - role: admin
+      select:
+        filter: null
+        allowSubscriptions: true
+

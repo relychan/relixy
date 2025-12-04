@@ -1,0 +1,52 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`We can make a request using query parameters 1`] = `
+{
+  "data": {
+    "artist": [
+      {
+        "name": "Queen",
+      },
+    ],
+  },
+}
+`;
+
+exports[`We can make a request using query parameters 2`] = `
+{
+  "data": {
+    "artist": [
+      {
+        "name": "Various Artists",
+      },
+      {
+        "name": "Led Zeppelin",
+      },
+      {
+        "name": "Frank Zappa & Captain Beefheart",
+      },
+      {
+        "name": "Marcos Valle",
+      },
+      {
+        "name": "Milton Nascimento & Bebeto",
+      },
+      {
+        "name": "Azymuth",
+      },
+      {
+        "name": "Gilberto Gil",
+      },
+      {
+        "name": "João Gilberto",
+      },
+      {
+        "name": "Bebel Gilberto",
+      },
+      {
+        "name": "Jorge Vercilo",
+      },
+    ],
+  },
+}
+`;

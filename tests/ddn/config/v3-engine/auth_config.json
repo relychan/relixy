@@ -1,0 +1,12 @@
+{
+  "version": "v1",
+  "definition": {
+    "allowRoleEmulationBy": "admin",
+    "mode": {
+      "noAuth": {
+        "role": "admin",
+        "sessionVariables": {}
+      }
+    }
+  }
+}

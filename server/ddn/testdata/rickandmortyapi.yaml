@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=../../../docs/rest_proxy.schema.json
+settings:
+  headers: {}
+  forwardHeaders:
+    request: []
+    response: []
+servers:
+  - url:
+      value: https://rickandmortyapi.com/graphql
+paths:
+  /characters:
+    get:
+      operationId: getCharacters
+      description: "Get characters"
+      proxy:
+        type: graphql
+        request:
+          query: |
+            query GetCharacters {
+              characters(page: 1, filter: { name: "Morty" }) {
+                info {
+                  count
+                }
+                results {
+                  name
+                }
+              }
+              location(id: 1) {
+                id
+              }
+              episodesByIds(ids: [1, 2]) {
+                id
+              }
+            }
+  /characters/{id}:
+    get:
+      operationId: getCharacters
+      description: "Get character by ID"
+      proxy:
+        type: graphql
+        request:
+          query: |
+            query Character($id: ID! = "1") {
+              character(id: $id) {
+                id
+                name
+              }
+            }
