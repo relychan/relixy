@@ -895,6 +895,9 @@
    },
    "additionalProperties": false,
    "type": "object",
+   "required": [
+    "proxy"
+   ],
    "description": "RelyProxyOperation represents the definition of an API operation."
   },
   "RelyProxyPathItem": {
