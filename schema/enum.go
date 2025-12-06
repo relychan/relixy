@@ -3,6 +3,9 @@ package schema
 import (
 	"fmt"
 	"slices"
+
+	"github.com/invopop/jsonschema"
+	"github.com/relychan/goutils"
 )
 
 const (
@@ -136,6 +139,15 @@ var enumValueParameterLocations = []ParameterLocation{
 // IsValid checks if the style enum is valid.
 func (j ParameterLocation) IsValid() bool {
 	return slices.Contains(enumValueParameterLocations, j)
+}
+
+// JSONSchema defines a custom definition for JSON schema.
+func (ParameterLocation) JSONSchema() *jsonschema.Schema {
+	return &jsonschema.Schema{
+		Type:        "string",
+		Description: "Location of the parameter which is defined in OpenAPI specifications",
+		Enum:        goutils.ToAnySlice(SupportedParameterLocations()),
+	}
 }
 
 // SupportedParameterLocations returns supported parameter locations.

@@ -19,11 +19,11 @@ func main() {
 	}
 }
 
-func jsonSchemaConfiguration() error { //nolint:funlen
+func jsonSchemaConfiguration() error {
 	r := new(jsonschema.Reflector)
 
 	err := r.AddGoComments(
-		"github.com/relychan/restly-proxy/schema",
+		"github.com/relychan/relyx/schema",
 		"../schema",
 		jsonschema.WithFullComment(),
 	)
@@ -40,6 +40,7 @@ func jsonSchemaConfiguration() error { //nolint:funlen
 		schema.RelyProxyEncoding{},
 		schema.RelyProxyHeader{},
 		schema.GraphQLVariableDefinition{},
+		schema.RelyProxyGraphQLRequestConfig{},
 		schema.RelyProxyGraphQLResponseConfig{},
 	} {
 		externalSchema := r.Reflect(externalType)
@@ -55,101 +56,15 @@ func jsonSchemaConfiguration() error { //nolint:funlen
 	reflectSchema.Definitions["Duration"] = &jsonschema.Schema{
 		Type:        "string",
 		Description: "Duration string",
-		Pattern:     "^((([0-9]+h)?([0-9]+m)?([0-9]+s))|(([0-9]+h)?([0-9]+m))|([0-9]+h))$",
+		MinLength:   goutils.ToPtr(uint64(2)),
+		Pattern:     `^(\d+(\.\d+)?h)?(\d+(\.\d+)?m)?(\d+(\.\d+)?s)?(\d+(\.\d+)?ms)?$`,
 	}
-	reflectSchema.Definitions["RelyProxyGraphQLRequestConfig"] = newRelyProxyGraphQLRequestConfigSchema()
-	reflectSchema.Definitions["RelyProxyAPIDocument"].Properties.Set("paths", &jsonschema.Schema{
-		Type: "object",
-		AdditionalProperties: &jsonschema.Schema{
-			Ref: "#/$defs/RelyProxyPathItem",
-		},
-	})
-	reflectSchema.Definitions["Parameter"].Properties.Set("in", &jsonschema.Schema{
-		Type: "string",
-		Enum: goutils.ToAnySlice(schema.SupportedParameterLocations()),
-	})
-	reflectSchema.Definitions["Parameter"].Properties.Set("content", &jsonschema.Schema{
-		Type: "object",
-		AdditionalProperties: &jsonschema.Schema{
-			Ref: "#/$defs/RelyProxyMediaType",
-		},
-	})
-	reflectSchema.Definitions["TemplateTransformerConfig"] = &jsonschema.Schema{
-		Ref: "https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json",
-	}
-	reflectSchema.Definitions["RelyProxyAction"] = newRelyProxyActionSchema()
-	reflectSchema.Definitions["Discriminator"].Properties.Set("mapping", &jsonschema.Schema{
-		Type: "object",
-		AdditionalProperties: &jsonschema.Schema{
-			Type: "string",
-		},
-	})
-	reflectSchema.Definitions["RelyProxyEncoding"].Properties.Set("headers", &jsonschema.Schema{
-		Type: "object",
-		AdditionalProperties: &jsonschema.Schema{
-			Ref: "#/$defs/RelyProxyHeader",
-		},
-	})
-	reflectSchema.Definitions["RelyProxyMediaType"].Properties.Set("encoding", &jsonschema.Schema{
-		Type: "object",
-		AdditionalProperties: &jsonschema.Schema{
-			Ref: "#/$defs/RelyProxyEncoding",
-		},
-	})
-	reflectSchema.Definitions["RelyProxyMediaType"].Properties.
-		Set("itemEncoding", &jsonschema.Schema{
-			Type: "object",
-			AdditionalProperties: &jsonschema.Schema{
-				Ref: "#/$defs/RelyProxyEncoding",
-			},
-		})
-	reflectSchema.Definitions["RelyProxySchema"].Properties.
-		Set("dependentSchemas", &jsonschema.Schema{
-			Type: "object",
-			AdditionalProperties: &jsonschema.Schema{
-				Ref: "#/$defs/RelyProxySchema",
-			},
-		})
-	reflectSchema.Definitions["RelyProxySchema"].Properties.
-		Set("patternProperties", &jsonschema.Schema{
-			Type: "object",
-			AdditionalProperties: &jsonschema.Schema{
-				Ref: "#/$defs/RelyProxySchema",
-			},
-		})
-	reflectSchema.Definitions["RelyProxySchema"].Properties.
-		Set("dependentRequired", &jsonschema.Schema{
-			Type: "object",
-			AdditionalProperties: &jsonschema.Schema{
-				Type: "array",
-				Items: &jsonschema.Schema{
-					Type: "string",
-				},
-			},
-		})
-	reflectSchema.Definitions["RelyProxySchema"].Properties.
-		Set("properties", &jsonschema.Schema{
-			Type: "object",
-			AdditionalProperties: &jsonschema.Schema{
-				Ref: "#/$defs/RelyProxySchema",
-			},
-		})
-	reflectSchema.Definitions["RelyProxyHeader"].Properties.
-		Set("content", &jsonschema.Schema{
-			Type: "object",
-			AdditionalProperties: &jsonschema.Schema{
-				Ref: "#/$defs/RelyProxyMediaType",
-			},
-		})
-	reflectSchema.Definitions["RelyProxyRequestBody"].Properties.
-		Set("content", &jsonschema.Schema{
-			Type: "object",
-			AdditionalProperties: &jsonschema.Schema{
-				Ref: "#/$defs/RelyProxyMediaType",
-			},
-		})
-	reflectSchema.Definitions["RelyProxySecurityScheme"] = newRelyProxySecuritySchemeSchema()
 
+	// delete unused types
+	delete(
+		reflectSchema.Definitions,
+		"OrderedMap[string,*github.com/relychan/relyx/schema.RelyProxyEncoding]",
+	)
 	delete(
 		reflectSchema.Definitions,
 		"OrderedMap[string,*github.com/relychan/relyx/schema.RelyProxyPathItem]",
@@ -157,10 +72,6 @@ func jsonSchemaConfiguration() error { //nolint:funlen
 	delete(
 		reflectSchema.Definitions,
 		"OrderedMap[string,*github.com/relychan/relyx/schema.GraphQLVariableDefinition]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relyx/schema.RelyProxyEncoding]",
 	)
 	delete(
 		reflectSchema.Definitions,
@@ -194,7 +105,7 @@ func jsonSchemaConfiguration() error { //nolint:funlen
 	}
 
 	return os.WriteFile( //nolint:gosec
-		filepath.Join("docs", "rest_proxy.schema.json"),
+		filepath.Join("..", "docs", "relyx.schema.json"),
 		buffer.Bytes(), 0o644,
 	)
 }

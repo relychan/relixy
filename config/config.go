@@ -1,3 +1,4 @@
+// Package config defines configurations to start the server.
 package config
 
 import (
@@ -15,8 +16,8 @@ import (
 type RelyXServerConfig struct {
 	Server     gohttps.ServerConfig `json:"server" yaml:"server"`
 	Telemetry  gotel.OTLPConfig     `json:"telemetry" yaml:"telemetry"`
-	Auth       *auth.RelyAuthConfig
-	ConfigPath string `json:"configPath" yaml:"configPath" env:"RELYX_CONFIG_PATH"`
+	Auth       auth.RelyAuthConfig  `json:"auth" yaml:"auth"`
+	ConfigPath string               `json:"configPath" yaml:"configPath" env:"RELYX_CONFIG_PATH"`
 }
 
 // GetConfigPath returns the auth config path.

@@ -3,6 +3,7 @@ package schema
 
 import (
 	"github.com/hasura/goenvconf"
+	"github.com/invopop/jsonschema"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	orderedmap "github.com/pb33f/ordered-map/v2"
@@ -40,6 +41,17 @@ type RelyProxyAPIDocument struct {
 	// Paths contains all the PathItem definitions for the specification.
 	// The available paths and operations for the API, The most important part of ths spec.
 	Paths orderedmap.OrderedMap[string, *RelyProxyPathItem] `json:"paths" yaml:"paths"`
+}
+
+// JSONSchemaExtend modifies the JSON schema afterwards.
+func (RelyProxyAPIDocument) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.Properties.
+		Set("paths", &jsonschema.Schema{
+			Type: "object",
+			AdditionalProperties: &jsonschema.Schema{
+				Ref: "#/$defs/RelyProxyPathItem",
+			},
+		})
 }
 
 // RelyProxyTag represents a high-level Tag instance for grouping and filtering.

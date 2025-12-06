@@ -14,7 +14,7 @@ import (
 	"github.com/hasura/gotel/otelutils"
 	"github.com/relychan/gohttps"
 	"github.com/relychan/goutils"
-	"github.com/relychan/relyx/authn"
+	"github.com/relychan/rely-auth/auth"
 	"github.com/relychan/relyx/config"
 	"github.com/relychan/relyx/routes/ddn"
 	"github.com/relychan/relyx/types"
@@ -49,38 +49,67 @@ func startServer() error {
 
 	defer goutils.CatchWarnContextErrorFunc(ts.Shutdown)
 
-	state, err := config.NewState(envVars, ts)
+	router, shutdown, err := setupRouter(envVars, ts)
 	if err != nil {
 		return err
 	}
 
-	defer goutils.CatchWarnErrorFunc(state.Close)
-
-	router := setupRouter(state, envVars, ts)
+	defer shutdown()
 
 	return gohttps.ListenAndServe(ctx, router, &envVars.Server)
 }
 
 func setupRouter(
-	state *types.State,
-	envVars *config.RelyXServerConfig,
+	conf *config.RelyXServerConfig,
 	ts *gotel.OTelExporters,
-) *chi.Mux {
-	router := gohttps.NewRouter(&envVars.Server, ts.Logger)
+) (*chi.Mux, func(), error) {
+	state, err := config.NewState(conf, ts)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	shutdownFuncs := []func() error{
+		state.Close,
+	}
+
+	if len(conf.Auth.Definitions) > 0 {
+		authManager, err := auth.NewRelyAuthManager(
+			&conf.Auth,
+			auth.WithLogger(ts.Logger),
+			auth.WithMeter(ts.Meter),
+		)
+		if err != nil {
+			goutils.CatchWarnErrorFunc(state.Close)
+
+			return nil, nil, err
+		}
+
+		shutdownFuncs = append(shutdownFuncs, authManager.Close)
+	}
+
+	middlewares := chi.Middlewares{
+		gotel.NewTracingMiddleware(
+			ts,
+			gotel.ResponseWriterWrapperFunc(
+				func(w http.ResponseWriter, protoMajor int) gotel.WrapResponseWriter {
+					return middleware.NewWrapResponseWriter(w, protoMajor)
+				},
+			),
+		),
+	}
+
+	router := gohttps.NewRouter(&conf.Server, ts.Logger)
 	router.Use(middleware.AllowContentType("application/json"))
 	router.Handle(
 		"/ddn/pre-route",
-		chi.Chain(
-			gotel.NewTracingMiddleware(
-				ts,
-				gotel.ResponseWriterWrapperFunc(
-					func(w http.ResponseWriter, protoMajor int) gotel.WrapResponseWriter {
-						return middleware.NewWrapResponseWriter(w, protoMajor)
-					},
-				),
-			), authn.AuthMiddleware[map[string]any](nil),
-		).Handler(ddn.NewPreRoutePluginHandler(state)),
+		middlewares.Handler(ddn.NewPreRoutePluginHandler(state)),
 	)
 
-	return router
+	shutdown := func() {
+		for _, fn := range shutdownFuncs {
+			goutils.CatchWarnErrorFunc(fn)
+		}
+	}
+
+	return router, shutdown, nil
 }

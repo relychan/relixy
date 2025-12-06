@@ -19,8 +19,11 @@ import (
 )
 
 func TestRESTServer(t *testing.T) {
-	server := initTestServer(t, "./testdata/jsonplaceholder.yaml")
-	defer server.Close()
+	server, shutdown := initTestServer(t, "./testdata/jsonplaceholder.yaml")
+	defer func() {
+		server.Close()
+		shutdown()
+	}()
 
 	requestURL := server.URL + "/ddn/pre-route"
 	testCases := []struct {
@@ -61,9 +64,11 @@ func TestRESTServer(t *testing.T) {
 }
 
 func TestGraphQLServer(t *testing.T) {
-	server := initTestServer(t, "./testdata/rickandmortyapi.yaml")
-	server.Start()
-	defer server.Close()
+	server, shutdown := initTestServer(t, "./testdata/rickandmortyapi.yaml")
+	defer func() {
+		server.Close()
+		shutdown()
+	}()
 
 	requestURL := server.URL + "/ddn/pre-route"
 	testCases := []struct {
@@ -138,8 +143,8 @@ func runPreRoute[T any](t *testing.T, requestURL string, body ddn.PreRoutePlugin
 	assert.DeepEqual(t, responseBody, output)
 }
 
-func initTestServer(t *testing.T, configPath string) *httptest.Server {
-	t.Setenv("CONFIG_PATH", configPath)
+func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {
+	t.Setenv("RELYX_CONFIG_PATH", configPath)
 
 	envVars, err := config.LoadServerConfig()
 	assert.NilError(t, err)
@@ -152,13 +157,10 @@ func initTestServer(t *testing.T, configPath string) *httptest.Server {
 		})),
 	}
 
-	state, err := config.NewState(envVars, otelExporters)
+	router, shutdown, err := setupRouter(envVars, otelExporters)
 	assert.NilError(t, err)
-	defer state.Close()
-
-	router := setupRouter(state, envVars, otelExporters)
 
 	server := httptest.NewServer(router)
 
-	return server
+	return server, shutdown
 }

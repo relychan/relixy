@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"github.com/invopop/jsonschema"
 	orderedmap "github.com/pb33f/ordered-map/v2"
 )
 
@@ -21,12 +22,34 @@ type Parameter struct {
 	Content         *orderedmap.OrderedMap[string, *RelyProxyMediaType] `json:"content,omitempty" yaml:"content,omitempty"`
 }
 
+// JSONSchemaExtend modifies the JSON schema afterwards.
+func (Parameter) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.Properties.
+		Set("content", &jsonschema.Schema{
+			Type: "object",
+			AdditionalProperties: &jsonschema.Schema{
+				Ref: "#/$defs/RelyProxyMediaType",
+			},
+		})
+}
+
 // RelyProxyRequestBody represents a high-level OpenAPI 3+ RequestBody object, backed by a low-level one.
 //   - https://spec.openapis.org/oas/v3.1.0#request-body-object
 type RelyProxyRequestBody struct {
 	Description string                                              `json:"description,omitempty" yaml:"description,omitempty"`
 	Content     *orderedmap.OrderedMap[string, *RelyProxyMediaType] `json:"content,omitempty" yaml:"content,omitempty"`
 	Required    *bool                                               `json:"required,omitempty" yaml:"required,omitempty"`
+}
+
+// JSONSchemaExtend modifies the JSON schema afterwards.
+func (RelyProxyRequestBody) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.Properties.
+		Set("content", &jsonschema.Schema{
+			Type: "object",
+			AdditionalProperties: &jsonschema.Schema{
+				Ref: "#/$defs/RelyProxyMediaType",
+			},
+		})
 }
 
 // RelyProxyMediaType represents a high-level OpenAPI MediaType object that is backed by a low-level one.
@@ -42,6 +65,23 @@ type RelyProxyMediaType struct {
 	ItemEncoding *orderedmap.OrderedMap[string, *RelyProxyEncoding] `json:"itemEncoding,omitempty" yaml:"itemEncoding,omitempty"`
 }
 
+// JSONSchemaExtend modifies the JSON schema afterwards.
+func (RelyProxyMediaType) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.Properties.Set("encoding", &jsonschema.Schema{
+		Type: "object",
+		AdditionalProperties: &jsonschema.Schema{
+			Ref: "#/$defs/RelyProxyEncoding",
+		},
+	})
+	schema.Properties.
+		Set("itemEncoding", &jsonschema.Schema{
+			Type: "object",
+			AdditionalProperties: &jsonschema.Schema{
+				Ref: "#/$defs/RelyProxyEncoding",
+			},
+		})
+}
+
 // RelyProxyEncoding represents an OpenAPI 3+ Encoding object
 //   - https://spec.openapis.org/oas/v3.1.0#encoding-object
 type RelyProxyEncoding struct {
@@ -50,6 +90,16 @@ type RelyProxyEncoding struct {
 	Style         string                                           `json:"style,omitempty" yaml:"style,omitempty"`
 	Explode       *bool                                            `json:"explode,omitempty" yaml:"explode,omitempty"`
 	AllowReserved bool                                             `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
+}
+
+// JSONSchemaExtend modifies the JSON schema afterwards.
+func (RelyProxyEncoding) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.Properties.Set("headers", &jsonschema.Schema{
+		Type: "object",
+		AdditionalProperties: &jsonschema.Schema{
+			Ref: "#/$defs/RelyProxyHeader",
+		},
+	})
 }
 
 // RelyProxyHeader represents a high-level OpenAPI 3+ Header object that is backed by a low-level one.
@@ -68,6 +118,17 @@ type RelyProxyHeader struct {
 	// Examples        *orderedmap.Map[string, *highbase.Example] `json:"examples,omitempty" yaml:"examples,omitempty"`
 }
 
+// JSONSchemaExtend modifies the JSON schema afterwards.
+func (RelyProxyHeader) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.Properties.
+		Set("content", &jsonschema.Schema{
+			Type: "object",
+			AdditionalProperties: &jsonschema.Schema{
+				Ref: "#/$defs/RelyProxyMediaType",
+			},
+		})
+}
+
 // Discriminator is only used by OpenAPI 3+ documents, it represents a polymorphic discriminator used for schemas
 // When request bodies or response payloads may be one of a number of different schemas, a discriminator object can be used to aid in serialization, deserialization, and validation.
 // The discriminator is a specific object in a schema which is used to inform the consumer of the document of an alternative schema based on the value associated with it.
@@ -76,6 +137,17 @@ type Discriminator struct {
 	PropertyName   string                                 `json:"propertyName,omitempty" yaml:"propertyName,omitempty"`
 	Mapping        *orderedmap.OrderedMap[string, string] `json:"mapping,omitempty" yaml:"mapping,omitempty"`
 	DefaultMapping string                                 `json:"defaultMapping,omitempty" yaml:"defaultMapping,omitempty"` // OpenAPI 3.2+ defaultMapping for fallback schema
+}
+
+// JSONSchemaExtend modifies the JSON schema afterwards.
+func (Discriminator) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.Properties.
+		Set("mapping", &jsonschema.Schema{
+			Type: "object",
+			AdditionalProperties: &jsonschema.Schema{
+				Type: "string",
+			},
+		})
 }
 
 // RelyProxySchema represents a JSON Schema that support Swagger, OpenAPI 3 and OpenAPI 3.1
@@ -168,6 +240,41 @@ type RelyProxySchema struct {
 	// ExternalDocs         *ExternalDoc                        `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 	// Example              *yaml.Node                          `json:"example,omitempty" yaml:"example,omitempty"`
 	Deprecated *bool `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+}
+
+// JSONSchemaExtend modifies the JSON schema afterwards.
+func (RelyProxySchema) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.Properties.
+		Set("dependentSchemas", &jsonschema.Schema{
+			Type: "object",
+			AdditionalProperties: &jsonschema.Schema{
+				Ref: "#/$defs/RelyProxySchema",
+			},
+		})
+	schema.Properties.
+		Set("patternProperties", &jsonschema.Schema{
+			Type: "object",
+			AdditionalProperties: &jsonschema.Schema{
+				Ref: "#/$defs/RelyProxySchema",
+			},
+		})
+	schema.Properties.
+		Set("dependentRequired", &jsonschema.Schema{
+			Type: "object",
+			AdditionalProperties: &jsonschema.Schema{
+				Type: "array",
+				Items: &jsonschema.Schema{
+					Type: "string",
+				},
+			},
+		})
+	schema.Properties.
+		Set("properties", &jsonschema.Schema{
+			Type: "object",
+			AdditionalProperties: &jsonschema.Schema{
+				Ref: "#/$defs/RelyProxySchema",
+			},
+		})
 }
 
 // RelyProxyAPIDocumentInfo represents a high-level Info object that provides metadata about the API.

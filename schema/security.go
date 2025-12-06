@@ -5,8 +5,10 @@ import (
 	"fmt"
 
 	"github.com/hasura/goenvconf"
+	"github.com/invopop/jsonschema"
 	"github.com/relychan/gohttpc/authc/authscheme"
 	"github.com/relychan/goutils"
+	wk8orderedmap "github.com/wk8/go-ordered-map/v2"
 	"go.yaml.in/yaml/v4"
 )
 
@@ -185,6 +187,111 @@ func (j *RelyProxySecurityScheme) Validate() error {
 	}
 
 	return j.SecuritySchemer.Validate()
+}
+
+// JSONSchema defines a custom definition for JSON schema.
+func (RelyProxySecurityScheme) JSONSchema() *jsonschema.Schema {
+	envStringRef := &jsonschema.Schema{
+		Ref: "#/$defs/EnvString",
+	}
+	apiKeySchema := wk8orderedmap.New[string, *jsonschema.Schema]()
+	apiKeySchema.Set("type", &jsonschema.Schema{
+		Type: "string",
+		Enum: []any{APIKeyScheme},
+	})
+	apiKeySchema.Set("value", envStringRef)
+	apiKeySchema.Set("in", &jsonschema.Schema{
+		Type: "string",
+		Enum: goutils.ToAnySlice(authscheme.GetSupportedAuthLocations()),
+	})
+	apiKeySchema.Set("name", &jsonschema.Schema{
+		Type: "string",
+	})
+
+	httpAuthSchema := wk8orderedmap.New[string, *jsonschema.Schema]()
+	httpAuthSchema.Set("type", &jsonschema.Schema{
+		Type: "string",
+		Enum: []any{HTTPAuthScheme},
+	})
+	httpAuthSchema.Set("value", envStringRef)
+	httpAuthSchema.Set("header", &jsonschema.Schema{
+		Type: "string",
+	})
+	httpAuthSchema.Set("scheme", &jsonschema.Schema{
+		Type: "string",
+	})
+
+	basicAuthSchema := wk8orderedmap.New[string, *jsonschema.Schema]()
+	basicAuthSchema.Set("type", &jsonschema.Schema{
+		Type: "string",
+		Enum: []any{BasicAuthScheme},
+	})
+	basicAuthSchema.Set("username", envStringRef)
+	basicAuthSchema.Set("password", envStringRef)
+	httpAuthSchema.Set("header", &jsonschema.Schema{
+		Description: "Request contains a header field in the form of Authorization: Basic [credentials]",
+		OneOf: []*jsonschema.Schema{
+			{Type: "string"},
+			{Type: "null"},
+		},
+	})
+
+	oidcSchema := wk8orderedmap.New[string, *jsonschema.Schema]()
+	oidcSchema.Set("type", &jsonschema.Schema{
+		Type: "string",
+		Enum: []any{OpenIDConnectScheme},
+	})
+	oidcSchema.Set("openIdConnectUrl", &jsonschema.Schema{
+		Type: "string",
+	})
+
+	cookieSchema := wk8orderedmap.New[string, *jsonschema.Schema]()
+	cookieSchema.Set("type", &jsonschema.Schema{
+		Type: "string",
+		Enum: []any{CookieAuthScheme},
+	})
+
+	mutualTLSSchema := wk8orderedmap.New[string, *jsonschema.Schema]()
+	mutualTLSSchema.Set("type", &jsonschema.Schema{
+		Type: "string",
+		Enum: []any{MutualTLSScheme},
+	})
+
+	return &jsonschema.Schema{
+		OneOf: []*jsonschema.Schema{
+			{
+				Type:       "object",
+				Required:   []string{"type", "value", "in", "name"},
+				Properties: apiKeySchema,
+			},
+			{
+				Type:       "object",
+				Properties: basicAuthSchema,
+				Required:   []string{"type", "username", "password"},
+			},
+			{
+				Type:       "object",
+				Properties: httpAuthSchema,
+				Required:   []string{"type", "value", "header", "scheme"},
+			},
+			newOAuth2ConfigSchema(),
+			{
+				Type:       "object",
+				Properties: oidcSchema,
+				Required:   []string{"type", "openIdConnectUrl"},
+			},
+			{
+				Type:       "object",
+				Properties: cookieSchema,
+				Required:   []string{"type"},
+			},
+			{
+				Type:       "object",
+				Properties: mutualTLSSchema,
+				Required:   []string{"type"},
+			},
+		},
+	}
 }
 
 // APIKeyAuthConfig contains configurations for [apiKey authentication]
@@ -456,4 +563,58 @@ func (MutualTLSAuthConfig) GetType() SecuritySchemeType {
 // Validate if the current instance is valid.
 func (MutualTLSAuthConfig) Validate() error {
 	return nil
+}
+
+func newOAuth2ConfigSchema() *jsonschema.Schema {
+	oauth2Schema := wk8orderedmap.New[string, *jsonschema.Schema]()
+	oauth2Schema.Set("type", &jsonschema.Schema{
+		Type: "string",
+		Enum: []any{OAuth2Scheme},
+	})
+
+	oauthFlowRef := &jsonschema.Schema{
+		Ref: "#/$defs/OAuthFlow",
+	}
+	implicitFlow := wk8orderedmap.New[string, *jsonschema.Schema]()
+	implicitFlow.Set(string(ImplicitFlow), oauthFlowRef)
+
+	passwordFlow := wk8orderedmap.New[string, *jsonschema.Schema]()
+	passwordFlow.Set(string(PasswordFlow), oauthFlowRef)
+
+	ccFlow := wk8orderedmap.New[string, *jsonschema.Schema]()
+	ccFlow.Set(string(ClientCredentialsFlow), oauthFlowRef)
+
+	acFlow := wk8orderedmap.New[string, *jsonschema.Schema]()
+	acFlow.Set(string(AuthorizationCodeFlow), oauthFlowRef)
+
+	oauth2Schema.Set("flows", &jsonschema.Schema{
+		OneOf: []*jsonschema.Schema{
+			{
+				Type:       "object",
+				Required:   []string{string(PasswordFlow)},
+				Properties: passwordFlow,
+			},
+			{
+				Type:       "object",
+				Required:   []string{string(ImplicitFlow)},
+				Properties: implicitFlow,
+			},
+			{
+				Type:       "object",
+				Required:   []string{string(ClientCredentialsFlow)},
+				Properties: ccFlow,
+			},
+			{
+				Type:       "object",
+				Required:   []string{string(AuthorizationCodeFlow)},
+				Properties: acFlow,
+			},
+		},
+	})
+
+	return &jsonschema.Schema{
+		Type:       "object",
+		Properties: oauth2Schema,
+		Required:   []string{"type", "flows"},
+	}
 }
