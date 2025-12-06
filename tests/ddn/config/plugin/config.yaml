@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=../../../../docs/relyx.schema.json
+settings:
+  headers: {}
+  forwardHeaders:
+    request: ["X-Hasura-Role", "Authorization", "X-Hasura-ddn-token"]
+    response: []
+servers:
+  - url:
+      env: GRAPHQL_SERVER_URL
+paths:
+  /v1/api/rest/artistbyname/{name}:
+    get:
+      operationId: artistByName
+      proxy:
+        type: graphql
+        request:
+          query: |
+            query artistByName($name: string!) { 
+              artist(where: {
+                name: { _eq: $name }
+              }) { 
+                name 
+              }
+            }
+          variables:
+            name:
+              expression: param.name
+  /v1/api/rest/artists:
+    get:
+      operationId: artists
+      proxy:
+        type: graphql
+        request:
+          query: |
+            query artists($limit: Int = 10, $offset: Int = 0) { 
+              artist(limit: $limit, offset: $offset) { 
+                name 
+              }
+            }
+          variables:
+            limit:
+              expression: query.limit[0]
+              default:
+                value: 19
+            offset:
+              expression: query.offset[0]
+              default:
+                value: 0

@@ -1,0 +1,30 @@
+kind: LifecyclePluginHook
+version: v1
+definition:
+  pre: route
+  name: restified_endpoints
+  url:
+    value: "http://plugin:8080/ddn/pre-route"
+  config:
+    matchPath: "/v1/api/rest/*"
+    matchMethods: ["GET", "POST"]
+    request:
+      method: POST
+      headers:
+        forward:
+          - Authorization
+          - x-hasura-role
+          - x-hasura-ddn-token
+        additional:
+          hasura-m-auth:
+            valueFromEnv: HASURA_M_AUTH
+      rawRequest:
+        path: {}
+        query: {}
+        method: {}
+        body: {}
+    response:
+      headers:
+        additional:
+          content-type:
+            value: application/json
