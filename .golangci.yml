@@ -82,6 +82,8 @@ linters:
           disabled: true
         - name: max-public-structs
           arguments: [10]
+        - name: var-naming
+          disabled: true
     exhaustive:
       default-signifies-exhaustive: true
     nestif:
