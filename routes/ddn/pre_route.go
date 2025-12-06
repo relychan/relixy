@@ -10,7 +10,7 @@ import (
 	"net/url"
 
 	"github.com/hasura/gotel"
-	"github.com/relychan/gohttps"
+	"github.com/relychan/gohttps/httputils"
 	"github.com/relychan/goutils"
 	"github.com/relychan/relyx/types"
 	"go.opentelemetry.io/otel/codes"
@@ -44,7 +44,7 @@ func (pr *preRoutePluginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	span := trace.SpanFromContext(ctx)
 	logger := gotel.GetLogger(ctx)
 
-	input, decoded := gohttps.DecodeRequestBody[PreRoutePluginRequestBody](w, r, span)
+	input, decoded := httputils.DecodeRequestBody[PreRoutePluginRequestBody](w, r, span)
 	if !decoded {
 		return
 	}
@@ -68,9 +68,9 @@ func (pr *preRoutePluginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		logger.Error("failed to execute proxy request", slog.String("error", err.Error()))
 
-		wErr := gohttps.WriteResponseError(w, err)
+		wErr := httputils.WriteResponseError(w, err)
 		if wErr != nil {
-			gohttps.SetWriteResponseErrorAttribute(span, wErr)
+			httputils.SetWriteResponseErrorAttribute(span, wErr)
 		}
 
 		return
@@ -84,7 +84,7 @@ func (pr *preRoutePluginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		w.WriteHeader(resp.StatusCode)
 		_, err = io.Copy(w, respReader)
 	} else {
-		err = gohttps.WriteResponseJSON(w, resp.StatusCode, respBody)
+		err = httputils.WriteResponseJSON(w, resp.StatusCode, respBody)
 	}
 
 	if err != nil {

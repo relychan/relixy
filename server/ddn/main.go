@@ -14,6 +14,8 @@ import (
 	"github.com/hasura/gotel/otelutils"
 	"github.com/relychan/gohttps"
 	"github.com/relychan/goutils"
+	"github.com/relychan/relyx/authn"
+	"github.com/relychan/relyx/config"
 	"github.com/relychan/relyx/routes/ddn"
 	"github.com/relychan/relyx/types"
 )
@@ -26,7 +28,10 @@ func main() {
 }
 
 func startServer() error {
-	envVars := GetEnvironment()
+	envVars, err := config.LoadServerConfig()
+	if err != nil {
+		return err
+	}
 
 	logger, _, err := otelutils.NewJSONLogger(envVars.Server.LogLevel)
 	if err != nil {
@@ -44,33 +49,37 @@ func startServer() error {
 
 	defer goutils.CatchWarnContextErrorFunc(ts.Shutdown)
 
-	state, err := NewState(&envVars, ts)
+	state, err := config.NewState(envVars, ts)
 	if err != nil {
 		return err
 	}
 
 	defer goutils.CatchWarnErrorFunc(state.Close)
 
-	router := setupRouter(state, &envVars, ts)
+	router := setupRouter(state, envVars, ts)
 
-	return gohttps.ListenAndServe(ctx, router, envVars.Server)
+	return gohttps.ListenAndServe(ctx, router, &envVars.Server)
 }
 
-func setupRouter(state *types.State, envVars *Environment, ts *gotel.OTelExporters) *chi.Mux {
-	router := gohttps.NewRouter(envVars.Server, ts.Logger)
+func setupRouter(
+	state *types.State,
+	envVars *config.RelyXServerConfig,
+	ts *gotel.OTelExporters,
+) *chi.Mux {
+	router := gohttps.NewRouter(&envVars.Server, ts.Logger)
 	router.Use(middleware.AllowContentType("application/json"))
 	router.Handle(
 		"/ddn/pre-route",
-		gotel.NewTracingMiddleware(
-			ts,
-			gotel.ResponseWriterWrapperFunc(
-				func(w http.ResponseWriter, protoMajor int) gotel.WrapResponseWriter {
-					return middleware.NewWrapResponseWriter(w, protoMajor)
-				},
-			),
-		)(
-			ddn.NewPreRoutePluginHandler(state),
-		),
+		chi.Chain(
+			gotel.NewTracingMiddleware(
+				ts,
+				gotel.ResponseWriterWrapperFunc(
+					func(w http.ResponseWriter, protoMajor int) gotel.WrapResponseWriter {
+						return middleware.NewWrapResponseWriter(w, protoMajor)
+					},
+				),
+			), authn.AuthMiddleware[map[string]any](nil),
+		).Handler(ddn.NewPreRoutePluginHandler(state)),
 	)
 
 	return router

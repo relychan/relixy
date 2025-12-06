@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/hasura/gotel"
+	"github.com/relychan/relyx/config"
 	"github.com/relychan/relyx/routes/ddn"
 	"go.opentelemetry.io/otel"
 	"gotest.tools/v3/assert"
@@ -140,7 +141,9 @@ func runPreRoute[T any](t *testing.T, requestURL string, body ddn.PreRoutePlugin
 func initTestServer(t *testing.T, configPath string) *httptest.Server {
 	t.Setenv("CONFIG_PATH", configPath)
 
-	envVars := GetEnvironment()
+	envVars, err := config.LoadServerConfig()
+	assert.NilError(t, err)
+
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),
 		Meter:  otel.Meter("test"),
@@ -149,11 +152,11 @@ func initTestServer(t *testing.T, configPath string) *httptest.Server {
 		})),
 	}
 
-	state, err := NewState(&envVars, otelExporters)
+	state, err := config.NewState(envVars, otelExporters)
 	assert.NilError(t, err)
 	defer state.Close()
 
-	router := setupRouter(state, &envVars, otelExporters)
+	router := setupRouter(state, envVars, otelExporters)
 
 	server := httptest.NewServer(router)
 
