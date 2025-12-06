@@ -166,5 +166,5 @@ type RelyProxyOperation struct {
 	// Requires the security for this operation.
 	Security SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
 	// Defines action information to proxy request to the remote server.
-	Proxy RelyProxyAction `json:"proxy,omitempty" yaml:"proxy,omitempty"`
+	Proxy RelyProxyAction `json:"proxy" yaml:"proxy"`
 }

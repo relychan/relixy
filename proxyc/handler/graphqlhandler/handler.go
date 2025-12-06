@@ -177,10 +177,12 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 		reqHeader.Set(key, value)
 	}
 
-	for _, key := range options.Settings.ForwardHeaders.Request {
-		value := reqHeader.Get(key)
-		if value != "" {
-			reqHeader.Set(key, value)
+	if options.Settings.ForwardHeaders != nil {
+		for _, key := range options.Settings.ForwardHeaders.Request {
+			value := reqHeader.Get(key)
+			if value != "" {
+				reqHeader.Set(key, value)
+			}
 		}
 	}
 

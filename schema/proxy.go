@@ -48,9 +48,9 @@ type RelyProxyAction struct {
 	// Overrides the request path. Use the original request path if empty.
 	Path string `json:"path,omitempty" yaml:"path,omitempty"`
 	// Configurations for the proxy request.
-	Request RelyProxyGraphQLRequestConfig `json:"request,omitempty" yaml:"request,omitempty"`
+	Request RelyProxyGraphQLRequestConfig `json:"request" yaml:"request"`
 	// Configurations for evaluating graphql responses.
-	Response RelyProxyGraphQLResponseConfig `json:"response,omitempty" yaml:"response,omitempty"`
+	Response RelyProxyGraphQLResponseConfig `json:"response" yaml:"response"`
 }
 
 // JSONSchema defines a custom definition for JSON schema.

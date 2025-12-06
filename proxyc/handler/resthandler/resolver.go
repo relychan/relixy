@@ -49,10 +49,12 @@ func (re *RESTHandler) Handle(
 
 	req := options.HTTPClient.R(re.method, requestPath)
 
-	for _, key := range options.Settings.ForwardHeaders.Request {
-		value := req.Header().Get(key)
-		if value != "" {
-			req.Header().Set(key, value)
+	if options.Settings.ForwardHeaders != nil {
+		for _, key := range options.Settings.ForwardHeaders.Request {
+			value := req.Header().Get(key)
+			if value != "" {
+				req.Header().Set(key, value)
+			}
 		}
 	}
 

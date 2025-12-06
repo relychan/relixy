@@ -460,7 +460,7 @@ func (n *Node) findRouteRecursive(path string, route *Route) *Node { //nolint:go
 	search := path
 
 	for t, nds := range nn.children {
-		ntyp := nodeTyp(t) //nolint:gosec
+		ntyp := nodeTyp(t)
 
 		if len(nds) == 0 {
 			continue

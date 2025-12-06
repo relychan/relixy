@@ -1,3 +1,4 @@
+// Package main generates the JSON schema for the relyx metadata.
 package main
 
 import (

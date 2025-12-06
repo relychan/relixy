@@ -16,7 +16,7 @@ type RelyProxySettings struct {
 	// Merged with the global headers.
 	Headers map[string]goenvconf.EnvString `json:"headers,omitempty" yaml:"headers,omitempty"`
 	// ForwardHeaders define configurations for headers forwarding
-	ForwardHeaders RelyProxyForwardHeadersConfig `json:"forwardHeaders,omitempty" yaml:"forwardHeaders,omitempty"`
+	ForwardHeaders *RelyProxyForwardHeadersConfig `json:"forwardHeaders,omitempty" yaml:"forwardHeaders,omitempty"`
 	// SecuritySchemes define security schemes that can be used by the operations.
 	SecuritySchemes []RelyProxySecurityScheme `json:"securitySchemes,omitempty" yaml:"securitySchemes,omitempty"`
 	// HealthCheck define the health check policy for load balancer recovery.
