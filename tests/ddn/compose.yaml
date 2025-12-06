@@ -26,6 +26,10 @@ services:
       dockerfile: Dockerfile.ddn
     ports:
       - 8080:8080
+    depends_on:
+      - engine
+      - postgres
+      - app_mypostgres
     environment:
       CONFIG_PATH: "/etc/relyx/config.yaml"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"

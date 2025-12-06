@@ -11,7 +11,13 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/hasura/goenvconf"
 	"github.com/hasura/gotel"
+	"github.com/relychan/gohttpc/authc/authscheme"
+	"github.com/relychan/goutils/httpheader"
+	"github.com/relychan/rely-auth/auth"
+	"github.com/relychan/rely-auth/auth/apikey"
+	"github.com/relychan/rely-auth/auth/authmode"
 	"github.com/relychan/relyx/config"
 	"github.com/relychan/relyx/routes/ddn"
 	"go.opentelemetry.io/otel"
@@ -116,31 +122,133 @@ func runPreRoute[T any](t *testing.T, requestURL string, body ddn.PreRoutePlugin
 	bodyBytes, err := json.Marshal(body)
 	assert.NilError(t, err)
 
-	resp, err := http.Post(requestURL, "application/json", bytes.NewReader(bodyBytes))
-	assert.NilError(t, err)
-	defer resp.Body.Close()
-
-	if resp.StatusCode != statusCode {
-		respBody, err := io.ReadAll(resp.Body)
+	t.Run("success", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewReader(bodyBytes))
 		assert.NilError(t, err)
 
-		t.Errorf("expected status code: %d; got: %d; response body: %s", statusCode, resp.StatusCode, string(respBody))
-		t.FailNow()
-	}
+		req.Header.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
+		req.Header.Set(httpheader.Authorization, "test-secret")
 
-	assert.Equal(t, resp.StatusCode, statusCode)
+		resp, err := http.DefaultClient.Do(req)
+		assert.NilError(t, err)
+		defer resp.Body.Close()
 
-	var output, empty T
+		if resp.StatusCode != statusCode {
+			respBody, err := io.ReadAll(resp.Body)
+			assert.NilError(t, err)
 
-	err = json.NewDecoder(resp.Body).Decode(&output)
-	assert.NilError(t, err)
+			t.Errorf("expected status code: %d; got: %d; response body: %s", statusCode, resp.StatusCode, string(respBody))
+			t.FailNow()
+		}
 
-	// ignore empty expected response.
-	if reflect.DeepEqual(responseBody, empty) {
+		var output, empty T
+
+		err = json.NewDecoder(resp.Body).Decode(&output)
+		assert.NilError(t, err)
+
+		// ignore empty expected response.
+		if reflect.DeepEqual(responseBody, empty) {
+			return
+		}
+
+		assert.DeepEqual(t, responseBody, output)
+	})
+
+	// expected unauthorized status
+	t.Run("unauthorized", func(t *testing.T) {
+		resp, err := http.DefaultClient.Post(requestURL, httpheader.ContentTypeJSON, bytes.NewReader(bodyBytes))
+		assert.NilError(t, err)
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected unauthorized status; got: %d", resp.StatusCode)
+			t.FailNow()
+		}
+	})
+}
+
+func TestDDN(t *testing.T) {
+	engineHost := os.Getenv("DDN_ENGINE_HOST")
+	if engineHost == "" {
 		return
 	}
 
-	assert.DeepEqual(t, responseBody, output)
+	testCases := []struct {
+		Path     string
+		Method   string
+		Body     any
+		Expected any
+	}{
+		{
+			Path:   "/v1/api/rest/artistbyname/Queen",
+			Method: http.MethodGet,
+			Expected: map[string]any{
+				"data": map[string]any{
+					"artist": []any{
+						map[string]any{
+							"name": "Queen",
+						},
+					},
+				},
+			},
+		},
+		{
+			Path:   "/v1/api/rest/artists?limit=10&offset=20",
+			Method: http.MethodGet,
+			Expected: map[string]any{
+				"data": map[string]any{
+					"artist": []any{
+						map[string]any{
+							"name": "Various Artists",
+						},
+						map[string]any{
+							"name": "Led Zeppelin",
+						},
+						map[string]any{
+							"name": "Frank Zappa & Captain Beefheart",
+						},
+						map[string]any{
+							"name": "Marcos Valle",
+						},
+						map[string]any{
+							"name": "Milton Nascimento & Bebeto",
+						},
+						map[string]any{
+							"name": "Azymuth",
+						},
+						map[string]any{
+							"name": "Gilberto Gil",
+						},
+						map[string]any{
+							"name": "João Gilberto",
+						},
+						map[string]any{
+							"name": "Bebel Gilberto",
+						},
+						map[string]any{
+							"name": "Jorge Vercilo",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		req, err := http.NewRequest(tc.Method, engineHost+tc.Path, nil)
+		assert.NilError(t, err)
+
+		resp, err := http.DefaultClient.Do(req)
+		assert.NilError(t, err)
+
+		defer resp.Body.Close()
+
+		var respBody any
+
+		err = json.NewDecoder(resp.Body).Decode(&respBody)
+		assert.NilError(t, err)
+		assert.DeepEqual(t, tc.Expected, respBody)
+	}
 }
 
 func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {
@@ -148,6 +256,24 @@ func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) 
 
 	envVars, err := config.LoadServerConfig()
 	assert.NilError(t, err)
+
+	envVars.Auth = auth.RelyAuthConfig{
+		Settings: &authmode.RelyAuthSettings{
+			Strict: true,
+		},
+		Definitions: []auth.RelyAuthDefinition{
+			{
+				RelyAuthDefinitionInterface: apikey.NewRelyAuthAPIKeyConfig(
+					authscheme.TokenLocation{
+						In:   authscheme.InHeader,
+						Name: "Authorization",
+					},
+					goenvconf.NewEnvStringValue("test-secret"),
+					map[string]goenvconf.EnvAny{},
+				),
+			},
+		},
+	}
 
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),

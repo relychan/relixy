@@ -207,16 +207,6 @@ func (n *Node) FindRoute(path string, method string) *Route {
 		return nil
 	}
 
-	// // Record the routing params in the request lifecycle
-	// rctx.URLParams.Keys = append(rctx.URLParams.Keys, rctx.routeParams.Keys...)
-	// rctx.URLParams.Values = append(rctx.URLParams.Values, rctx.routeParams.Values...)
-
-	// // Record the routing pattern in the request lifecycle
-	// if rn.endpoints[method].pattern != "" {
-	// 	rctx.routePattern = rn.endpoints[method].pattern
-	// 	rctx.RoutePatterns = append(rctx.RoutePatterns, rctx.routePattern)
-	// }
-
 	route.Node = rn
 	route.Handler = handler
 
@@ -258,7 +248,7 @@ func (n *Node) addChild(child *Node, prefix string) (*Node, error) {
 			child.rex = rex
 		}
 
-		if segStartIdx == 0 { //nolint:nestif
+		if segStartIdx == 0 {
 			// Route starts with a param
 			child.typ = segTyp
 
@@ -532,7 +522,6 @@ func (n *Node) findRouteRecursive(path string, route *Route) *Node { //nolint:go
 
 				if len(xsearch) == 0 {
 					if xn.isLeaf() {
-						// rctx.routeParams.Keys = append(rctx.routeParams.Keys, h.paramKeys...)
 						return xn
 					}
 				}
@@ -544,15 +533,10 @@ func (n *Node) findRouteRecursive(path string, route *Route) *Node { //nolint:go
 				}
 
 				// not found on this branch, reset vars
-				// rctx.routeParams.Values = rctx.routeParams.Values[:prevlen]
 				xsearch = search
 			}
-
-			// rctx.routeParams.Values = append(rctx.routeParams.Values, "")
-
 		default:
 			// catch-all nodes
-			// rctx.routeParams.Values = append(rctx.routeParams.Values, search)
 			xn = nds[0]
 			xsearch = ""
 		}
@@ -564,7 +548,6 @@ func (n *Node) findRouteRecursive(path string, route *Route) *Node { //nolint:go
 		// did we find it yet?
 		if len(xsearch) == 0 {
 			if xn.isLeaf() {
-				// rctx.routeParams.Keys = append(rctx.routeParams.Keys, h.paramKeys...)
 				return xn
 			}
 		}
@@ -574,96 +557,14 @@ func (n *Node) findRouteRecursive(path string, route *Route) *Node { //nolint:go
 		if fin != nil {
 			return fin
 		}
-
-		// Did not find final handler, let's remove the param here if it was set
-		// if xn.typ > ntStatic {
-		// 	if len(rctx.routeParams.Values) > 0 {
-		// 		rctx.routeParams.Values = rctx.routeParams.Values[:len(rctx.routeParams.Values)-1]
-		// 	}
-		// }
 	}
 
 	return nil
 }
 
-// func (n *Node) findEdge(ntyp nodeTyp, label byte) *Node {
-// 	nds := n.children[ntyp]
-// 	num := len(nds)
-// 	idx := 0
-
-// 	switch ntyp {
-// 	case ntStatic, ntParam, ntRegexp:
-// 		i, j := 0, num-1
-// 		for i <= j {
-// 			idx = i + (j-i)/2
-
-// 			switch {
-// 			case label > nds[idx].label:
-// 				i = idx + 1
-// 			case label < nds[idx].label:
-// 				j = idx - 1
-// 			default:
-// 				i = num // breaks cond
-// 			}
-// 		}
-
-// 		if nds[idx].label != label {
-// 			return nil
-// 		}
-
-// 		return nds[idx]
-
-// 	default: // catch all
-// 		return nds[idx]
-// 	}
-// }
-
 func (n *Node) isLeaf() bool {
 	return n.handlers != nil
 }
-
-// func (n *Node) findPattern(pattern string) bool {
-// 	nn := n
-// 	for _, nds := range nn.children {
-// 		if len(nds) == 0 {
-// 			continue
-// 		}
-
-// 		n = nn.findEdge(nds[0].typ, pattern[0])
-// 		if n == nil {
-// 			continue
-// 		}
-
-// 		var idx int
-// 		var xpattern string
-
-// 		switch n.typ {
-// 		case ntStatic:
-// 			idx = longestPrefix(pattern, n.prefix)
-// 			if idx < len(n.prefix) {
-// 				continue
-// 			}
-
-// 		case ntParam, ntRegexp:
-// 			idx = strings.IndexByte(pattern, '}') + 1
-
-// 		case ntCatchAll:
-// 			idx = longestPrefix(pattern, "*")
-
-// 		default:
-// 			panic("chi: unknown node type")
-// 		}
-
-// 		xpattern = pattern[idx:]
-// 		if len(xpattern) == 0 {
-// 			return true
-// 		}
-
-// 		return n.findPattern(xpattern)
-// 	}
-
-// 	return false
-// }
 
 // patNextSegment returns the next segment details from a pattern:
 // node type, param key, regexp string, param tail byte, param starting index, param ending index.

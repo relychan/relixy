@@ -13,10 +13,10 @@ require (
 	github.com/pb33f/libopenapi v0.28.2
 	github.com/pb33f/ordered-map/v2 v2.3.0
 	github.com/relychan/gohttpc v0.0.0-20251202175427-82ba88e9d657
-	github.com/relychan/gohttps v0.0.0-20251205182317-9efd58c7c4f3
+	github.com/relychan/gohttps v0.0.0-20251206085650-5f2727ade1fa
 	github.com/relychan/gotransform v0.0.0-20251115070005-4e3c3650c419
 	github.com/relychan/goutils v0.0.0-20251126052335-b9b7ec5a4db1
-	github.com/relychan/rely-auth v0.0.0-20251206012540-319d08aaec9d
+	github.com/relychan/rely-auth v0.0.0-20251206090116-7ed551e415fa
 	github.com/vektah/gqlparser v1.3.1
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	go.opentelemetry.io/otel v1.38.0

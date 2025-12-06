@@ -25,7 +25,7 @@ jobs:
         with:
           version: latest
       - name: Test
-        run: make test
+        run: make test-ddn
       - name: Go coverage format
         if: ${{ github.event_name == 'pull_request' && github.repository == 'relychan/relyx' }}
         run: |

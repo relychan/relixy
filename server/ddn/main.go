@@ -15,6 +15,7 @@ import (
 	"github.com/relychan/gohttps"
 	"github.com/relychan/goutils"
 	"github.com/relychan/rely-auth/auth"
+	"github.com/relychan/relyx/authn"
 	"github.com/relychan/relyx/config"
 	"github.com/relychan/relyx/routes/ddn"
 	"github.com/relychan/relyx/types"
@@ -72,6 +73,17 @@ func setupRouter(
 		state.Close,
 	}
 
+	middlewares := chi.Middlewares{
+		gotel.NewTracingMiddleware(
+			ts,
+			gotel.ResponseWriterWrapperFunc(
+				func(w http.ResponseWriter, protoMajor int) gotel.WrapResponseWriter {
+					return middleware.NewWrapResponseWriter(w, protoMajor)
+				},
+			),
+		),
+	}
+
 	if len(conf.Auth.Definitions) > 0 {
 		authManager, err := auth.NewRelyAuthManager(
 			&conf.Auth,
@@ -85,17 +97,8 @@ func setupRouter(
 		}
 
 		shutdownFuncs = append(shutdownFuncs, authManager.Close)
-	}
 
-	middlewares := chi.Middlewares{
-		gotel.NewTracingMiddleware(
-			ts,
-			gotel.ResponseWriterWrapperFunc(
-				func(w http.ResponseWriter, protoMajor int) gotel.WrapResponseWriter {
-					return middleware.NewWrapResponseWriter(w, protoMajor)
-				},
-			),
-		),
+		middlewares = append(middlewares, authn.AuthMiddleware[map[string]any](authManager))
 	}
 
 	router := gohttps.NewRouter(&conf.Server, ts.Logger)
