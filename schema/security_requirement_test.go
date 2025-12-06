@@ -241,4 +241,3 @@ func TestSecurityRequirements_First(t *testing.T) {
 		})
 	}
 }
-
