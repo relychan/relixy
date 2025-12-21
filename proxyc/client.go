@@ -46,6 +46,11 @@ func NewProxyClient(
 	return client, nil
 }
 
+// Metadata returns the metadata of the proxy client.
+func (pc *ProxyClient) Metadata() *schema.RelyProxyAPIDocument {
+	return pc.metadata
+}
+
 // Close method performs cleanup and closure activities on the client instance.
 func (pc *ProxyClient) Close() error {
 	if pc.clientOptions != nil && pc.clientOptions.HTTPClient != nil {

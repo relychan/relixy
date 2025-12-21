@@ -113,7 +113,7 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 		Headers:     requestHeaders,
 	}
 
-	if request.Body != nil {
+	if request.Body != nil && request.Body != http.NoBody {
 		var body any
 
 		err := json.NewDecoder(request.Body).Decode(&body)

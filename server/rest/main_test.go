@@ -32,7 +32,6 @@ func TestRESTServer(t *testing.T) {
 		shutdown()
 	}()
 
-	requestURL := server.URL + "/ddn/pre-route"
 	testCases := []struct {
 		Name         string
 		Body         ddn.PreRoutePluginRequestBody
@@ -42,7 +41,7 @@ func TestRESTServer(t *testing.T) {
 		{
 			Name: "getAlbums",
 			Body: ddn.PreRoutePluginRequestBody{
-				Path:   "/albums",
+				Path:   server.URL + "/albums",
 				Method: "GET",
 			},
 			StatusCode: 200,
@@ -50,7 +49,7 @@ func TestRESTServer(t *testing.T) {
 		{
 			Name: "getPostByID",
 			Body: ddn.PreRoutePluginRequestBody{
-				Path:   "/posts/1",
+				Path:   server.URL + "/posts/1",
 				Method: "GET",
 			},
 			StatusCode: 200,
@@ -65,7 +64,8 @@ func TestRESTServer(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			runPreRoute(t, requestURL, tc.Body, tc.StatusCode, tc.ResponseBody)
+			runSuccessRequest(t, tc.Body, tc.StatusCode, tc.ResponseBody)
+			runUnauthorizedRequest(t, tc.Body, tc.StatusCode, tc.ResponseBody)
 		})
 	}
 }
@@ -77,7 +77,6 @@ func TestGraphQLServer(t *testing.T) {
 		shutdown()
 	}()
 
-	requestURL := server.URL + "/ddn/pre-route"
 	testCases := []struct {
 		Name         string
 		Body         ddn.PreRoutePluginRequestBody
@@ -87,7 +86,7 @@ func TestGraphQLServer(t *testing.T) {
 		{
 			Name: "getCharacters",
 			Body: ddn.PreRoutePluginRequestBody{
-				Path:   "/characters",
+				Path:   server.URL + "/characters",
 				Method: "GET",
 			},
 			StatusCode: 200,
@@ -95,7 +94,7 @@ func TestGraphQLServer(t *testing.T) {
 		{
 			Name: "getCharacterByID",
 			Body: ddn.PreRoutePluginRequestBody{
-				Path:   "/characters/1",
+				Path:   server.URL + "/characters/1",
 				Method: "GET",
 			},
 			StatusCode: 200,
@@ -112,78 +111,38 @@ func TestGraphQLServer(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			runPreRoute(t, requestURL, tc.Body, tc.StatusCode, tc.ResponseBody)
+			runSuccessRequest(t, tc.Body, tc.StatusCode, tc.ResponseBody)
+			runUnauthorizedRequest(t, tc.Body, tc.StatusCode, tc.ResponseBody)
 		})
 	}
 }
 
-func runPreRoute[T any](t *testing.T, requestURL string, body ddn.PreRoutePluginRequestBody, statusCode int, responseBody T) {
-	t.Helper()
-
-	bodyBytes, err := json.Marshal(body)
-	assert.NilError(t, err)
-
-	t.Run("success", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewReader(bodyBytes))
-		assert.NilError(t, err)
-
-		req.Header.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
-		req.Header.Set(httpheader.Authorization, "test-secret")
-
-		resp, err := http.DefaultClient.Do(req)
-		assert.NilError(t, err)
-		defer resp.Body.Close()
-
-		if resp.StatusCode != statusCode {
-			respBody, err := io.ReadAll(resp.Body)
-			assert.NilError(t, err)
-
-			t.Errorf("expected status code: %d; got: %d; response body: %s", statusCode, resp.StatusCode, string(respBody))
-			t.FailNow()
-		}
-
-		var output, empty T
-
-		err = json.NewDecoder(resp.Body).Decode(&output)
-		assert.NilError(t, err)
-
-		// ignore empty expected response.
-		if reflect.DeepEqual(responseBody, empty) {
-			return
-		}
-
-		assert.DeepEqual(t, responseBody, output)
-	})
-
-	// expected unauthorized status
-	t.Run("unauthorized", func(t *testing.T) {
-		resp, err := http.DefaultClient.Post(requestURL, httpheader.ContentTypeJSON, bytes.NewReader(bodyBytes))
-		assert.NilError(t, err)
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusUnauthorized {
-			t.Errorf("expected unauthorized status; got: %d", resp.StatusCode)
-			t.FailNow()
-		}
-	})
-}
-
 func TestDDN(t *testing.T) {
-	engineHost := os.Getenv("DDN_ENGINE_HOST")
-	if engineHost == "" {
+	graphqlURL := os.Getenv("GRAPHQL_SERVER_URL")
+	if graphqlURL == "" {
 		return
 	}
 
+	server, shutdown := initTestServer(t, "../../tests/ddn/config/plugin/config.yaml")
+	defer func() {
+		server.Close()
+		shutdown()
+	}()
+
 	testCases := []struct {
-		Path     string
-		Method   string
-		Body     any
-		Expected any
+		Name         string
+		Body         ddn.PreRoutePluginRequestBody
+		StatusCode   int
+		ResponseBody any
 	}{
 		{
-			Path:   "/v1/api/rest/artistbyname/Queen",
-			Method: http.MethodGet,
-			Expected: map[string]any{
+			Name: "getArtistByName",
+			Body: ddn.PreRoutePluginRequestBody{
+				Path:   server.URL + "/v1/api/rest/artistbyname/Queen",
+				Method: "GET",
+			},
+			StatusCode: 200,
+			ResponseBody: map[string]any{
 				"data": map[string]any{
 					"artist": []any{
 						map[string]any{
@@ -194,9 +153,13 @@ func TestDDN(t *testing.T) {
 			},
 		},
 		{
-			Path:   "/v1/api/rest/artists?limit=10&offset=20",
-			Method: http.MethodGet,
-			Expected: map[string]any{
+			Name: "getArtists",
+			Body: ddn.PreRoutePluginRequestBody{
+				Path:   server.URL + "/v1/api/rest/artists?limit=10&offset=20",
+				Method: "GET",
+			},
+			StatusCode: 200,
+			ResponseBody: map[string]any{
 				"data": map[string]any{
 					"artist": []any{
 						map[string]any{
@@ -236,20 +199,71 @@ func TestDDN(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		req, err := http.NewRequest(tc.Method, engineHost+tc.Path, nil)
+		runSuccessRequest(t, tc.Body, tc.StatusCode, tc.ResponseBody)
+	}
+}
+
+func runSuccessRequest[T any](t *testing.T, r ddn.PreRoutePluginRequestBody, statusCode int, responseBody T) {
+	t.Helper()
+
+	t.Run("success", func(t *testing.T) {
+		var reader io.ReadSeeker
+		if len(r.Body) > 0 {
+			reader = bytes.NewReader(r.Body)
+		}
+
+		req, err := http.NewRequest(r.Method, r.Path, reader)
+		assert.NilError(t, err)
+
+		req.Header.Set(httpheader.Authorization, "test-secret")
+
+		resp, err := http.DefaultClient.Do(req)
+		assert.NilError(t, err)
+		defer resp.Body.Close()
+
+		if resp.StatusCode != statusCode {
+			respBody, err := io.ReadAll(resp.Body)
+			assert.NilError(t, err)
+
+			t.Errorf("expected status code: %d; got: %d; response body: %s", statusCode, resp.StatusCode, string(respBody))
+			t.FailNow()
+		}
+
+		var output, empty T
+
+		err = json.NewDecoder(resp.Body).Decode(&output)
+		assert.NilError(t, err)
+
+		// ignore empty expected response.
+		if reflect.DeepEqual(responseBody, empty) {
+			return
+		}
+
+		assert.DeepEqual(t, responseBody, output)
+	})
+}
+
+func runUnauthorizedRequest[T any](t *testing.T, r ddn.PreRoutePluginRequestBody, statusCode int, responseBody T) {
+	t.Helper()
+	// expected unauthorized status
+	t.Run("unauthorized", func(t *testing.T) {
+		var reader io.ReadSeeker
+		if len(r.Body) > 0 {
+			reader = bytes.NewReader(r.Body)
+		}
+
+		req, err := http.NewRequest(r.Method, r.Path, reader)
 		assert.NilError(t, err)
 
 		resp, err := http.DefaultClient.Do(req)
 		assert.NilError(t, err)
-
 		defer resp.Body.Close()
 
-		var respBody any
-
-		err = json.NewDecoder(resp.Body).Decode(&respBody)
-		assert.NilError(t, err)
-		assert.DeepEqual(t, tc.Expected, respBody)
-	}
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected unauthorized status; got: %d", resp.StatusCode)
+			t.FailNow()
+		}
+	})
 }
 
 func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {

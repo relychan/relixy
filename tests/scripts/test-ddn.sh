@@ -10,5 +10,6 @@ pushd tests/ddn \
     && popd
 
 export DDN_ENGINE_HOST=http://localhost:3280
+export GRAPHQL_SERVER_URL=http://localhost:3280/graphql
 
 make test

@@ -1,20 +1,20 @@
-// Package main starts the DDN restified endpoint plugin service.
+// Package main starts the REST proxy service.
 package main
 
 import (
 	"context"
 	"log"
+	"net/url"
 	"os"
 	"os/signal"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/hasura/gotel"
 	"github.com/hasura/gotel/otelutils"
 	"github.com/relychan/gohttps"
 	"github.com/relychan/goutils"
 	"github.com/relychan/relyx/config"
-	"github.com/relychan/relyx/routes/ddn"
+	"github.com/relychan/relyx/routes/rest"
 	"github.com/relychan/relyx/types"
 )
 
@@ -72,11 +72,16 @@ func setupRouter(
 		return nil, nil, err
 	}
 
+	basePath := "/*"
+
+	if conf.Router != nil && conf.Router.BasePath != "" {
+		basePath = (&url.URL{}).JoinPath(conf.Router.BasePath, "*").RawPath
+	}
+
 	router := gohttps.NewRouter(&conf.Server, ts.Logger)
-	router.Use(middleware.AllowContentType("application/json"))
 	router.Handle(
-		"/ddn/pre-route",
-		middlewares.Handler(ddn.NewPreRoutePluginHandler(state)),
+		basePath,
+		middlewares.Handler(rest.NewRESTHandler(state)),
 	)
 
 	return router, shutdown, nil

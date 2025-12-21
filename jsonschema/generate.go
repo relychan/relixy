@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/invopop/jsonschema"
 	"github.com/relychan/goutils"
@@ -106,7 +105,7 @@ func jsonSchemaConfiguration() error {
 	}
 
 	return os.WriteFile( //nolint:gosec
-		filepath.Join("..", "docs", "relyx.schema.json"),
+		"relyx.schema.json",
 		buffer.Bytes(), 0o644,
 	)
 }
