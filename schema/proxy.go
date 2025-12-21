@@ -16,6 +16,7 @@ import (
 type RelyProxyHandleOptions struct {
 	HTTPClient     *loadbalancer.LoadBalancerClient
 	Settings       *RelyProxySettings
+	Path           string
 	ParamValues    map[string]string
 	DefaultHeaders map[string]string
 }

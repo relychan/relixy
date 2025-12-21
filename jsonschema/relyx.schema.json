@@ -1408,10 +1408,6 @@
   },
   "RelyProxySettings": {
    "properties": {
-    "basePath": {
-     "type": "string",
-     "description": "Set the base path for all API handlers."
-    },
     "http": {
      "$ref": "#/$defs/HTTPClientConfig",
      "description": "Global settings for the HTTP client."

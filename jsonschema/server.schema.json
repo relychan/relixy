@@ -1,0 +1,304 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://github.com/relychan/relyx/config/rely-x-server-config",
+ "$ref": "#/$defs/RelyXServerConfig",
+ "$defs": {
+  "CORSConfig": {
+   "properties": {
+    "allowedOrigins": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "allowedMethods": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "allowedHeaders": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "exposedHeaders": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "allowCredentials": {
+     "type": "boolean"
+    },
+    "maxAge": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "optionsPassthrough": {
+     "type": "boolean"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "OTLPConfig": {
+   "properties": {
+    "serviceName": {
+     "type": "string"
+    },
+    "otlpEndpoint": {
+     "type": "string"
+    },
+    "otlpTracesEndpoint": {
+     "type": "string"
+    },
+    "otlpMetricsEndpoint": {
+     "type": "string"
+    },
+    "otlpLogsEndpoint": {
+     "type": "string"
+    },
+    "otlpInsecure": {
+     "type": "boolean"
+    },
+    "otlpTracesInsecure": {
+     "type": "boolean"
+    },
+    "otlpMetricsInsecure": {
+     "type": "boolean"
+    },
+    "otlpLogsInsecure": {
+     "type": "boolean"
+    },
+    "otlpProtocol": {
+     "type": "string",
+     "enum": [
+      "grpc",
+      "http/protobuf"
+     ]
+    },
+    "otlpTracesProtocol": {
+     "type": "string",
+     "enum": [
+      "grpc",
+      "http/protobuf"
+     ]
+    },
+    "otlpMetricsProtocol": {
+     "type": "string",
+     "enum": [
+      "grpc",
+      "http/protobuf"
+     ]
+    },
+    "otlpLogsProtocol": {
+     "type": "string",
+     "enum": [
+      "grpc",
+      "http/protobuf"
+     ]
+    },
+    "otlpCompression": {
+     "type": "string",
+     "enum": [
+      "none",
+      "gzip"
+     ]
+    },
+    "otlpTracesCompression": {
+     "type": "string",
+     "enum": [
+      "none",
+      "gzip"
+     ]
+    },
+    "otlpMetricsCompression": {
+     "type": "string",
+     "enum": [
+      "none",
+      "gzip"
+     ]
+    },
+    "otlpLogsCompression": {
+     "type": "string",
+     "enum": [
+      "none",
+      "gzip"
+     ]
+    },
+    "metricsExporter": {
+     "type": "string",
+     "enum": [
+      "none",
+      "otlp",
+      "prometheus"
+     ]
+    },
+    "logsExporter": {
+     "type": "string",
+     "enum": [
+      "none",
+      "otlp"
+     ]
+    },
+    "prometheusPort": {
+     "type": "integer",
+     "maximum": 65535,
+     "minimum": 1000
+    },
+    "disableGoMetrics": {
+     "type": "boolean"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelyAuthConfig": {
+   "properties": {
+    "settings": {
+     "$ref": "#/$defs/RelyAuthSettings"
+    },
+    "definitions": {
+     "items": {
+      "$ref": "#/$defs/RelyAuthDefinition"
+     },
+     "type": "array"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "definitions"
+   ]
+  },
+  "RelyAuthDefinition": {
+   "oneOf": [
+    {
+     "$ref": "#/$defs/RelyAuthAPIKeyConfig"
+    },
+    {
+     "$ref": "#/$defs/RelyAuthJWTConfig"
+    },
+    {
+     "$ref": "#/$defs/RelyAuthNoAuthConfig"
+    },
+    {
+     "$ref": "#/$defs/RelyAuthWebhookConfig"
+    }
+   ]
+  },
+  "RelyAuthSettings": {
+   "properties": {
+    "strict": {
+     "type": "boolean"
+    },
+    "reloadInterval": {
+     "type": "integer",
+     "minimum": 0,
+     "default": 0
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelyXRouterConfig": {
+   "properties": {
+    "basePath": {
+     "type": "string",
+     "description": "Set the base path for all API handlers."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "description": "RelyXRouterConfig holds configurations of the rest handler."
+  },
+  "RelyXServerConfig": {
+   "properties": {
+    "server": {
+     "$ref": "#/$defs/ServerConfig"
+    },
+    "router": {
+     "$ref": "#/$defs/RelyXRouterConfig"
+    },
+    "telemetry": {
+     "$ref": "#/$defs/OTLPConfig"
+    },
+    "auth": {
+     "$ref": "#/$defs/RelyAuthConfig"
+    },
+    "configPath": {
+     "type": "string"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "server",
+    "router",
+    "telemetry",
+    "auth",
+    "configPath"
+   ],
+   "description": "RelyXServerConfig holds information of required configurations to run the relyx server."
+  },
+  "ServerConfig": {
+   "properties": {
+    "port": {
+     "type": "integer",
+     "maximum": 65535,
+     "minimum": 1000,
+     "default": 8080
+    },
+    "logLevel": {
+     "type": "string",
+     "enum": [
+      "INFO",
+      "DEBUG",
+      "WARN",
+      "ERROR"
+     ],
+     "default": "INFO"
+    },
+    "compressionLevel": {
+     "type": "integer",
+     "maximum": 9,
+     "minimum": -1
+    },
+    "requestTimeout": {
+     "type": "integer"
+    },
+    "readTimeout": {
+     "type": "integer"
+    },
+    "readHeaderTimeout": {
+     "type": "integer"
+    },
+    "writeTimeout": {
+     "type": "integer"
+    },
+    "idleTimeout": {
+     "type": "integer"
+    },
+    "maxHeaderKilobytes": {
+     "type": "integer"
+    },
+    "maxBodyKilobytes": {
+     "type": "integer"
+    },
+    "tlsCertFile": {
+     "type": "string"
+    },
+    "tlsKeyFile": {
+     "type": "string"
+    },
+    "cors": {
+     "$ref": "#/$defs/CORSConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  }
+ }
+}

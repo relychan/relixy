@@ -24,6 +24,8 @@ type ProxyClient struct {
 // ProxyClientOptions holds optional options to creates a proxy client.
 type ProxyClientOptions struct {
 	*gohttpc.ClientOptions
+
+	BasePath string
 }
 
 // NewProxyClient creates a proxy client from the API document.

@@ -74,8 +74,11 @@ func setupRouter(
 
 	basePath := "/*"
 
-	if conf.Router != nil && conf.Router.BasePath != "" {
+	if conf.Router.BasePath != "" {
 		basePath = (&url.URL{}).JoinPath(conf.Router.BasePath, "*").Path
+		if basePath[0] != '/' {
+			basePath = "/" + basePath
+		}
 	}
 
 	router := gohttps.NewRouter(&conf.Server, ts.Logger)

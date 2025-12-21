@@ -21,7 +21,7 @@ type RelyXRouterConfig struct {
 // RelyXServerConfig holds information of required configurations to run the relyx server.
 type RelyXServerConfig struct {
 	Server     gohttps.ServerConfig `json:"server" yaml:"server"`
-	Router     *RelyXRouterConfig   `json:"router,omitempty" yaml:"router,omitempty"`
+	Router     RelyXRouterConfig    `json:"router,omitempty" yaml:"router"`
 	Telemetry  gotel.OTLPConfig     `json:"telemetry" yaml:"telemetry"`
 	Auth       auth.RelyAuthConfig  `json:"auth" yaml:"auth"`
 	ConfigPath string               `json:"configPath" yaml:"configPath" env:"RELYX_CONFIG_PATH"`

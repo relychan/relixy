@@ -76,11 +76,6 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 	options *schema.RelyProxyHandleOptions,
 ) (*http.Response, any, error) {
 	span := trace.SpanFromContext(ctx)
-	requestPath := options.Settings.BasePath
-
-	if ge.requestPath != "" {
-		requestPath = ge.requestPath
-	}
 
 	graphqlPayload := GraphQLRequestBody{
 		Query:         ge.query,
@@ -94,7 +89,7 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 	)
 
 	logAttrs := []slog.Attr{
-		slog.String("path", requestPath),
+		slog.String("path", ge.requestPath),
 	}
 
 	requestHeaders := map[string]string{}
@@ -172,7 +167,7 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 		),
 	)
 
-	req := options.HTTPClient.R(http.MethodPost, requestPath)
+	req := options.HTTPClient.R(http.MethodPost, ge.requestPath)
 	reqHeader := req.Header()
 
 	for key, value := range options.DefaultHeaders {

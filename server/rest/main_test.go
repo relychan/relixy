@@ -26,6 +26,8 @@ import (
 )
 
 func TestRESTHandler_RESTServer(t *testing.T) {
+	t.Setenv("RELYX_ROUTE_BASE_PATH", "/api/v1")
+
 	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
 	defer func() {
 		server.Close()
@@ -41,7 +43,7 @@ func TestRESTHandler_RESTServer(t *testing.T) {
 		{
 			Name: "getAlbums",
 			Body: ddn.PreRoutePluginRequestBody{
-				Path:   server.URL + "/albums",
+				Path:   server.URL + "/api/v1/albums",
 				Method: "GET",
 			},
 			StatusCode: 200,
@@ -49,7 +51,7 @@ func TestRESTHandler_RESTServer(t *testing.T) {
 		{
 			Name: "getPostByID",
 			Body: ddn.PreRoutePluginRequestBody{
-				Path:   server.URL + "/posts/1",
+				Path:   server.URL + "/api/v1/posts/1",
 				Method: "GET",
 			},
 			StatusCode: 200,

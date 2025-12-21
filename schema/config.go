@@ -8,8 +8,6 @@ import (
 
 // RelyProxySettings hold settings of the rely proxy.
 type RelyProxySettings struct {
-	// Set the base path for all API handlers.
-	BasePath string `json:"basePath,omitempty" yaml:"basePath,omitempty"`
 	// Global settings for the HTTP client.
 	HTTP *httpconfig.HTTPClientConfig `json:"http,omitempty" yaml:"http,omitempty"`
 	// Headers define custom headers to be injected to the remote server.

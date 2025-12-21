@@ -43,6 +43,7 @@ func NewState(
 			gohttpc.WithLogger(ts.Logger),
 			gohttpc.WithTracer(ts.Tracer),
 		),
+		BasePath: conf.Router.BasePath,
 	}
 
 	httpConfig := result.Settings.HTTP
