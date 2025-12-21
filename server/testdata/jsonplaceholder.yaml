@@ -4,6 +4,10 @@ settings:
   forwardHeaders:
     request: []
     response: []
+  http:
+    retry:
+      maxAttempts:
+        value: 3
 servers:
   - url:
       value: https://jsonplaceholder.typicode.com

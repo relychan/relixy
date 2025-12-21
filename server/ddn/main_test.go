@@ -25,7 +25,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestRESTServer(t *testing.T) {
+func TestRestifiedPlugin_RESTServer(t *testing.T) {
 	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
 	defer func() {
 		server.Close()
@@ -70,7 +70,7 @@ func TestRESTServer(t *testing.T) {
 	}
 }
 
-func TestGraphQLServer(t *testing.T) {
+func TestRestifiedPlugin_GraphQLServer(t *testing.T) {
 	server, shutdown := initTestServer(t, "../testdata/rickandmortyapi.yaml")
 	defer func() {
 		server.Close()
@@ -168,7 +168,7 @@ func runPreRoute[T any](t *testing.T, requestURL string, body ddn.PreRoutePlugin
 	})
 }
 
-func TestDDN(t *testing.T) {
+func TestRestifiedPlugin_DDN(t *testing.T) {
 	engineHost := os.Getenv("DDN_ENGINE_HOST")
 	if engineHost == "" {
 		return

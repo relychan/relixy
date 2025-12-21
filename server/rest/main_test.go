@@ -25,7 +25,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestRESTServer(t *testing.T) {
+func TestRESTHandler_RESTServer(t *testing.T) {
 	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
 	defer func() {
 		server.Close()
@@ -70,7 +70,7 @@ func TestRESTServer(t *testing.T) {
 	}
 }
 
-func TestGraphQLServer(t *testing.T) {
+func TestRESTHandler_GraphQLServer(t *testing.T) {
 	server, shutdown := initTestServer(t, "../testdata/rickandmortyapi.yaml")
 	defer func() {
 		server.Close()
@@ -117,7 +117,7 @@ func TestGraphQLServer(t *testing.T) {
 	}
 }
 
-func TestDDN(t *testing.T) {
+func TestRESTHandler_DDN(t *testing.T) {
 	graphqlURL := os.Getenv("GRAPHQL_SERVER_URL")
 	if graphqlURL == "" {
 		return
