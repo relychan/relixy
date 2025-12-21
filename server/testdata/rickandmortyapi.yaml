@@ -5,6 +5,12 @@ settings:
     request: []
     response: []
   http:
+    timeout: 60s
+    transport:
+      tlsHandshakeTimeout: 10s
+      responseHeaderTimeout: 20s
+      dialer:
+        timeout: 30s
     retry:
       maxAttempts:
         value: 3
