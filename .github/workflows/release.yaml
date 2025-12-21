@@ -13,7 +13,7 @@ env:
 
 permissions:
   pull-requests: write
-  
+
 jobs:
   tests:
     uses: ./.github/workflows/test.yaml
@@ -46,7 +46,7 @@ jobs:
 
       - name: RelyX - Extract metadata (tags, labels) for Docker image
         id: docker-metadata
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
 
@@ -57,6 +57,8 @@ jobs:
           tags: ${{ steps.docker-metadata.outputs.tags }}
           labels: ${{ steps.docker-metadata.outputs.labels }}
           platforms: linux/amd64,linux/arm64
+          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.get-version.outputs.tagged_version }}
+          cache-to: type=inline
           build-args: |
             VERSION=${{ steps.get-version.outputs.tagged_version }}
 
@@ -83,7 +85,7 @@ jobs:
 
       - name: RelyX DDN - Extract metadata (tags, labels) for Docker image
         id: docker-metadata-ddn
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@v5
         if: startsWith(github.ref, 'refs/tags/')
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_DDN_NAME }}
@@ -96,5 +98,7 @@ jobs:
           tags: ${{ steps.docker-metadata-ddn.outputs.tags }}
           labels: ${{ steps.docker-metadata-ddn.outputs.labels }}
           platforms: linux/amd64,linux/arm64
+          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_DDN_NAME }}:${{ steps.get-version.outputs.tagged_version }}
+          cache-to: type=inline
           build-args: |
             VERSION=${{ steps.get-version.outputs.tagged_version }}
