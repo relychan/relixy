@@ -21,7 +21,7 @@ type ProxyClient struct {
 	defaultHeaders map[string]string
 }
 
-// ProxyClientOptions holds optional options to creates a proxy client.
+// ProxyClientOptions holds optional options to create a proxy client.
 type ProxyClientOptions struct {
 	*gohttpc.ClientOptions
 
