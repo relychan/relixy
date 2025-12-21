@@ -11,6 +11,9 @@ env:
   DOCKER_IMAGE_NAME: relychan/relyx
   DOCKER_IMAGE_DDN_NAME: relychan/relyx-ddn
 
+permissions:
+  pull-requests: write
+  
 jobs:
   tests:
     uses: ./.github/workflows/test.yaml
