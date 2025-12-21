@@ -8,9 +8,7 @@ settings:
     timeout: 60s
     transport:
       tlsHandshakeTimeout: 10s
-      responseHeaderTimeout: 20s
-      dialer:
-        timeout: 30s
+      forceAttemptHTTP2: false
     retry:
       maxAttempts:
         value: 3

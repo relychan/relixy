@@ -114,6 +114,8 @@ github.com/relychan/gohttpc v0.0.0-20251202175427-82ba88e9d657 h1:H07W88w5GnYaaz
 github.com/relychan/gohttpc v0.0.0-20251202175427-82ba88e9d657/go.mod h1:HF8ga1DYk38ODewQR3LqkERNPFnbl1l+1e+vdcF4+AQ=
 github.com/relychan/gohttpc v0.0.0-20251214022704-553f87cb214d h1:8pfYHXPJKmyx6cUoXuf+YPPtOTvwJyfHAI4zD6dHWlg=
 github.com/relychan/gohttpc v0.0.0-20251214022704-553f87cb214d/go.mod h1:QGQn6JKK8SYOX7GEn2K0PHnt0Mw4NTbfn20YTvz2he8=
+github.com/relychan/gohttpc v0.0.0-20251221091317-e15eaee60ca3 h1:+z867HuSWfVrIyiXYFKDEolrshDujGimQJofxjzrY/U=
+github.com/relychan/gohttpc v0.0.0-20251221091317-e15eaee60ca3/go.mod h1:F+Ek5Sgp2mt/iPSU/8i8NCfPZO2xcqXYezXX92nT6jA=
 github.com/relychan/gohttps v0.0.0-20251206085650-5f2727ade1fa h1:IKG7M145hiVMpXRNoFhJ6nOsEeRn+ixOy6Y3fqTg/R8=
 github.com/relychan/gohttps v0.0.0-20251206085650-5f2727ade1fa/go.mod h1:J4ZyZSHr4oGeFlxn+VgYKZ4r5hzZfnoj+yg+1py/UMM=
 github.com/relychan/gotransform v0.0.0-20251115070005-4e3c3650c419 h1:w0XVlW5EO0dc7bfnvnRQi0vSl9nxL3uR1A4v+hJRHEU=

@@ -12,7 +12,7 @@ require (
 	github.com/jmespath-community/go-jmespath v1.1.2-0.20250228093220-ef5fae83c6c0
 	github.com/pb33f/libopenapi v0.30.4
 	github.com/pb33f/ordered-map/v2 v2.3.0
-	github.com/relychan/gohttpc v0.0.0-20251214022704-553f87cb214d
+	github.com/relychan/gohttpc v0.0.0-20251221091317-e15eaee60ca3
 	github.com/relychan/gohttps v0.0.0-20251206085650-5f2727ade1fa
 	github.com/relychan/gotransform v0.0.0-20251214152200-6dcd174d5492
 	github.com/relychan/goutils v0.0.0-20251214090424-aad6497ba9b4
