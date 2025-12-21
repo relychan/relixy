@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hasura/gotel"
@@ -14,6 +15,7 @@ import (
 
 // NewState creates the handler state from config.
 func NewState(
+	ctx context.Context,
 	conf *RelyXServerConfig,
 	ts *gotel.OTelExporters,
 ) (*types.State, error) {
@@ -29,10 +31,12 @@ func NewState(
 
 	gohttpc.SetHTTPClientMetrics(httpMetrics)
 
-	clientOptions := gohttpc.NewClientOptions(
-		gohttpc.WithLogger(ts.Logger),
-		gohttpc.WithTracer(ts.Tracer),
-	)
+	proxyClientOptions := &proxyc.ProxyClientOptions{
+		ClientOptions: gohttpc.NewClientOptions(
+			gohttpc.WithLogger(ts.Logger),
+			gohttpc.WithTracer(ts.Tracer),
+		),
+	}
 
 	httpConfig := result.Settings.HTTP
 	if httpConfig == nil {
@@ -40,16 +44,16 @@ func NewState(
 	}
 
 	httpClient, err := httpconfig.NewHTTPClientFromConfig(
-		*httpConfig,
-		clientOptions,
+		httpConfig,
+		proxyClientOptions.ClientOptions,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	clientOptions.HTTPClient = httpClient
+	proxyClientOptions.HTTPClient = httpClient
 
-	proxyClient, err := proxyc.NewProxyClient(result, clientOptions)
+	proxyClient, err := proxyc.NewProxyClient(ctx, result, proxyClientOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create proxy client: %w", err)
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -283,7 +284,7 @@ func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) 
 		})),
 	}
 
-	router, shutdown, err := setupRouter(envVars, otelExporters)
+	router, shutdown, err := setupRouter(context.TODO(), envVars, otelExporters)
 	assert.NilError(t, err)
 
 	server := httptest.NewServer(router)

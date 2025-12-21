@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +16,8 @@ import (
 	"github.com/relychan/gohttps"
 	"github.com/relychan/goutils"
 	"github.com/relychan/rely-auth/auth"
+	"github.com/relychan/rely-auth/auth/authmetrics"
+	"github.com/relychan/rely-auth/auth/authmode"
 	"github.com/relychan/relyx/authn"
 	"github.com/relychan/relyx/config"
 	"github.com/relychan/relyx/routes/ddn"
@@ -50,7 +53,7 @@ func startServer() error {
 
 	defer goutils.CatchWarnContextErrorFunc(ts.Shutdown)
 
-	router, shutdown, err := setupRouter(envVars, ts)
+	router, shutdown, err := setupRouter(ctx, envVars, ts)
 	if err != nil {
 		return err
 	}
@@ -61,10 +64,11 @@ func startServer() error {
 }
 
 func setupRouter(
+	ctx context.Context,
 	conf *config.RelyXServerConfig,
 	ts *gotel.OTelExporters,
 ) (*chi.Mux, func(), error) {
-	state, err := config.NewState(conf, ts)
+	state, err := config.NewState(ctx, conf, ts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -85,10 +89,18 @@ func setupRouter(
 	}
 
 	if len(conf.Auth.Definitions) > 0 {
+		// setup global metrics
+		authMetrics, err := authmetrics.NewRelyAuthMetrics(ts.Meter)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to setup auth metrics: %w", err)
+		}
+
+		authmetrics.SetRelyAuthMetrics(authMetrics)
+
 		authManager, err := auth.NewRelyAuthManager(
+			ctx,
 			&conf.Auth,
-			auth.WithLogger(ts.Logger),
-			auth.WithMeter(ts.Meter),
+			authmode.WithLogger(ts.Logger),
 		)
 		if err != nil {
 			goutils.CatchWarnErrorFunc(state.Close)

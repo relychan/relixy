@@ -35,7 +35,7 @@ type authMiddleware[T any] struct {
 
 // ServeHTTP implements the http.Handler interface to authenticate the request.
 func (am *authMiddleware[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	authRequest := authmode.AuthenticateRequestData{
+	authRequest := &authmode.AuthenticateRequestData{
 		URL:     r.URL.String(),
 		Headers: goutils.ExtractHeaders(r.Header),
 	}

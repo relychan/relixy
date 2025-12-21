@@ -2,6 +2,7 @@
 package proxyc
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/relychan/gohttpc"
@@ -13,17 +14,23 @@ import (
 
 // ProxyClient helps manage and execute REST and GraphQL APIs from the API document.
 type ProxyClient struct {
-	clientOptions  *gohttpc.ClientOptions
+	clientOptions  *ProxyClientOptions
 	lbClient       *loadbalancer.LoadBalancerClient
 	metadata       *schema.RelyProxyAPIDocument
 	node           *internal.Node
 	defaultHeaders map[string]string
 }
 
+// ProxyClientOptions holds optional options to creates a proxy client.
+type ProxyClientOptions struct {
+	*gohttpc.ClientOptions
+}
+
 // NewProxyClient creates a proxy client from the API document.
 func NewProxyClient(
+	ctx context.Context,
 	metadata *schema.RelyProxyAPIDocument,
-	clientOptions *gohttpc.ClientOptions,
+	clientOptions *ProxyClientOptions,
 ) (*ProxyClient, error) {
 	client := &ProxyClient{
 		metadata:       metadata,
@@ -31,7 +38,7 @@ func NewProxyClient(
 		defaultHeaders: map[string]string{},
 	}
 
-	err := client.init()
+	err := client.init(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +59,7 @@ func (pc *ProxyClient) Close() error {
 	return nil
 }
 
-func (pc *ProxyClient) init() error {
+func (pc *ProxyClient) init(ctx context.Context) error {
 	err := pc.initServers()
 	if err != nil {
 		return err
@@ -63,7 +70,7 @@ func (pc *ProxyClient) init() error {
 		return err
 	}
 
-	node, err := BuildMetadataTree(pc.metadata)
+	node, err := BuildMetadataTree(ctx, pc.metadata, pc.clientOptions)
 	if err != nil {
 		return err
 	}

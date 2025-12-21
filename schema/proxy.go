@@ -36,6 +36,16 @@ type RelyProxyHandler interface {
 type NewRelyProxyHandlerOptions struct {
 	Method     string
 	Parameters []Parameter
+	GetEnv     goenvconf.GetEnvFunc
+}
+
+// GetEnvFunc returns a function to get environment variables.
+func (nrp NewRelyProxyHandlerOptions) GetEnvFunc() goenvconf.GetEnvFunc {
+	if nrp.GetEnv == nil {
+		return goenvconf.GetOSEnv
+	}
+
+	return nrp.GetEnv
 }
 
 // NewRelyProxyHandlerFunc abstracts a function to create a new proxy handler.

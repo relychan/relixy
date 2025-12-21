@@ -62,7 +62,11 @@ type Node struct {
 	label byte
 }
 
-func (n *Node) InsertRoute(pattern string, operations *schema.RelyProxyPathItem) (*Node, error) {
+func (n *Node) InsertRoute(
+	pattern string,
+	operations *schema.RelyProxyPathItem,
+	options *InsertRouteOptions,
+) (*Node, error) {
 	var parent *Node
 
 	search := pattern
@@ -71,7 +75,7 @@ func (n *Node) InsertRoute(pattern string, operations *schema.RelyProxyPathItem)
 		// Handle key exhaustion
 		if len(search) == 0 {
 			// Insert or update the node's leaf handler
-			err := n.setEndpoint(pattern, operations)
+			err := n.setEndpoint(pattern, operations, options)
 
 			return n, err
 		}
@@ -119,7 +123,7 @@ func (n *Node) InsertRoute(pattern string, operations *schema.RelyProxyPathItem)
 				return nil, err
 			}
 
-			err = hn.setEndpoint(pattern, operations)
+			err = hn.setEndpoint(pattern, operations, options)
 
 			return hn, err
 		}
@@ -168,7 +172,7 @@ func (n *Node) InsertRoute(pattern string, operations *schema.RelyProxyPathItem)
 		// If the new key is a subset, set the method/handler on this node and finish.
 		search = search[commonPrefix:]
 		if len(search) == 0 {
-			err := child.setEndpoint(pattern, operations)
+			err := child.setEndpoint(pattern, operations, options)
 
 			return child, err
 		}
@@ -185,7 +189,7 @@ func (n *Node) InsertRoute(pattern string, operations *schema.RelyProxyPathItem)
 			return nil, err
 		}
 
-		err = hn.setEndpoint(pattern, operations)
+		err = hn.setEndpoint(pattern, operations, options)
 
 		return hn, err
 	}
@@ -327,7 +331,11 @@ func (n *Node) replaceChild(label, tail byte, child *Node) error {
 	return fmt.Errorf("%w: %s", ErrReplaceMissingChildNode, child.pattern)
 }
 
-func (n *Node) setEndpoint(pattern string, operations *schema.RelyProxyPathItem) error {
+func (n *Node) setEndpoint(
+	pattern string,
+	operations *schema.RelyProxyPathItem,
+	options *InsertRouteOptions,
+) error {
 	paramKeys, err := patParamKeys(pattern)
 	if err != nil {
 		return fmt.Errorf("failed to extract param keys in the pattern %s: %w", pattern, err)
@@ -370,6 +378,7 @@ func (n *Node) setEndpoint(pattern string, operations *schema.RelyProxyPathItem)
 		handler, err := NewProxyHandler(operations.Get, &schema.NewRelyProxyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
+			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create handler for GET %s: %w", pattern, err)
@@ -384,6 +393,7 @@ func (n *Node) setEndpoint(pattern string, operations *schema.RelyProxyPathItem)
 		handler, err := NewProxyHandler(operations.Post, &schema.NewRelyProxyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
+			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create handler for POST %s: %w", pattern, err)
@@ -398,6 +408,7 @@ func (n *Node) setEndpoint(pattern string, operations *schema.RelyProxyPathItem)
 		handler, err := NewProxyHandler(operations.Put, &schema.NewRelyProxyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
+			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create handler for PUT %s: %w", pattern, err)
@@ -412,6 +423,7 @@ func (n *Node) setEndpoint(pattern string, operations *schema.RelyProxyPathItem)
 		handler, err := NewProxyHandler(operations.Patch, &schema.NewRelyProxyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
+			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create handler for PATCH %s: %w", pattern, err)
@@ -426,6 +438,7 @@ func (n *Node) setEndpoint(pattern string, operations *schema.RelyProxyPathItem)
 		handler, err := NewProxyHandler(operations.Delete, &schema.NewRelyProxyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
+			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create handler for DELETE %s: %w", pattern, err)
@@ -460,7 +473,7 @@ func (n *Node) findRouteRecursive(path string, route *Route) *Node { //nolint:go
 	search := path
 
 	for t, nds := range nn.children {
-		ntyp := nodeTyp(t)
+		ntyp := nodeTyp(t) //nolint:gosec
 
 		if len(nds) == 0 {
 			continue

@@ -49,17 +49,19 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 	handler.responseConfig = operation.Proxy.Response
 	handler.parameters = schema.MergeParameters(options.Parameters, operation.Parameters)
 
-	handler.variables, err = validateGraphQLVariables(operation.Proxy.Request.Variables)
+	getEnvFunc := options.GetEnvFunc()
+
+	handler.variables, err = validateGraphQLVariables(operation.Proxy.Request.Variables, getEnvFunc)
 	if err != nil {
 		return nil, err
 	}
 
-	handler.extensions, err = validateGraphQLVariables(operation.Proxy.Request.Extensions)
-	if err != nil {
-		return nil, err
-	}
+	handler.extensions, err = validateGraphQLVariables(
+		operation.Proxy.Request.Extensions,
+		getEnvFunc,
+	)
 
-	return handler, nil
+	return handler, err
 }
 
 // Type returns type of the current handler.
