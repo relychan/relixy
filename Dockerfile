@@ -10,15 +10,15 @@ COPY . .
 
 RUN CGO_ENABLED=0 go build \
     -ldflags="-X 'github.com/relychan/relyx/types.BuildVersion=${VERSION}'" \
-    -v -o relyx-ddn ./server/ddn
+    -v -o relyx ./server/rest
 
 # stage 2: production image
 FROM gcr.io/distroless/static-debian13:nonroot
 
 # Copy the binary to the production image from the builder stage.
-COPY --from=builder /app/relyx-ddn /relyx-ddn
+COPY --from=builder /app/relyx /relyx
 
 USER 65532
 
 # Run the web service on container startup.
-ENTRYPOINT ["/relyx-ddn"]
+ENTRYPOINT ["/relyx"]

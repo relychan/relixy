@@ -7,6 +7,7 @@ on:
 env:
   DOCKER_REGISTRY: ghcr.io
   DOCKER_IMAGE_NAME: relychan/relyx
+  DOCKER_IMAGE_DDN_NAME: relychan/relyx-ddn
 
 jobs:
   tests:
@@ -17,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [tests]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -38,18 +39,34 @@ jobs:
           echo "tagged_version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: Extract metadata (tags, labels) for Docker
+      - name: RelyX - Extract metadata (tags, labels) for Docker image
         id: docker-metadata
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
 
-      - name: Build and push
+      - name: RelyX - Build and push
         uses: docker/build-push-action@v6
         with:
           push: true
           tags: ${{ steps.docker-metadata.outputs.tags }}
           labels: ${{ steps.docker-metadata.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            VERSION=${{ steps.get-version.outputs.tagged_version }}
+
+      - name: RelyX DDN - Extract metadata (tags, labels) for Docker image
+        id: docker-metadata-ddn
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_DDN_NAME }}
+
+      - name: RelyX DDN - Build and push 
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ steps.docker-metadata-ddn.outputs.tags }}
+          labels: ${{ steps.docker-metadata-ddn.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           build-args: |
             VERSION=${{ steps.get-version.outputs.tagged_version }}
