@@ -1,7 +1,8 @@
 name: Release
 on:
-  workflow_call:
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
@@ -49,6 +50,27 @@ jobs:
       - name: RelyX - Build and push
         uses: docker/build-push-action@v6
         with:
+          push: false
+          tags: ${{ steps.docker-metadata.outputs.tags }}
+          labels: ${{ steps.docker-metadata.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            VERSION=${{ steps.get-version.outputs.tagged_version }}
+
+      - name: Scan High/Critical Vulnerabilities
+        uses: aquasecurity/trivy-action@0.32.0
+        with:
+          image-ref: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.get-version.outputs.tagged_version }}
+          format: table
+          severity: "CRITICAL,HIGH"
+          scanners: vuln
+          ignore-unfixed: true
+          exit-code: 1
+
+      - name: RelyX - Push image
+        uses: docker/build-push-action@v6
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
           push: true
           tags: ${{ steps.docker-metadata.outputs.tags }}
           labels: ${{ steps.docker-metadata.outputs.labels }}
@@ -59,11 +81,13 @@ jobs:
       - name: RelyX DDN - Extract metadata (tags, labels) for Docker image
         id: docker-metadata-ddn
         uses: docker/metadata-action@v6
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_DDN_NAME }}
 
       - name: RelyX DDN - Build and push 
         uses: docker/build-push-action@v6
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           push: true
           tags: ${{ steps.docker-metadata-ddn.outputs.tags }}
