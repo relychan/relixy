@@ -64,14 +64,14 @@ jobs:
 
       - name: Get version from tag
         id: get-version
-        # if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+        if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
         run: |
           echo "ref_version=${GITHUB_SHA:0:10}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Build image
         id: docker-build
-        # if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+        if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
         run: |
           docker build --build-arg VERSION=$VERSION \
             -t "$DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$VERSION" .
@@ -80,7 +80,7 @@ jobs:
           
       - name: Scan High/Critical Vulnerabilities
         uses: aquasecurity/trivy-action@0.33.1
-        # if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+        if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
         with:
           scan-type: "image"
           image-ref: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.get-version.outputs.ref_version }}
@@ -88,5 +88,4 @@ jobs:
           severity: "CRITICAL,HIGH"
           scanners: vuln
           ignore-unfixed: true
-          # DOCKER-HOST: "unix://${SOCKET}"
           exit-code: 1
