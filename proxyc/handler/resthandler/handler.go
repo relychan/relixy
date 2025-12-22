@@ -40,7 +40,7 @@ func (re *RESTHandler) Handle(
 ) (*http.Response, any, error) {
 	requestPath := re.requestPath
 	if requestPath == "" {
-		requestPath = options.Settings.BasePath + request.URL.Path
+		requestPath = options.Path
 	}
 
 	if request.URL.RawQuery != "" {

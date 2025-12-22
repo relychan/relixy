@@ -82,7 +82,7 @@ func TestTreeNodes(t *testing.T) {
 	node := new(Node)
 
 	for _, route := range routes {
-		_, err := node.InsertRoute(route.Pattern, route.Handlers)
+		_, err := node.InsertRoute(route.Pattern, route.Handlers, &InsertRouteOptions{})
 		assert.NilError(t, err, route.Pattern)
 	}
 

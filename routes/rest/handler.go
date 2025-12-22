@@ -1,13 +1,10 @@
-// Package ddn implements restified endpoint handlers for DDN engine plugin.
-package ddn
+// Package rest implements restified endpoint handlers for DDN engine plugin.
+package rest
 
 import (
-	"bytes"
-	"encoding/json"
 	"io"
 	"log/slog"
 	"net/http"
-	"net/url"
 
 	"github.com/hasura/gotel"
 	"github.com/relychan/gohttps/httputils"
@@ -18,49 +15,24 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// PreRoutePluginRequestBody represents the request body of the pre-route plugin request.
-type PreRoutePluginRequestBody struct {
-	Path   string          `json:"path"`
-	Method string          `json:"method"`
-	Query  string          `json:"query"`
-	Body   json.RawMessage `json:"body"`
-}
-
-type preRoutePluginHandler struct {
+type restHandler struct {
 	state *types.State
 }
 
-// NewPreRoutePluginHandler creates a pre-route plugin handler instance.
-func NewPreRoutePluginHandler(state *types.State) *preRoutePluginHandler {
-	return &preRoutePluginHandler{
+// NewRESTHandler creates a REST handler instance.
+func NewRESTHandler(state *types.State) *restHandler {
+	return &restHandler{
 		state: state,
 	}
 }
 
 // ServeHTTP serves an HTTP request.
-func (pr *preRoutePluginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (rh *restHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	span := trace.SpanFromContext(ctx)
 	logger := gotel.GetLogger(ctx)
 
-	input, decoded := httputils.DecodeRequestBody[PreRoutePluginRequestBody](w, r, span)
-	if !decoded {
-		return
-	}
-
-	req := &http.Request{
-		Method: input.Method,
-		URL: &url.URL{
-			Path:     input.Path,
-			RawQuery: input.Query,
-		},
-	}
-
-	if len(input.Body) > 0 {
-		req.Body = io.NopCloser(bytes.NewReader(input.Body))
-	}
-
-	resp, respBody, err := pr.state.ProxyClient.Execute(ctx, req) //nolint:bodyclose
+	resp, respBody, err := rh.state.ProxyClient.Execute(ctx, r) //nolint:bodyclose
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		span.RecordError(err)

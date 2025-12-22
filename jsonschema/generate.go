@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/invopop/jsonschema"
 	"github.com/relychan/goutils"
+	"github.com/relychan/relyx/config"
 	"github.com/relychan/relyx/schema"
 )
 
@@ -17,6 +17,11 @@ func main() {
 	err := jsonSchemaConfiguration()
 	if err != nil {
 		panic(fmt.Errorf("failed to write jsonschema for RelyProxyAPIDocument: %w", err))
+	}
+
+	err = jsonSchemaServerConfiguration()
+	if err != nil {
+		panic(fmt.Errorf("failed to write jsonschema for RelyXServerConfig: %w", err))
 	}
 }
 
@@ -106,7 +111,37 @@ func jsonSchemaConfiguration() error {
 	}
 
 	return os.WriteFile( //nolint:gosec
-		filepath.Join("..", "docs", "relyx.schema.json"),
+		"relyx.schema.json",
+		buffer.Bytes(), 0o644,
+	)
+}
+
+func jsonSchemaServerConfiguration() error {
+	r := new(jsonschema.Reflector)
+
+	err := r.AddGoComments(
+		"github.com/relychan/relyx/config",
+		"../config",
+		jsonschema.WithFullComment(),
+	)
+	if err != nil {
+		return err
+	}
+
+	reflectSchema := r.Reflect(config.RelyXServerConfig{})
+
+	buffer := new(bytes.Buffer)
+	enc := json.NewEncoder(buffer)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", " ")
+
+	err = enc.Encode(reflectSchema)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile( //nolint:gosec
+		"server.schema.json",
 		buffer.Bytes(), 0o644,
 	)
 }

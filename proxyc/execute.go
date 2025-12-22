@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/relychan/goutils"
 	"github.com/relychan/relyx/schema"
@@ -22,10 +23,23 @@ func (pc *ProxyClient) Execute(
 
 	span.SetAttributes(
 		semconv.HTTPRequestMethodKey.String(req.Method),
-		semconv.URLFull(req.URL.String()),
+		semconv.URLOriginal(req.URL.String()),
 	)
 
-	route := pc.node.FindRoute(req.URL.Path, req.Method)
+	requestPath := req.URL.Path
+
+	if pc.clientOptions.BasePath != "" && req.URL.Path != "" {
+		// The URL path may omit the slash character
+		if req.URL.Path[0] == '/' {
+			requestPath = strings.TrimPrefix(req.URL.Path, pc.clientOptions.BasePath)
+		} else {
+			requestPath = strings.TrimPrefix(req.URL.Path, pc.clientOptions.BasePath[1:])
+		}
+	}
+
+	span.SetAttributes(semconv.URLPath(requestPath))
+
+	route := pc.node.FindRoute(requestPath, req.Method)
 	if route == nil {
 		span.SetStatus(codes.Error, "request path or method does not exist")
 
@@ -43,6 +57,7 @@ func (pc *ProxyClient) Execute(
 		ParamValues:    route.ParamValues,
 		HTTPClient:     pc.lbClient,
 		DefaultHeaders: pc.defaultHeaders,
+		Path:           requestPath,
 	}
 
 	response, responseBody, err := route.Handler.Handle(ctx, req, options)

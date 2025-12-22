@@ -49,17 +49,19 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 	handler.responseConfig = operation.Proxy.Response
 	handler.parameters = schema.MergeParameters(options.Parameters, operation.Parameters)
 
-	handler.variables, err = validateGraphQLVariables(operation.Proxy.Request.Variables)
+	getEnvFunc := options.GetEnvFunc()
+
+	handler.variables, err = validateGraphQLVariables(operation.Proxy.Request.Variables, getEnvFunc)
 	if err != nil {
 		return nil, err
 	}
 
-	handler.extensions, err = validateGraphQLVariables(operation.Proxy.Request.Extensions)
-	if err != nil {
-		return nil, err
-	}
+	handler.extensions, err = validateGraphQLVariables(
+		operation.Proxy.Request.Extensions,
+		getEnvFunc,
+	)
 
-	return handler, nil
+	return handler, err
 }
 
 // Type returns type of the current handler.
@@ -74,11 +76,6 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 	options *schema.RelyProxyHandleOptions,
 ) (*http.Response, any, error) {
 	span := trace.SpanFromContext(ctx)
-	requestPath := options.Settings.BasePath
-
-	if ge.requestPath != "" {
-		requestPath = ge.requestPath
-	}
 
 	graphqlPayload := GraphQLRequestBody{
 		Query:         ge.query,
@@ -92,7 +89,7 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 	)
 
 	logAttrs := []slog.Attr{
-		slog.String("path", requestPath),
+		slog.String("path", ge.requestPath),
 	}
 
 	requestHeaders := map[string]string{}
@@ -111,7 +108,7 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 		Headers:     requestHeaders,
 	}
 
-	if request.Body != nil {
+	if request.Body != nil && request.Body != http.NoBody {
 		var body any
 
 		err := json.NewDecoder(request.Body).Decode(&body)
@@ -170,7 +167,7 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 		),
 	)
 
-	req := options.HTTPClient.R(http.MethodPost, requestPath)
+	req := options.HTTPClient.R(http.MethodPost, ge.requestPath)
 	reqHeader := req.Header()
 
 	for key, value := range options.DefaultHeaders {

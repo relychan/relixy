@@ -430,6 +430,9 @@
     },
     "disableKeepAlives": {
      "type": "boolean"
+    },
+    "forceAttemptHTTP2": {
+     "type": "boolean"
     }
    },
    "additionalProperties": false,
@@ -1405,10 +1408,6 @@
   },
   "RelyProxySettings": {
    "properties": {
-    "basePath": {
-     "type": "string",
-     "description": "Set the base path for all API handlers."
-    },
     "http": {
      "$ref": "#/$defs/HTTPClientConfig",
      "description": "Global settings for the HTTP client."

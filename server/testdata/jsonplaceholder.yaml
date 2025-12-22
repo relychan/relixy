@@ -1,9 +1,13 @@
-# yaml-language-server: $schema=../../../docs/rest_proxy.schema.json
+# yaml-language-server: $schema=../../jsonschema/relyx.schema.json
 settings:
   headers: {}
   forwardHeaders:
     request: []
     response: []
+  http:
+    retry:
+      maxAttempts:
+        value: 3
 servers:
   - url:
       value: https://jsonplaceholder.typicode.com
