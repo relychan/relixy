@@ -69,26 +69,14 @@ jobs:
           echo "ref_version=${GITHUB_SHA:0:10}" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: Extract metadata (tags, labels) for Docker image
-        id: docker-metadata
-        uses: docker/metadata-action@v5
-        # if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-        with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
-
       - name: Build image
-        uses: docker/build-push-action@v6
         id: docker-build
         # if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-        with:
-          push: false
-          load: true
-          tags: ${{ steps.docker-metadata.outputs.tags }}
-          labels: ${{ steps.docker-metadata.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest
-          cache-to: type=inline
-          build-args: |
-            VERSION=${{ steps.get-version.outputs.ref_version }}
+        run: |
+          docker build --build-arg VERSION=$VERSION \
+            -t "$DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$VERSION" .
+        env:
+          VERSION=${{ steps.get-version.outputs.ref_version }}
           
       - name: Scan High/Critical Vulnerabilities
         uses: aquasecurity/trivy-action@0.33.1
