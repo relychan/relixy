@@ -7,6 +7,10 @@ on:
     branches:
       - main
 
+env:
+  DOCKER_REGISTRY: ghcr.io
+  DOCKER_IMAGE_NAME: relychan/relyx
+
 permissions:
   pull-requests: write
   
@@ -57,3 +61,44 @@ jobs:
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
+
+      - name: Get version from tag
+        id: get-version
+        # if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+        run: |
+          echo "ref_version=${GITHUB_REF:0:10}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Extract metadata (tags, labels) for Docker image
+        id: docker-metadata
+        uses: docker/metadata-action@v5
+        # if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        id: docker-build
+        # if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+        with:
+          push: false
+          load: true
+          tags: ${{ steps.docker-metadata.outputs.tags }}
+          labels: ${{ steps.docker-metadata.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+          cache-to: type=inline
+          build-args: |
+            VERSION=${{ steps.get-version.outputs.ref_version }}
+          
+      - name: Scan High/Critical Vulnerabilities
+        uses: aquasecurity/trivy-action@0.33.1
+        # if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+        with:
+          scan-type: "image"
+          image-ref: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.get-version.outputs.ref_version }}
+          format: table
+          severity: "CRITICAL,HIGH"
+          scanners: vuln
+          ignore-unfixed: true
+          # DOCKER-HOST: "unix://${SOCKET}"
+          exit-code: 1
