@@ -52,6 +52,7 @@ jobs:
 
       - name: RelyX - Build and push
         uses: docker/build-push-action@v6
+        id: docker-build
         with:
           push: false
           tags: ${{ steps.docker-metadata.outputs.tags }}
@@ -73,7 +74,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.32.0
         with:
           scan-type: "image"
-          image-ref: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.get-version.outputs.tagged_version }}
+          image-ref: ${{ steps.docker-build.outputs.imageid }}
           format: table
           severity: "CRITICAL,HIGH"
           scanners: vuln
