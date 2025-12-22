@@ -66,7 +66,7 @@ jobs:
         id: get-version
         # if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
         run: |
-          echo "ref_version=${GITHUB_REF:0:10}" >> $GITHUB_OUTPUT
+          echo "ref_version=${GITHUB_SHA:0:10}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Extract metadata (tags, labels) for Docker image
