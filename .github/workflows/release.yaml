@@ -52,7 +52,6 @@ jobs:
 
       - name: RelyX - Build and push
         uses: docker/build-push-action@v6
-        id: docker-build
         with:
           push: false
           tags: ${{ steps.docker-metadata.outputs.tags }}
@@ -71,10 +70,10 @@ jobs:
           echo "SOCKET=$socket_path" >> $GITHUB_ENV
           
       - name: Scan High/Critical Vulnerabilities
-        uses: aquasecurity/trivy-action@0.32.0
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           scan-type: "image"
-          image-ref: ${{ steps.docker-build.outputs.imageid }}
+          image-ref: ${{ steps.docker-metadata.outputs.tags }}
           format: table
           severity: "CRITICAL,HIGH"
           scanners: vuln
