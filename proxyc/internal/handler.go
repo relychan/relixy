@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/relychan/relyx/proxyc/handler/graphqlhandler"
-	"github.com/relychan/relyx/proxyc/handler/resthandler"
-	"github.com/relychan/relyx/schema"
+	"github.com/relychan/relixy/proxyc/handler/graphqlhandler"
+	"github.com/relychan/relixy/proxyc/handler/resthandler"
+	"github.com/relychan/relixy/schema"
 )
 
 var (

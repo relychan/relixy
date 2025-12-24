@@ -9,7 +9,7 @@ on:
 
 env:
   DOCKER_REGISTRY: ghcr.io
-  DOCKER_IMAGE_NAME: relychan/relyx
+  DOCKER_IMAGE_NAME: relychan/relixy
 
 permissions:
   pull-requests: write
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version-file: ./go.mod
@@ -35,13 +35,13 @@ jobs:
       - name: Test
         run: make test-ddn
       - name: Go coverage format
-        if: ${{ github.event_name == 'pull_request' && github.repository == 'relychan/relyx' }}
+        if: ${{ github.event_name == 'pull_request' && github.repository == 'relychan/relixy' }}
         run: |
           go get github.com/boumenot/gocover-cobertura
           go install github.com/boumenot/gocover-cobertura
           gocover-cobertura < coverage.out > coverage.xml
       - name: Code Coverage Summary Report
-        if: ${{ github.event_name == 'pull_request' && github.repository == 'relychan/relyx' }}
+        if: ${{ github.event_name == 'pull_request' && github.repository == 'relychan/relixy' }}
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
           filename: coverage.xml
@@ -62,16 +62,21 @@ jobs:
         if: failure()
         uses: jwalton/gh-docker-logs@v2
 
+  build-scan:
+    name: Build and scan vulnerabilities
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
       - name: Get version from tag
         id: get-version
-        if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
         run: |
           echo "ref_version=${GITHUB_SHA:0:10}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Build image
         id: docker-build
-        if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
         run: |
           docker build --build-arg VERSION=$VERSION \
             -t "$DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$VERSION" .
@@ -80,7 +85,6 @@ jobs:
           
       - name: Scan High/Critical Vulnerabilities
         uses: aquasecurity/trivy-action@0.33.1
-        if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
         with:
           scan-type: "image"
           image-ref: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.get-version.outputs.ref_version }}

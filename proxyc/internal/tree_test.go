@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/relychan/relyx/schema"
+	"github.com/relychan/relixy/schema"
 	"gotest.tools/v3/assert"
 )
 

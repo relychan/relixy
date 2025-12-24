@@ -6,7 +6,7 @@ import (
 
 	"github.com/hasura/goenvconf"
 	orderedmap "github.com/pb33f/ordered-map/v2"
-	"github.com/relychan/relyx/schema"
+	"github.com/relychan/relixy/schema"
 	"github.com/vektah/gqlparser/ast"
 	"github.com/vektah/gqlparser/parser"
 )

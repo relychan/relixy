@@ -13,9 +13,9 @@ import (
 	"github.com/hasura/gotel/otelutils"
 	"github.com/relychan/gohttps"
 	"github.com/relychan/goutils"
-	"github.com/relychan/relyx/config"
-	"github.com/relychan/relyx/routes/ddn"
-	"github.com/relychan/relyx/types"
+	"github.com/relychan/relixy/config"
+	"github.com/relychan/relixy/routes/ddn"
+	"github.com/relychan/relixy/types"
 )
 
 func main() {
@@ -59,7 +59,7 @@ func startServer() error {
 
 func setupRouter(
 	ctx context.Context,
-	conf *config.RelyXServerConfig,
+	conf *config.RelixyServerConfig,
 	ts *gotel.OTelExporters,
 ) (*chi.Mux, func(), error) {
 	state, err := config.NewState(ctx, conf, ts)

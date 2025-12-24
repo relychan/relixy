@@ -5,7 +5,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/relychan/relyx/schema"
+	"github.com/relychan/relixy/schema"
 )
 
 // RESTHandler implements the RelyProxyHandler interface for REST proxy.

@@ -10,7 +10,7 @@ import (
 	"github.com/relychan/gohttps/httputils"
 	"github.com/relychan/goutils"
 	"github.com/relychan/goutils/httpheader"
-	"github.com/relychan/relyx/types"
+	"github.com/relychan/relixy/types"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )

@@ -9,16 +9,16 @@ RUN go mod download
 COPY . .
 
 RUN CGO_ENABLED=0 go build \
-    -ldflags="-X 'github.com/relychan/relyx/types.BuildVersion=${VERSION}'" \
-    -v -o relyx ./server/rest
+    -ldflags="-X 'github.com/relychan/relixy/types.BuildVersion=${VERSION}'" \
+    -v -o relixy ./server/rest
 
 # stage 2: production image
 FROM gcr.io/distroless/static-debian13:nonroot
 
 # Copy the binary to the production image from the builder stage.
-COPY --from=builder /app/relyx /relyx
+COPY --from=builder /app/relixy /relixy
 
 USER 65532
 
 # Run the web service on container startup.
-ENTRYPOINT ["/relyx"]
+ENTRYPOINT ["/relixy"]

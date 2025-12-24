@@ -8,8 +8,8 @@ import (
 	"github.com/relychan/gohttpc"
 	"github.com/relychan/gohttpc/loadbalancer"
 	"github.com/relychan/gohttpc/loadbalancer/roundrobin"
-	"github.com/relychan/relyx/proxyc/internal"
-	"github.com/relychan/relyx/schema"
+	"github.com/relychan/relixy/proxyc/internal"
+	"github.com/relychan/relixy/schema"
 )
 
 // ProxyClient helps manage and execute REST and GraphQL APIs from the API document.
