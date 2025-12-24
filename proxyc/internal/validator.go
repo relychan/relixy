@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	orderedmap "github.com/pb33f/ordered-map/v2"
-	"github.com/relychan/relyx/proxyc/handler/graphqlhandler"
-	"github.com/relychan/relyx/schema"
+	"github.com/relychan/relixy/proxyc/handler/graphqlhandler"
+	"github.com/relychan/relixy/schema"
 )
 
 // ValidateOperations validate operations of a route.

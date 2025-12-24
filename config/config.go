@@ -12,44 +12,44 @@ import (
 	"github.com/relychan/rely-auth/auth"
 )
 
-// RelyXRouterConfig holds configurations of the rest handler.
-type RelyXRouterConfig struct {
+// RelixyRouterConfig holds configurations of the rest handler.
+type RelixyRouterConfig struct {
 	// Set the base path for all API handlers.
-	BasePath string `json:"basePath,omitempty" yaml:"basePath,omitempty" env:"RELYX_ROUTE_BASE_PATH"`
+	BasePath string `json:"basePath,omitempty" yaml:"basePath,omitempty" env:"RELIXY_ROUTE_BASE_PATH"`
 }
 
-// RelyXServerConfig holds information of required configurations to run the relyx server.
-type RelyXServerConfig struct {
+// RelixyServerConfig holds information of required configurations to run the relixy server.
+type RelixyServerConfig struct {
 	Server     gohttps.ServerConfig `json:"server" yaml:"server"`
-	Router     RelyXRouterConfig    `json:"router,omitempty" yaml:"router"`
+	Router     RelixyRouterConfig   `json:"router,omitempty" yaml:"router"`
 	Telemetry  gotel.OTLPConfig     `json:"telemetry" yaml:"telemetry"`
 	Auth       auth.RelyAuthConfig  `json:"auth" yaml:"auth"`
-	ConfigPath string               `json:"configPath" yaml:"configPath" env:"RELYX_CONFIG_PATH"`
+	ConfigPath string               `json:"configPath" yaml:"configPath" env:"RELIXY_CONFIG_PATH"`
 }
 
 // GetConfigPath returns the auth config path.
-func (rlsc RelyXServerConfig) GetConfigPath() string {
+func (rlsc RelixyServerConfig) GetConfigPath() string {
 	if rlsc.ConfigPath != "" {
 		return rlsc.ConfigPath
 	}
 
-	return "/etc/relyx/config.yaml"
+	return "/etc/relixy/config.yaml"
 }
 
 // LoadServerConfig loads and parses configurations for [RelyAuthServerConfig].
-func LoadServerConfig() (*RelyXServerConfig, error) {
-	var result *RelyXServerConfig
+func LoadServerConfig() (*RelixyServerConfig, error) {
+	var result *RelixyServerConfig
 
 	var err error
 
-	serverConfigPath := os.Getenv("RELYX_SERVER_CONFIG_PATH")
+	serverConfigPath := os.Getenv("RELIXY_SERVER_CONFIG_PATH")
 	if serverConfigPath != "" {
-		result, err = goutils.ReadJSONOrYAMLFile[RelyXServerConfig](serverConfigPath)
+		result, err = goutils.ReadJSONOrYAMLFile[RelixyServerConfig](serverConfigPath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load RELY_AUTH_SERVER_CONFIG_PATH: %w", err)
+			return nil, fmt.Errorf("failed to load RELIXY_SERVER_CONFIG_PATH: %w", err)
 		}
 	} else {
-		result = &RelyXServerConfig{}
+		result = &RelixyServerConfig{}
 	}
 
 	err = env.Parse(result)
@@ -58,7 +58,7 @@ func LoadServerConfig() (*RelyXServerConfig, error) {
 	}
 
 	if result.Telemetry.ServiceName == "" {
-		result.Telemetry.ServiceName = "relyx"
+		result.Telemetry.ServiceName = "relixy"
 	}
 
 	return result, nil

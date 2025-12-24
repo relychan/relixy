@@ -16,7 +16,7 @@ import (
 	"github.com/jmespath-community/go-jmespath"
 	"github.com/relychan/goutils"
 	"github.com/relychan/goutils/httpheader"
-	"github.com/relychan/relyx/schema"
+	"github.com/relychan/relixy/schema"
 	"github.com/vektah/gqlparser/ast"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"

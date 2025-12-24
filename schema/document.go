@@ -1,4 +1,4 @@
-// Package schema defines config schemas for the relyx service.
+// Package schema defines config schemas for the relixy service.
 package schema
 
 import (

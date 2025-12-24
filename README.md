@@ -1,7 +1,6 @@
-# RelyX
+# Relixy
 
-RelyX is an API gateway service in front of your REST or GraphQL services with extra security and custom transformation.
-
+Relixy is an API gateway service in front of your REST or GraphQL services with extra security and custom transformation.
 
 ## AI Use Disclaimer
 

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/relychan/goutils"
-	"github.com/relychan/relyx/schema"
+	"github.com/relychan/relixy/schema"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"

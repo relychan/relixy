@@ -6,7 +6,7 @@ import (
 	"github.com/hasura/gotel"
 )
 
-var tracer = gotel.NewTracer("relyx")
+var tracer = gotel.NewTracer("relixy")
 
 var (
 	errServerURLRequired = errors.New("server url is required")

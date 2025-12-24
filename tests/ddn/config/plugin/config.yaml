@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../../../jsonschema/relyx.schema.json
+# yaml-language-server: $schema=../../../../jsonschema/relixy.schema.json
 settings:
   headers: {}
   forwardHeaders:

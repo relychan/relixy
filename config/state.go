@@ -11,19 +11,19 @@ import (
 	"github.com/relychan/gohttpc"
 	"github.com/relychan/gohttpc/httpconfig"
 	"github.com/relychan/goutils"
+	"github.com/relychan/relixy/authn"
+	"github.com/relychan/relixy/proxyc"
+	"github.com/relychan/relixy/schema"
+	"github.com/relychan/relixy/types"
 	"github.com/relychan/rely-auth/auth"
 	"github.com/relychan/rely-auth/auth/authmetrics"
 	"github.com/relychan/rely-auth/auth/authmode"
-	"github.com/relychan/relyx/authn"
-	"github.com/relychan/relyx/proxyc"
-	"github.com/relychan/relyx/schema"
-	"github.com/relychan/relyx/types"
 )
 
 // NewState creates the handler state from config.
 func NewState(
 	ctx context.Context,
-	conf *RelyXServerConfig,
+	conf *RelixyServerConfig,
 	ts *gotel.OTelExporters,
 ) (*types.State, error) {
 	result, err := goutils.ReadJSONOrYAMLFile[schema.RelyProxyAPIDocument](conf.GetConfigPath())
@@ -74,7 +74,7 @@ func NewState(
 // SetupMiddlewares sets up default middlewares and the shutdown function for the handler.
 func SetupMiddlewares(
 	ctx context.Context,
-	conf *RelyXServerConfig,
+	conf *RelixyServerConfig,
 	state *types.State,
 	ts *gotel.OTelExporters,
 ) (chi.Middlewares, func(), error) {

@@ -16,17 +16,17 @@ import (
 	"github.com/hasura/gotel"
 	"github.com/relychan/gohttpc/authc/authscheme"
 	"github.com/relychan/goutils/httpheader"
+	"github.com/relychan/relixy/config"
+	"github.com/relychan/relixy/routes/ddn"
 	"github.com/relychan/rely-auth/auth"
 	"github.com/relychan/rely-auth/auth/apikey"
 	"github.com/relychan/rely-auth/auth/authmode"
-	"github.com/relychan/relyx/config"
-	"github.com/relychan/relyx/routes/ddn"
 	"go.opentelemetry.io/otel"
 	"gotest.tools/v3/assert"
 )
 
 func TestRESTHandler_RESTServer(t *testing.T) {
-	t.Setenv("RELYX_ROUTE_BASE_PATH", "/api/v1")
+	t.Setenv("RELIXY_ROUTE_BASE_PATH", "/api/v1")
 
 	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
 	defer func() {
@@ -269,7 +269,7 @@ func runUnauthorizedRequest[T any](t *testing.T, r ddn.PreRoutePluginRequestBody
 }
 
 func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {
-	t.Setenv("RELYX_CONFIG_PATH", configPath)
+	t.Setenv("RELIXY_CONFIG_PATH", configPath)
 
 	envVars, err := config.LoadServerConfig()
 	assert.NilError(t, err)

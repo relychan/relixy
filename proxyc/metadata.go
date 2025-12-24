@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/relychan/relyx/proxyc/internal"
-	"github.com/relychan/relyx/schema"
+	"github.com/relychan/relixy/proxyc/internal"
+	"github.com/relychan/relixy/schema"
 )
 
 // BuildMetadataTree builds the metadata tree from the API document.

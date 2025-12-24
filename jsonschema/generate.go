@@ -1,4 +1,4 @@
-// Package main generates the JSON schema for the relyx metadata.
+// Package main generates the JSON schema for the relixy metadata.
 package main
 
 import (
@@ -9,8 +9,8 @@ import (
 
 	"github.com/invopop/jsonschema"
 	"github.com/relychan/goutils"
-	"github.com/relychan/relyx/config"
-	"github.com/relychan/relyx/schema"
+	"github.com/relychan/relixy/config"
+	"github.com/relychan/relixy/schema"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 
 	err = jsonSchemaServerConfiguration()
 	if err != nil {
-		panic(fmt.Errorf("failed to write jsonschema for RelyXServerConfig: %w", err))
+		panic(fmt.Errorf("failed to write jsonschema for RelixyServerConfig: %w", err))
 	}
 }
 
@@ -29,7 +29,7 @@ func jsonSchemaConfiguration() error {
 	r := new(jsonschema.Reflector)
 
 	err := r.AddGoComments(
-		"github.com/relychan/relyx/schema",
+		"github.com/relychan/relixy/schema",
 		"../schema",
 		jsonschema.WithFullComment(),
 	)
@@ -69,27 +69,27 @@ func jsonSchemaConfiguration() error {
 	// delete unused types
 	delete(
 		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relyx/schema.RelyProxyEncoding]",
+		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxyEncoding]",
 	)
 	delete(
 		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relyx/schema.RelyProxyPathItem]",
+		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxyPathItem]",
 	)
 	delete(
 		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relyx/schema.GraphQLVariableDefinition]",
+		"OrderedMap[string,*github.com/relychan/relixy/schema.GraphQLVariableDefinition]",
 	)
 	delete(
 		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relyx/schema.RelyProxyHeader]",
+		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxyHeader]",
 	)
 	delete(
 		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relyx/schema.RelyProxySchema]",
+		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxySchema]",
 	)
 	delete(
 		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relyx/schema.RelyProxyMediaType]",
+		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxyMediaType]",
 	)
 	delete(
 		reflectSchema.Definitions,
@@ -111,7 +111,7 @@ func jsonSchemaConfiguration() error {
 	}
 
 	return os.WriteFile( //nolint:gosec
-		"relyx.schema.json",
+		"relixy.schema.json",
 		buffer.Bytes(), 0o644,
 	)
 }
@@ -120,7 +120,7 @@ func jsonSchemaServerConfiguration() error {
 	r := new(jsonschema.Reflector)
 
 	err := r.AddGoComments(
-		"github.com/relychan/relyx/config",
+		"github.com/relychan/relixy/config",
 		"../config",
 		jsonschema.WithFullComment(),
 	)
@@ -128,7 +128,7 @@ func jsonSchemaServerConfiguration() error {
 		return err
 	}
 
-	reflectSchema := r.Reflect(config.RelyXServerConfig{})
+	reflectSchema := r.Reflect(config.RelixyServerConfig{})
 
 	buffer := new(bytes.Buffer)
 	enc := json.NewEncoder(buffer)

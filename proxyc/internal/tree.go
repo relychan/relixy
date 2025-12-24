@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/relychan/goutils"
-	"github.com/relychan/relyx/schema"
+	"github.com/relychan/relixy/schema"
 )
 
 type nodeTyp uint8

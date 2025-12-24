@@ -2,7 +2,7 @@
 package types
 
 import (
-	"github.com/relychan/relyx/proxyc"
+	"github.com/relychan/relixy/proxyc"
 )
 
 // BuildVersion is set when building the binary.
