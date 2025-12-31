@@ -5,8 +5,8 @@ import (
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
-// RelyProxyDocumentToOAS3 converts a proxy document to OAS 3.
-func RelyProxyDocumentToOAS3(doc RelyProxyAPIDocument) *highv3.Document {
+// RelixyDocumentToOAS3 converts a proxy document to OAS 3.
+func RelixyDocumentToOAS3(doc RelixyAPIDocument) *highv3.Document {
 	result := &highv3.Document{
 		Servers: make([]*highv3.Server, len(doc.Servers)),
 		Tags:    make([]*base.Tag, len(doc.Tags)),

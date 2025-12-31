@@ -29,7 +29,7 @@ func TestTransformRequest(t *testing.T) {
 				},
 				variables: map[string]graphqlVariable{
 					"name": {
-						Expression: "param.name",
+						Path: "param.name",
 					},
 				},
 			},
@@ -55,10 +55,10 @@ func TestTransformRequest(t *testing.T) {
 				},
 				variables: map[string]graphqlVariable{
 					"limit": {
-						Expression: "query.limit[0]",
+						Path: "query.limit[0]",
 					},
 					"offset": {
-						Expression: "query.offset[0]",
+						Path: "query.offset[0]",
 					},
 				},
 			},

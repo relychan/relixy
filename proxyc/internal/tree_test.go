@@ -13,15 +13,15 @@ func TestTreeNodes(t *testing.T) {
 		Path     string
 		Pattern  string
 		Method   string
-		Handlers *schema.RelyProxyPathItem
+		Handlers *schema.RelixyPathItem
 		Route    Route
 	}{
 		{
 			Pattern: "/posts",
 			Path:    "/posts",
 			Method:  http.MethodGet,
-			Handlers: &schema.RelyProxyPathItem{
-				Get: &schema.RelyProxyOperation{},
+			Handlers: &schema.RelixyPathItem{
+				Get: &schema.RelixyOperation{},
 			},
 			Route: Route{
 				Node: &Node{
@@ -34,8 +34,8 @@ func TestTreeNodes(t *testing.T) {
 			Path:    "/posts/1",
 			Pattern: "/posts/{id}",
 			Method:  http.MethodPost,
-			Handlers: &schema.RelyProxyPathItem{
-				Post: &schema.RelyProxyOperation{},
+			Handlers: &schema.RelixyPathItem{
+				Post: &schema.RelixyOperation{},
 			},
 			Route: Route{
 				Node: &Node{
@@ -50,8 +50,8 @@ func TestTreeNodes(t *testing.T) {
 			Path:    "/posts/1/comments/abc",
 			Pattern: "/posts/{id}/comments/{commentId}",
 			Method:  http.MethodGet,
-			Handlers: &schema.RelyProxyPathItem{
-				Get: &schema.RelyProxyOperation{},
+			Handlers: &schema.RelixyPathItem{
+				Get: &schema.RelixyOperation{},
 			},
 			Route: Route{
 				Node: &Node{
@@ -67,8 +67,8 @@ func TestTreeNodes(t *testing.T) {
 			Path:    "/v1/random/route",
 			Pattern: "/v1/*",
 			Method:  http.MethodGet,
-			Handlers: &schema.RelyProxyPathItem{
-				Get: &schema.RelyProxyOperation{},
+			Handlers: &schema.RelixyPathItem{
+				Get: &schema.RelixyOperation{},
 			},
 			Route: Route{
 				Node: &Node{

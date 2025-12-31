@@ -8,7 +8,7 @@ import (
 	"github.com/relychan/relixy/schema"
 )
 
-// RESTHandler implements the RelyProxyHandler interface for REST proxy.
+// RESTHandler implements the RelixyHandler interface for REST proxy.
 type RESTHandler struct {
 	method      string
 	requestPath string
@@ -17,9 +17,9 @@ type RESTHandler struct {
 
 // NewRESTHandler creates a RESTHandler from operation.
 func NewRESTHandler( //nolint:ireturn
-	operation *schema.RelyProxyOperation,
-	options *schema.NewRelyProxyHandlerOptions,
-) (schema.RelyProxyHandler, error) {
+	operation *schema.RelixyOperation,
+	options *schema.NewRelixyHandlerOptions,
+) (schema.RelixyHandler, error) {
 	return &RESTHandler{
 		method:      options.Method,
 		requestPath: operation.Proxy.Path,
@@ -28,7 +28,7 @@ func NewRESTHandler( //nolint:ireturn
 }
 
 // Type returns type of the current handler.
-func (*RESTHandler) Type() schema.RelyProxyType {
+func (*RESTHandler) Type() schema.RelixyType {
 	return schema.ProxyTypeREST
 }
 
@@ -36,7 +36,7 @@ func (*RESTHandler) Type() schema.RelyProxyType {
 func (re *RESTHandler) Handle(
 	ctx context.Context,
 	request *http.Request,
-	options *schema.RelyProxyHandleOptions,
+	options *schema.RelixyHandleOptions,
 ) (*http.Response, any, error) {
 	requestPath := re.requestPath
 	if requestPath == "" {

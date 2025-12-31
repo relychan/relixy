@@ -11,8 +11,8 @@ type GraphQLRequestBody struct {
 }
 
 type graphqlVariable struct {
-	Expression string
-	Default    any
+	Path    string
+	Default any
 }
 
 type requestTemplateData struct {

@@ -60,7 +60,7 @@ func validateGraphQLVariables(
 
 	for iter := inputs.Oldest(); iter != nil; iter = iter.Next() {
 		variable := graphqlVariable{
-			Expression: iter.Value.Expression,
+			Path: iter.Value.Path,
 		}
 
 		if iter.Value.Default != nil {

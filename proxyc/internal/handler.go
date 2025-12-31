@@ -20,16 +20,16 @@ var (
 	ErrReplaceMissingChildNode          = errors.New("replacing missing child node")
 )
 
-var proxyHandlerConstructors = map[schema.RelyProxyType]schema.NewRelyProxyHandlerFunc{
+var proxyHandlerConstructors = map[schema.RelixyType]schema.NewRelixyHandlerFunc{
 	schema.ProxyTypeREST:    resthandler.NewRESTHandler,
 	schema.ProxyTypeGraphQL: graphqlhandler.NewGraphQLHandler,
 }
 
 // NewProxyHandler creates a proxy handler by type.
 func NewProxyHandler( //nolint:ireturn
-	operation *schema.RelyProxyOperation,
-	options *schema.NewRelyProxyHandlerOptions,
-) (schema.RelyProxyHandler, error) {
+	operation *schema.RelixyOperation,
+	options *schema.NewRelixyHandlerOptions,
+) (schema.RelixyHandler, error) {
 	proxyType := schema.ProxyTypeREST
 
 	if operation.Proxy.Type != "" {
@@ -46,8 +46,8 @@ func NewProxyHandler( //nolint:ireturn
 
 // RegisterProxyHandler registers the handler to the global registry.
 func RegisterProxyHandler(
-	proxyType schema.RelyProxyType,
-	constructor schema.NewRelyProxyHandlerFunc,
+	proxyType schema.RelixyType,
+	constructor schema.NewRelixyHandlerFunc,
 ) {
 	proxyHandlerConstructors[proxyType] = constructor
 }

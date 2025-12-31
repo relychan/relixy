@@ -259,9 +259,7 @@ func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) 
 	assert.NilError(t, err)
 
 	envVars.Auth = auth.RelyAuthConfig{
-		Settings: &authmode.RelyAuthSettings{
-			Strict: true,
-		},
+		Settings: &authmode.RelyAuthSettings{},
 		Definitions: []auth.RelyAuthDefinition{
 			{
 				RelyAuthDefinitionInterface: apikey.NewRelyAuthAPIKeyConfig(

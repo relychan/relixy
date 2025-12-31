@@ -13,12 +13,12 @@ import (
 func TestAPIKeyAuthConfig_Validate(t *testing.T) {
 	testCases := []struct {
 		name        string
-		config      *APIKeyAuthConfig
+		config      *RelixyAPIKeyAuthConfig
 		expectError bool
 	}{
 		{
 			name: "valid config",
-			config: &APIKeyAuthConfig{
+			config: &RelixyAPIKeyAuthConfig{
 				Type:  APIKeyScheme,
 				Name:  "X-API-Key",
 				In:    authscheme.InHeader,
@@ -28,7 +28,7 @@ func TestAPIKeyAuthConfig_Validate(t *testing.T) {
 		},
 		{
 			name: "missing name",
-			config: &APIKeyAuthConfig{
+			config: &RelixyAPIKeyAuthConfig{
 				Type:  APIKeyScheme,
 				In:    authscheme.InHeader,
 				Value: goenvconf.NewEnvStringValue("test-key"),
@@ -37,7 +37,7 @@ func TestAPIKeyAuthConfig_Validate(t *testing.T) {
 		},
 		{
 			name: "invalid location",
-			config: &APIKeyAuthConfig{
+			config: &RelixyAPIKeyAuthConfig{
 				Type:  APIKeyScheme,
 				Name:  "X-API-Key",
 				In:    authscheme.AuthLocation("invalid"),
@@ -60,32 +60,32 @@ func TestAPIKeyAuthConfig_Validate(t *testing.T) {
 }
 
 func TestAPIKeyAuthConfig_GetType(t *testing.T) {
-	config := &APIKeyAuthConfig{}
+	config := &RelixyAPIKeyAuthConfig{}
 	assert.Equal(t, APIKeyScheme, config.GetType())
 }
 
 func TestHTTPAuthConfig_Validate(t *testing.T) {
 	testCases := []struct {
 		name        string
-		config      *HTTPAuthConfig
+		config      *RelixyHTTPAuthConfig
 		expectError bool
 	}{
 		{
 			name: "valid config",
-			config: &HTTPAuthConfig{
+			config: &RelixyHTTPAuthConfig{
 				Type:   HTTPAuthScheme,
 				Scheme: "bearer",
-				Header: "Authorization",
+				Name:   "Authorization",
 				Value:  goenvconf.NewEnvStringValue("token"),
 			},
 			expectError: false,
 		},
 		{
 			name: "missing scheme",
-			config: &HTTPAuthConfig{
-				Type:   HTTPAuthScheme,
-				Header: "Authorization",
-				Value:  goenvconf.NewEnvStringValue("token"),
+			config: &RelixyHTTPAuthConfig{
+				Type:  HTTPAuthScheme,
+				Name:  "Authorization",
+				Value: goenvconf.NewEnvStringValue("token"),
 			},
 			expectError: true,
 		},
@@ -104,12 +104,12 @@ func TestHTTPAuthConfig_Validate(t *testing.T) {
 }
 
 func TestHTTPAuthConfig_GetType(t *testing.T) {
-	config := &HTTPAuthConfig{}
+	config := &RelixyHTTPAuthConfig{}
 	assert.Equal(t, HTTPAuthScheme, config.GetType())
 }
 
 func TestBasicAuthConfig_Validate(t *testing.T) {
-	config := &BasicAuthConfig{
+	config := &RelixyBasicAuthConfig{
 		Type:     BasicAuthScheme,
 		Username: goenvconf.NewEnvStringValue("user"),
 		Password: goenvconf.NewEnvStringValue("pass"),
@@ -119,7 +119,7 @@ func TestBasicAuthConfig_Validate(t *testing.T) {
 }
 
 func TestBasicAuthConfig_GetType(t *testing.T) {
-	config := &BasicAuthConfig{}
+	config := &RelixyBasicAuthConfig{}
 	assert.Equal(t, BasicAuthScheme, config.GetType())
 }
 
@@ -130,12 +130,12 @@ func TestOAuth2Config_Validate(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		config      *OAuth2Config
+		config      *RelixyOAuth2Config
 		expectError bool
 	}{
 		{
 			name: "valid client credentials flow",
-			config: &OAuth2Config{
+			config: &RelixyOAuth2Config{
 				Type: OAuth2Scheme,
 				Flows: map[OAuthFlowType]OAuthFlow{
 					ClientCredentialsFlow: {
@@ -149,7 +149,7 @@ func TestOAuth2Config_Validate(t *testing.T) {
 		},
 		{
 			name: "missing client ID for client credentials",
-			config: &OAuth2Config{
+			config: &RelixyOAuth2Config{
 				Type: OAuth2Scheme,
 				Flows: map[OAuthFlowType]OAuthFlow{
 					ClientCredentialsFlow: {
@@ -162,7 +162,7 @@ func TestOAuth2Config_Validate(t *testing.T) {
 		},
 		{
 			name: "missing flows",
-			config: &OAuth2Config{
+			config: &RelixyOAuth2Config{
 				Type:  OAuth2Scheme,
 				Flows: map[OAuthFlowType]OAuthFlow{},
 			},
@@ -183,19 +183,19 @@ func TestOAuth2Config_Validate(t *testing.T) {
 }
 
 func TestOAuth2Config_GetType(t *testing.T) {
-	config := &OAuth2Config{Type: OAuth2Scheme}
+	config := &RelixyOAuth2Config{Type: OAuth2Scheme}
 	assert.Equal(t, OAuth2Scheme, config.GetType())
 }
 
 func TestOpenIDConnectConfig_Validate(t *testing.T) {
 	testCases := []struct {
 		name        string
-		config      *OpenIDConnectConfig
+		config      *RelixyOpenIDConnectConfig
 		expectError bool
 	}{
 		{
 			name: "valid config",
-			config: &OpenIDConnectConfig{
+			config: &RelixyOpenIDConnectConfig{
 				Type:             OpenIDConnectScheme,
 				OpenIDConnectURL: "https://example.com/.well-known/openid-configuration",
 			},
@@ -203,7 +203,7 @@ func TestOpenIDConnectConfig_Validate(t *testing.T) {
 		},
 		{
 			name: "missing URL",
-			config: &OpenIDConnectConfig{
+			config: &RelixyOpenIDConnectConfig{
 				Type: OpenIDConnectScheme,
 			},
 			expectError: true,
@@ -223,33 +223,33 @@ func TestOpenIDConnectConfig_Validate(t *testing.T) {
 }
 
 func TestOpenIDConnectConfig_GetType(t *testing.T) {
-	config := &OpenIDConnectConfig{Type: OpenIDConnectScheme}
+	config := &RelixyOpenIDConnectConfig{Type: OpenIDConnectScheme}
 	assert.Equal(t, OpenIDConnectScheme, config.GetType())
 }
 
 func TestCookieAuthConfig_Validate(t *testing.T) {
-	config := &CookieAuthConfig{Type: CookieAuthScheme}
+	config := &RelixyCookieAuthConfig{Type: CookieAuthScheme}
 	err := config.Validate()
 	assert.NilError(t, err)
 }
 
 func TestCookieAuthConfig_GetType(t *testing.T) {
-	config := &CookieAuthConfig{}
+	config := &RelixyCookieAuthConfig{}
 	assert.Equal(t, CookieAuthScheme, config.GetType())
 }
 
 func TestMutualTLSAuthConfig_Validate(t *testing.T) {
-	config := &MutualTLSAuthConfig{Type: MutualTLSScheme}
+	config := &RelixyCookieAuthConfig{Type: MutualTLSScheme}
 	err := config.Validate()
 	assert.NilError(t, err)
 }
 
 func TestMutualTLSAuthConfig_GetType(t *testing.T) {
-	config := &MutualTLSAuthConfig{}
+	config := &RelixyCookieAuthConfig{}
 	assert.Equal(t, MutualTLSScheme, config.GetType())
 }
 
-func TestRelyProxySecurityScheme_UnmarshalJSON(t *testing.T) {
+func TestRelixySecurityScheme_UnmarshalJSON(t *testing.T) {
 	testCases := []struct {
 		name        string
 		jsonData    string
@@ -295,7 +295,7 @@ func TestRelyProxySecurityScheme_UnmarshalJSON(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var scheme RelyProxySecurityScheme
+			var scheme RelixySecurityScheme
 			err := json.Unmarshal([]byte(tc.jsonData), &scheme)
 			if tc.expectError {
 				assert.Assert(t, err != nil)
@@ -307,9 +307,9 @@ func TestRelyProxySecurityScheme_UnmarshalJSON(t *testing.T) {
 	}
 }
 
-func TestRelyProxySecurityScheme_MarshalJSON(t *testing.T) {
-	scheme := RelyProxySecurityScheme{
-		SecuritySchemer: &CookieAuthConfig{
+func TestRelixySecurityScheme_MarshalJSON(t *testing.T) {
+	scheme := RelixySecurityScheme{
+		SecuritySchemer: &RelixyCookieAuthConfig{
 			Type: CookieAuthScheme,
 		},
 	}
@@ -324,7 +324,7 @@ func TestRelyProxySecurityScheme_MarshalJSON(t *testing.T) {
 	assert.Equal(t, "cookie", result["type"])
 }
 
-func TestRelyProxySecurityScheme_UnmarshalYAML(t *testing.T) {
+func TestRelixySecurityScheme_UnmarshalYAML(t *testing.T) {
 	testCases := []struct {
 		name        string
 		yamlData    string
@@ -356,7 +356,7 @@ value:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var scheme RelyProxySecurityScheme
+			var scheme RelixySecurityScheme
 			err := yaml.Unmarshal([]byte(tc.yamlData), &scheme)
 			if tc.expectError {
 				assert.Assert(t, err != nil)
@@ -368,16 +368,16 @@ value:
 	}
 }
 
-func TestRelyProxySecurityScheme_Validate(t *testing.T) {
+func TestRelixySecurityScheme_Validate(t *testing.T) {
 	testCases := []struct {
 		name        string
-		scheme      RelyProxySecurityScheme
+		scheme      RelixySecurityScheme
 		expectError bool
 	}{
 		{
 			name: "valid scheme",
-			scheme: RelyProxySecurityScheme{
-				SecuritySchemer: &CookieAuthConfig{
+			scheme: RelixySecurityScheme{
+				SecuritySchemer: &RelixyCookieAuthConfig{
 					Type: CookieAuthScheme,
 				},
 			},
@@ -385,7 +385,7 @@ func TestRelyProxySecurityScheme_Validate(t *testing.T) {
 		},
 		{
 			name: "nil schemer",
-			scheme: RelyProxySecurityScheme{
+			scheme: RelixySecurityScheme{
 				SecuritySchemer: nil,
 			},
 			expectError: true,

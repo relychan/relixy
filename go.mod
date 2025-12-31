@@ -6,17 +6,17 @@ require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-viper/mapstructure/v2 v2.4.0
-	github.com/hasura/goenvconf v0.5.1
+	github.com/hasura/goenvconf v0.6.1
 	github.com/hasura/gotel v0.5.0
 	github.com/invopop/jsonschema v0.13.0
 	github.com/jmespath-community/go-jmespath v1.1.2-0.20250228093220-ef5fae83c6c0
-	github.com/pb33f/libopenapi v0.31.0
+	github.com/pb33f/libopenapi v0.31.1
 	github.com/pb33f/ordered-map/v2 v2.3.0
-	github.com/relychan/gohttpc v0.0.0-20251221091317-e15eaee60ca3
+	github.com/relychan/gohttpc v0.0.0-20251231181802-fa4980777a9c
 	github.com/relychan/gohttps v0.0.0-20251206085650-5f2727ade1fa
-	github.com/relychan/gotransform v0.0.0-20251214152200-6dcd174d5492
-	github.com/relychan/goutils v0.0.0-20251214090424-aad6497ba9b4
-	github.com/relychan/rely-auth v0.0.1
+	github.com/relychan/gotransform v0.0.0-20251230164839-634794cf57f2
+	github.com/relychan/goutils v0.0.0-20251230062103-93a30b1ea43d
+	github.com/relychan/rely-auth v0.0.0-20251231030447-86a180e9dbd9
 	github.com/vektah/gqlparser v1.3.1
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	go.opentelemetry.io/otel v1.39.0
@@ -43,7 +43,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.4 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/influxdata/tdigest v0.0.1 // indirect
 	github.com/klauspost/compress v1.18.2 // indirect

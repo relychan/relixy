@@ -26,7 +26,7 @@ func NewState(
 	conf *RelixyServerConfig,
 	ts *gotel.OTelExporters,
 ) (*types.State, error) {
-	result, err := goutils.ReadJSONOrYAMLFile[schema.RelyProxyAPIDocument](conf.GetConfigPath())
+	result, err := goutils.ReadJSONOrYAMLFile[schema.RelixyAPIDocument](conf.GetConfigPath())
 	if err != nil {
 		return nil, err
 	}

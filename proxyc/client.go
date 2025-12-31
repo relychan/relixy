@@ -16,7 +16,7 @@ import (
 type ProxyClient struct {
 	clientOptions  *ProxyClientOptions
 	lbClient       *loadbalancer.LoadBalancerClient
-	metadata       *schema.RelyProxyAPIDocument
+	metadata       *schema.RelixyAPIDocument
 	node           *internal.Node
 	defaultHeaders map[string]string
 }
@@ -31,7 +31,7 @@ type ProxyClientOptions struct {
 // NewProxyClient creates a proxy client from the API document.
 func NewProxyClient(
 	ctx context.Context,
-	metadata *schema.RelyProxyAPIDocument,
+	metadata *schema.RelixyAPIDocument,
 	clientOptions *ProxyClientOptions,
 ) (*ProxyClient, error) {
 	client := &ProxyClient{
@@ -49,7 +49,7 @@ func NewProxyClient(
 }
 
 // Metadata returns the metadata of the proxy client.
-func (pc *ProxyClient) Metadata() *schema.RelyProxyAPIDocument {
+func (pc *ProxyClient) Metadata() *schema.RelixyAPIDocument {
 	return pc.metadata
 }
 
@@ -171,7 +171,7 @@ func (pc *ProxyClient) initServers() error {
 }
 
 func (pc *ProxyClient) initServer(
-	server *schema.RelyProxyServer,
+	server *schema.RelixyServer,
 	healthCheckBuilder *loadbalancer.HTTPHealthCheckPolicyBuilder,
 ) (*loadbalancer.Host, error) {
 	rawServerURL, err := server.URL.GetOrDefault("")

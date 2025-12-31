@@ -215,24 +215,25 @@
   "RelyAuthDefinition": {
    "oneOf": [
     {
-     "$ref": "#/$defs/RelyAuthAPIKeyConfig"
+     "$ref": "#/$defs/RelyAuthAPIKeyConfig",
+     "description": "Configurations for HTTP authentication with static secrets"
     },
     {
-     "$ref": "#/$defs/RelyAuthJWTConfig"
+     "$ref": "#/$defs/RelyAuthJWTConfig",
+     "description": "Configurations to which the incoming JWT will be verified and decoded to extract the session variable claims"
     },
     {
-     "$ref": "#/$defs/RelyAuthNoAuthConfig"
+     "$ref": "#/$defs/RelyAuthNoAuthConfig",
+     "description": "The session variables configuration for unauthenticated users"
     },
     {
-     "$ref": "#/$defs/RelyAuthWebhookConfig"
+     "$ref": "#/$defs/RelyAuthWebhookConfig",
+     "description": "Configurations for the webhook authentication mode"
     }
    ]
   },
   "RelyAuthSettings": {
    "properties": {
-    "strict": {
-     "type": "boolean"
-    },
     "reloadInterval": {
      "type": "integer",
      "minimum": 0,

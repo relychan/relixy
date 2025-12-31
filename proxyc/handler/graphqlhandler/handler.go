@@ -22,7 +22,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// GraphQLHandler implements the RelyProxyHandler interface for GraphQL proxy.
+// GraphQLHandler implements the RelixyHandler interface for GraphQL proxy.
 type GraphQLHandler struct {
 	requestPath         string
 	parameters          []schema.Parameter
@@ -32,14 +32,14 @@ type GraphQLHandler struct {
 	variables           map[string]graphqlVariable
 	extensions          map[string]graphqlVariable
 	operationName       string
-	responseConfig      schema.RelyProxyGraphQLResponseConfig
+	responseConfig      schema.RelixyGraphQLResponseConfig
 }
 
 // NewGraphQLHandler creates a GraphQL request from operation.
 func NewGraphQLHandler( //nolint:ireturn,nolintlint
-	operation *schema.RelyProxyOperation,
-	options *schema.NewRelyProxyHandlerOptions,
-) (schema.RelyProxyHandler, error) {
+	operation *schema.RelixyOperation,
+	options *schema.NewRelixyHandlerOptions,
+) (schema.RelixyHandler, error) {
 	handler, err := ValidateGraphQLString(operation.Proxy.Request.Query)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 }
 
 // Type returns type of the current handler.
-func (*GraphQLHandler) Type() schema.RelyProxyType {
+func (*GraphQLHandler) Type() schema.RelixyType {
 	return schema.ProxyTypeGraphQL
 }
 
@@ -73,7 +73,7 @@ func (*GraphQLHandler) Type() schema.RelyProxyType {
 func (ge *GraphQLHandler) Handle( //nolint:funlen
 	ctx context.Context,
 	request *http.Request,
-	options *schema.RelyProxyHandleOptions,
+	options *schema.RelixyHandleOptions,
 ) (*http.Response, any, error) {
 	span := trace.SpanFromContext(ctx)
 
@@ -313,8 +313,8 @@ func (ge *GraphQLHandler) resolveRequestVariables(
 				results[varDef.Variable] = variable.Default
 			}
 
-			if variable.Expression != "" {
-				value, err := jmespath.Search(variable.Expression, rawRequestData)
+			if variable.Path != "" {
+				value, err := jmespath.Search(variable.Path, rawRequestData)
 				if err != nil {
 					return nil, fmt.Errorf(
 						"failed to select value of variable %s: %w",
@@ -391,8 +391,8 @@ func (ge *GraphQLHandler) resolveRequestExtensions(
 			results[key] = extension.Default
 		}
 
-		if extension.Expression != "" {
-			value, err := jmespath.Search(extension.Expression, rawRequestData)
+		if extension.Path != "" {
+			value, err := jmespath.Search(extension.Path, rawRequestData)
 			if err != nil {
 				return nil, fmt.Errorf("failed to select value of extension %s: %w", key, err)
 			}

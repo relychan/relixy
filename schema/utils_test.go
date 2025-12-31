@@ -10,7 +10,7 @@ func TestExtractCommonParametersOfOperation(t *testing.T) {
 	testCases := []struct {
 		name               string
 		pathParams         []Parameter
-		operation          *RelyProxyOperation
+		operation          *RelixyOperation
 		expectedPathParams []Parameter
 		expectedOpParams   []Parameter
 	}{
@@ -24,14 +24,14 @@ func TestExtractCommonParametersOfOperation(t *testing.T) {
 		{
 			name:               "operation with no parameters",
 			pathParams:         []Parameter{{Name: "id", In: InPath}},
-			operation:          &RelyProxyOperation{Parameters: []Parameter{}},
+			operation:          &RelixyOperation{Parameters: []Parameter{}},
 			expectedPathParams: []Parameter{{Name: "id", In: InPath}},
 			expectedOpParams:   []Parameter{},
 		},
 		{
 			name:       "operation with duplicate path parameter",
 			pathParams: []Parameter{{Name: "id", In: InPath}},
-			operation: &RelyProxyOperation{
+			operation: &RelixyOperation{
 				Parameters: []Parameter{
 					{Name: "id", In: InPath},
 					{Name: "filter", In: InQuery},
@@ -43,7 +43,7 @@ func TestExtractCommonParametersOfOperation(t *testing.T) {
 		{
 			name:       "operation with new path parameter",
 			pathParams: []Parameter{{Name: "id", In: InPath}},
-			operation: &RelyProxyOperation{
+			operation: &RelixyOperation{
 				Parameters: []Parameter{
 					{Name: "commentId", In: InPath},
 					{Name: "filter", In: InQuery},
@@ -58,7 +58,7 @@ func TestExtractCommonParametersOfOperation(t *testing.T) {
 		{
 			name:       "operation with query and header parameters",
 			pathParams: []Parameter{{Name: "id", In: InPath}},
-			operation: &RelyProxyOperation{
+			operation: &RelixyOperation{
 				Parameters: []Parameter{
 					{Name: "filter", In: InQuery},
 					{Name: "Authorization", In: InHeader},
@@ -73,7 +73,7 @@ func TestExtractCommonParametersOfOperation(t *testing.T) {
 		{
 			name:       "operation with same name but different location",
 			pathParams: []Parameter{{Name: "id", In: InPath}},
-			operation: &RelyProxyOperation{
+			operation: &RelixyOperation{
 				Parameters: []Parameter{
 					{Name: "id", In: InQuery},
 				},

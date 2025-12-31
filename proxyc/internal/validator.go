@@ -9,7 +9,7 @@ import (
 )
 
 // ValidateOperations validate operations of a route.
-func ValidateOperations(pair *orderedmap.Pair[string, *schema.RelyProxyPathItem]) error {
+func ValidateOperations(pair *orderedmap.Pair[string, *schema.RelixyPathItem]) error {
 	operation := pair.Value
 
 	err := validateOperation(operation.Get)
@@ -63,7 +63,7 @@ func ValidateOperations(pair *orderedmap.Pair[string, *schema.RelyProxyPathItem]
 	return nil
 }
 
-func validateOperation(operation *schema.RelyProxyOperation) error {
+func validateOperation(operation *schema.RelixyOperation) error {
 	if operation == nil {
 		return nil
 	}

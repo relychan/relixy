@@ -59,10 +59,16 @@ func ParseSecuritySchemeType(value string) (SecuritySchemeType, error) {
 type OAuthFlowType string
 
 const (
+	// AuthorizationCodeFlow is the constant string for the OAuth Authorization Code flow.
 	AuthorizationCodeFlow OAuthFlowType = "authorizationCode"
-	ImplicitFlow          OAuthFlowType = "implicit"
-	PasswordFlow          OAuthFlowType = "password"
+	// ImplicitFlow is the constant string for the OAuth Implicit flow.
+	ImplicitFlow OAuthFlowType = "implicit"
+	// PasswordFlow is the constant string for the OAuth Resource Owner Password flow.
+	PasswordFlow OAuthFlowType = "password"
+	// ClientCredentialsFlow is the constant string for the OAuth Client Credentials flow.
 	ClientCredentialsFlow OAuthFlowType = "clientCredentials"
+	// DeviceAuthorizationFlow is the constant string for the OAuth Device Authorization flow.
+	DeviceAuthorizationFlow OAuthFlowType = "deviceAuthorization"
 )
 
 var enumValuesOAuthFlows = []OAuthFlowType{
@@ -70,6 +76,7 @@ var enumValuesOAuthFlows = []OAuthFlowType{
 	ImplicitFlow,
 	PasswordFlow,
 	ClientCredentialsFlow,
+	DeviceAuthorizationFlow,
 }
 
 // ParseOAuthFlowType parses OAuthFlowType from string.
@@ -86,12 +93,12 @@ func ParseOAuthFlowType(value string) (OAuthFlowType, error) {
 	return result, nil
 }
 
-// RelyProxyType represents enums of proxy types.
-type RelyProxyType string
+// RelixyType represents enums of proxy types.
+type RelixyType string
 
 const (
-	ProxyTypeGraphQL RelyProxyType = "graphql"
-	ProxyTypeREST    RelyProxyType = "rest"
+	ProxyTypeGraphQL RelixyType = "graphql"
+	ProxyTypeREST    RelixyType = "rest"
 )
 
 // PrimitiveType represents primitive data types.
@@ -110,7 +117,28 @@ const (
 	Array PrimitiveType = "array"
 	// Object represents object data types.
 	Object PrimitiveType = "object"
+	// Null represents the null data type.
+	Null PrimitiveType = "null"
 )
+
+var enumValuePrimitiveTypes = []PrimitiveType{
+	String,
+	Number,
+	Integer,
+	Boolean,
+	Array,
+	Object,
+	Null,
+}
+
+// JSONSchema defines a custom definition for JSON schema.
+func (PrimitiveType) JSONSchema() *jsonschema.Schema {
+	return &jsonschema.Schema{
+		Type:        "string",
+		Description: "A primitive type in OpenAPI specification",
+		Enum:        goutils.ToAnySlice(enumValuePrimitiveTypes),
+	}
+}
 
 // ParameterLocation is [the location] of the parameter.
 // Possible values are "query", "header", "path" or "cookie".

@@ -52,7 +52,7 @@ func (pc *ProxyClient) Execute(
 
 	span.SetAttributes(attribute.String("http.request.proxy.type", string(route.Handler.Type())))
 
-	options := &schema.RelyProxyHandleOptions{
+	options := &schema.RelixyHandleOptions{
 		Settings:       &pc.metadata.Settings,
 		ParamValues:    route.ParamValues,
 		HTTPClient:     pc.lbClient,

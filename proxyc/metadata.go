@@ -11,7 +11,7 @@ import (
 // BuildMetadataTree builds the metadata tree from the API document.
 func BuildMetadataTree(
 	ctx context.Context,
-	document *schema.RelyProxyAPIDocument,
+	document *schema.RelixyAPIDocument,
 	clientOptions *ProxyClientOptions,
 ) (*internal.Node, error) {
 	rootNode := new(internal.Node)

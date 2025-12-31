@@ -25,7 +25,7 @@ const (
 // Route holds parameter values from the request path.
 type Route struct {
 	Node        *Node
-	Handler     schema.RelyProxyHandler
+	Handler     schema.RelixyHandler
 	ParamValues map[string]string
 }
 
@@ -34,7 +34,7 @@ type Route struct {
 //
 // [Chi router]: https://github.com/go-chi/chi/tree/v5.2.3
 type Node struct {
-	handlers map[string]schema.RelyProxyHandler
+	handlers map[string]schema.RelixyHandler
 
 	// regexp matcher for regexp nodes
 	rex *regexp.Regexp
@@ -64,7 +64,7 @@ type Node struct {
 
 func (n *Node) InsertRoute(
 	pattern string,
-	operations *schema.RelyProxyPathItem,
+	operations *schema.RelixyPathItem,
 	options *InsertRouteOptions,
 ) (*Node, error) {
 	var parent *Node
@@ -333,7 +333,7 @@ func (n *Node) replaceChild(label, tail byte, child *Node) error {
 
 func (n *Node) setEndpoint(
 	pattern string,
-	operations *schema.RelyProxyPathItem,
+	operations *schema.RelixyPathItem,
 	options *InsertRouteOptions,
 ) error {
 	paramKeys, err := patParamKeys(pattern)
@@ -361,8 +361,8 @@ func (n *Node) setEndpoint(
 			Name:     key,
 			In:       schema.InPath,
 			Required: goutils.ToPtr(true),
-			Schema: &schema.RelyProxySchema{
-				Type: []string{string(schema.String)},
+			Schema: &schema.RelixySchema{
+				Type: []schema.PrimitiveType{schema.String},
 			},
 		})
 	}
@@ -370,12 +370,12 @@ func (n *Node) setEndpoint(
 	operations.Parameters = params
 	n.pattern = pattern
 
-	n.handlers = map[string]schema.RelyProxyHandler{}
+	n.handlers = map[string]schema.RelixyHandler{}
 
 	if operations.Get != nil {
 		method := http.MethodGet
 
-		handler, err := NewProxyHandler(operations.Get, &schema.NewRelyProxyHandlerOptions{
+		handler, err := NewProxyHandler(operations.Get, &schema.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
@@ -390,7 +390,7 @@ func (n *Node) setEndpoint(
 	if operations.Post != nil {
 		method := http.MethodPost
 
-		handler, err := NewProxyHandler(operations.Post, &schema.NewRelyProxyHandlerOptions{
+		handler, err := NewProxyHandler(operations.Post, &schema.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
@@ -405,7 +405,7 @@ func (n *Node) setEndpoint(
 	if operations.Put != nil {
 		method := http.MethodPut
 
-		handler, err := NewProxyHandler(operations.Put, &schema.NewRelyProxyHandlerOptions{
+		handler, err := NewProxyHandler(operations.Put, &schema.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
@@ -420,7 +420,7 @@ func (n *Node) setEndpoint(
 	if operations.Patch != nil {
 		method := http.MethodPatch
 
-		handler, err := NewProxyHandler(operations.Patch, &schema.NewRelyProxyHandlerOptions{
+		handler, err := NewProxyHandler(operations.Patch, &schema.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
@@ -435,7 +435,7 @@ func (n *Node) setEndpoint(
 	if operations.Delete != nil {
 		method := http.MethodDelete
 
-		handler, err := NewProxyHandler(operations.Delete, &schema.NewRelyProxyHandlerOptions{
+		handler, err := NewProxyHandler(operations.Delete, &schema.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,

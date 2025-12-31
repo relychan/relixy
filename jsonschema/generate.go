@@ -16,7 +16,7 @@ import (
 func main() {
 	err := jsonSchemaConfiguration()
 	if err != nil {
-		panic(fmt.Errorf("failed to write jsonschema for RelyProxyAPIDocument: %w", err))
+		panic(fmt.Errorf("failed to write jsonschema for RelixyAPIDocument: %w", err))
 	}
 
 	err = jsonSchemaServerConfiguration()
@@ -37,17 +37,23 @@ func jsonSchemaConfiguration() error {
 		return err
 	}
 
-	reflectSchema := r.Reflect(schema.RelyProxyAPIDocument{})
+	reflectSchema := r.Reflect(schema.RelixyAPIDocument{})
 
 	for _, externalType := range []any{
-		schema.OAuthFlow{},
-		schema.RelyProxyPathItem{},
-		schema.RelyProxyMediaType{},
-		schema.RelyProxyEncoding{},
-		schema.RelyProxyHeader{},
+		schema.RelixyPathItem{},
+		schema.RelixyMediaType{},
+		schema.RelixyEncoding{},
+		schema.RelixyHeader{},
 		schema.GraphQLVariableDefinition{},
-		schema.RelyProxyGraphQLRequestConfig{},
-		schema.RelyProxyGraphQLResponseConfig{},
+		schema.RelixyGraphQLRequestConfig{},
+		schema.RelixyGraphQLResponseConfig{},
+		schema.RelixyAPIKeyAuthConfig{},
+		schema.RelixyHTTPAuthConfig{},
+		schema.RelixyBasicAuthConfig{},
+		schema.RelixyOAuth2Config{},
+		schema.RelixyOpenIDConnectConfig{},
+		schema.RelixyCookieAuthConfig{},
+		schema.RelixyMutualTLSAuthConfig{},
 	} {
 		externalSchema := r.Reflect(externalType)
 
@@ -66,14 +72,30 @@ func jsonSchemaConfiguration() error {
 		Pattern:     `^(\d+(\.\d+)?h)?(\d+(\.\d+)?m)?(\d+(\.\d+)?s)?(\d+(\.\d+)?ms)?$`,
 	}
 
+	reflectSchema.Definitions["TemplateTransformerConfig"] = &jsonschema.Schema{
+		Ref: "https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json",
+	}
+
+	reflectSchema.Definitions["HTTPClientConfig"] = &jsonschema.Schema{
+		Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json",
+	}
+
+	reflectSchema.Definitions["TLSConfig"] = &jsonschema.Schema{
+		Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json#/$defs/TLSConfig",
+	}
+
+	reflectSchema.Definitions["HTTPHealthCheckConfig"] = &jsonschema.Schema{
+		Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json#/$defs/HTTPHealthCheckConfig",
+	}
+
 	// delete unused types
 	delete(
 		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxyEncoding]",
+		"OrderedMap[string,*github.com/relychan/relixy/schema.RelixyEncoding]",
 	)
 	delete(
 		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxyPathItem]",
+		"OrderedMap[string,*github.com/relychan/relixy/schema.RelixyPathItem]",
 	)
 	delete(
 		reflectSchema.Definitions,
@@ -81,24 +103,23 @@ func jsonSchemaConfiguration() error {
 	)
 	delete(
 		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxyHeader]",
+		"OrderedMap[string,*github.com/relychan/relixy/schema.RelixyHeader]",
 	)
 	delete(
 		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxySchema]",
+		"OrderedMap[string,*github.com/relychan/relixy/schema.RelixySchema]",
 	)
 	delete(
 		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxyMediaType]",
+		"OrderedMap[string,*github.com/relychan/relixy/schema.RelixyMediaType]",
 	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,[]string]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,string]",
-	)
+	delete(reflectSchema.Definitions, "OrderedMap[string,[]string]")
+	delete(reflectSchema.Definitions, "OrderedMap[string,string]")
+	delete(reflectSchema.Definitions, "HTTPTransportConfig")
+	delete(reflectSchema.Definitions, "HTTPRetryConfig")
+	delete(reflectSchema.Definitions, "TLSClientCertificate")
+	delete(reflectSchema.Definitions, "HTTPDialerConfig")
+	delete(reflectSchema.Definitions, "HTTPClientAuthConfig")
 
 	buffer := new(bytes.Buffer)
 	enc := json.NewEncoder(buffer)
@@ -141,7 +162,7 @@ func jsonSchemaServerConfiguration() error {
 	}
 
 	return os.WriteFile( //nolint:gosec
-		"server.schema.json",
+		"relixy-server.schema.json",
 		buffer.Bytes(), 0o644,
 	)
 }
