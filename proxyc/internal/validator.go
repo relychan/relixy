@@ -5,11 +5,12 @@ import (
 
 	orderedmap "github.com/pb33f/ordered-map/v2"
 	"github.com/relychan/relixy/proxyc/handler/graphqlhandler"
-	"github.com/relychan/relixy/schema"
+	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/openapi"
 )
 
 // ValidateOperations validate operations of a route.
-func ValidateOperations(pair *orderedmap.Pair[string, *schema.RelixyPathItem]) error {
+func ValidateOperations(pair *orderedmap.Pair[string, *openapi.RelixyOpenAPIv3PathItem]) error {
 	operation := pair.Value
 
 	err := validateOperation(operation.Get)
@@ -63,13 +64,13 @@ func ValidateOperations(pair *orderedmap.Pair[string, *schema.RelixyPathItem]) e
 	return nil
 }
 
-func validateOperation(operation *schema.RelixyOperation) error {
+func validateOperation(operation *openapi.RelixyOpenAPIv3Operation) error {
 	if operation == nil {
 		return nil
 	}
 
 	switch operation.Proxy.Type {
-	case schema.ProxyTypeGraphQL:
+	case base_schema.ProxyTypeGraphQL:
 		_, err := graphqlhandler.ValidateGraphQLString(operation.Proxy.Request.Query)
 		if err != nil {
 			return err

@@ -275,17 +275,19 @@ func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) 
 	assert.NilError(t, err)
 
 	envVars.Auth = auth.RelyAuthConfig{
-		Settings: &authmode.RelyAuthSettings{},
-		Definitions: []auth.RelyAuthDefinition{
-			{
-				RelyAuthDefinitionInterface: apikey.NewRelyAuthAPIKeyConfig(
-					authscheme.TokenLocation{
-						In:   authscheme.InHeader,
-						Name: "Authorization",
-					},
-					goenvconf.NewEnvStringValue("test-secret"),
-					map[string]goenvconf.EnvAny{},
-				),
+		Definition: auth.RelyAuthDefinition{
+			Settings: &authmode.RelyAuthSettings{},
+			Modes: []auth.RelyAuthMode{
+				{
+					RelyAuthModeInterface: apikey.NewRelyAuthAPIKeyConfig(
+						authscheme.TokenLocation{
+							In:   authscheme.InHeader,
+							Name: "Authorization",
+						},
+						goenvconf.NewEnvStringValue("test-secret"),
+						map[string]goenvconf.EnvAny{},
+					),
+				},
 			},
 		},
 	}

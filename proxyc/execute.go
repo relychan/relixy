@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/relychan/goutils"
-	"github.com/relychan/relixy/schema"
+	"github.com/relychan/relixy/schema/openapi"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
@@ -52,7 +52,7 @@ func (pc *ProxyClient) Execute(
 
 	span.SetAttributes(attribute.String("http.request.proxy.type", string(route.Handler.Type())))
 
-	options := &schema.RelixyHandleOptions{
+	options := &openapi.RelixyHandleOptions{
 		Settings:       &pc.metadata.Settings,
 		ParamValues:    route.ParamValues,
 		HTTPClient:     pc.lbClient,

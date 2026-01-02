@@ -10,7 +10,8 @@ import (
 	"strings"
 
 	"github.com/relychan/goutils"
-	"github.com/relychan/relixy/schema"
+	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/openapi"
 )
 
 type nodeTyp uint8
@@ -25,7 +26,7 @@ const (
 // Route holds parameter values from the request path.
 type Route struct {
 	Node        *Node
-	Handler     schema.RelixyHandler
+	Handler     openapi.RelixyHandler
 	ParamValues map[string]string
 }
 
@@ -34,7 +35,7 @@ type Route struct {
 //
 // [Chi router]: https://github.com/go-chi/chi/tree/v5.2.3
 type Node struct {
-	handlers map[string]schema.RelixyHandler
+	handlers map[string]openapi.RelixyHandler
 
 	// regexp matcher for regexp nodes
 	rex *regexp.Regexp
@@ -64,7 +65,7 @@ type Node struct {
 
 func (n *Node) InsertRoute(
 	pattern string,
-	operations *schema.RelixyPathItem,
+	operations *openapi.RelixyOpenAPIv3PathItem,
 	options *InsertRouteOptions,
 ) (*Node, error) {
 	var parent *Node
@@ -333,7 +334,7 @@ func (n *Node) replaceChild(label, tail byte, child *Node) error {
 
 func (n *Node) setEndpoint(
 	pattern string,
-	operations *schema.RelixyPathItem,
+	operations *openapi.RelixyOpenAPIv3PathItem,
 	options *InsertRouteOptions,
 ) error {
 	paramKeys, err := patParamKeys(pattern)
@@ -343,26 +344,26 @@ func (n *Node) setEndpoint(
 
 	params := operations.Parameters
 
-	params = schema.ExtractCommonParametersOfOperation(params, operations.Get)
-	params = schema.ExtractCommonParametersOfOperation(params, operations.Post)
-	params = schema.ExtractCommonParametersOfOperation(params, operations.Put)
-	params = schema.ExtractCommonParametersOfOperation(params, operations.Patch)
-	params = schema.ExtractCommonParametersOfOperation(params, operations.Delete)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Get)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Post)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Put)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Patch)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Delete)
 
 	// validates and add unknown parameters from the request pattern
 	for _, key := range paramKeys {
-		if slices.ContainsFunc(params, func(param schema.Parameter) bool {
-			return param.In == schema.InPath && param.Name == key
+		if slices.ContainsFunc(params, func(param openapi.Parameter) bool {
+			return param.In == openapi.InPath && param.Name == key
 		}) {
 			continue
 		}
 
-		params = append(params, schema.Parameter{
+		params = append(params, openapi.Parameter{
 			Name:     key,
-			In:       schema.InPath,
+			In:       openapi.InPath,
 			Required: goutils.ToPtr(true),
-			Schema: &schema.RelixySchema{
-				Type: []schema.PrimitiveType{schema.String},
+			Schema: &openapi.RelixyOpenAPIv3Schema{
+				Type: []base_schema.PrimitiveType{base_schema.String},
 			},
 		})
 	}
@@ -370,12 +371,12 @@ func (n *Node) setEndpoint(
 	operations.Parameters = params
 	n.pattern = pattern
 
-	n.handlers = map[string]schema.RelixyHandler{}
+	n.handlers = map[string]openapi.RelixyHandler{}
 
 	if operations.Get != nil {
 		method := http.MethodGet
 
-		handler, err := NewProxyHandler(operations.Get, &schema.NewRelixyHandlerOptions{
+		handler, err := NewProxyHandler(operations.Get, &openapi.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
@@ -390,7 +391,7 @@ func (n *Node) setEndpoint(
 	if operations.Post != nil {
 		method := http.MethodPost
 
-		handler, err := NewProxyHandler(operations.Post, &schema.NewRelixyHandlerOptions{
+		handler, err := NewProxyHandler(operations.Post, &openapi.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
@@ -405,7 +406,7 @@ func (n *Node) setEndpoint(
 	if operations.Put != nil {
 		method := http.MethodPut
 
-		handler, err := NewProxyHandler(operations.Put, &schema.NewRelixyHandlerOptions{
+		handler, err := NewProxyHandler(operations.Put, &openapi.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
@@ -420,7 +421,7 @@ func (n *Node) setEndpoint(
 	if operations.Patch != nil {
 		method := http.MethodPatch
 
-		handler, err := NewProxyHandler(operations.Patch, &schema.NewRelixyHandlerOptions{
+		handler, err := NewProxyHandler(operations.Patch, &openapi.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
@@ -435,7 +436,7 @@ func (n *Node) setEndpoint(
 	if operations.Delete != nil {
 		method := http.MethodDelete
 
-		handler, err := NewProxyHandler(operations.Delete, &schema.NewRelixyHandlerOptions{
+		handler, err := NewProxyHandler(operations.Delete, &openapi.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,

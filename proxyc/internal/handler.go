@@ -6,7 +6,8 @@ import (
 
 	"github.com/relychan/relixy/proxyc/handler/graphqlhandler"
 	"github.com/relychan/relixy/proxyc/handler/resthandler"
-	"github.com/relychan/relixy/schema"
+	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/openapi"
 )
 
 var (
@@ -20,17 +21,17 @@ var (
 	ErrReplaceMissingChildNode          = errors.New("replacing missing child node")
 )
 
-var proxyHandlerConstructors = map[schema.RelixyType]schema.NewRelixyHandlerFunc{
-	schema.ProxyTypeREST:    resthandler.NewRESTHandler,
-	schema.ProxyTypeGraphQL: graphqlhandler.NewGraphQLHandler,
+var proxyHandlerConstructors = map[base_schema.RelixyType]openapi.NewRelixyHandlerFunc{
+	base_schema.ProxyTypeREST:    resthandler.NewRESTHandler,
+	base_schema.ProxyTypeGraphQL: graphqlhandler.NewGraphQLHandler,
 }
 
 // NewProxyHandler creates a proxy handler by type.
 func NewProxyHandler( //nolint:ireturn
-	operation *schema.RelixyOperation,
-	options *schema.NewRelixyHandlerOptions,
-) (schema.RelixyHandler, error) {
-	proxyType := schema.ProxyTypeREST
+	operation *openapi.RelixyOpenAPIv3Operation,
+	options *openapi.NewRelixyHandlerOptions,
+) (openapi.RelixyHandler, error) {
+	proxyType := base_schema.ProxyTypeREST
 
 	if operation.Proxy.Type != "" {
 		proxyType = operation.Proxy.Type
@@ -46,8 +47,8 @@ func NewProxyHandler( //nolint:ireturn
 
 // RegisterProxyHandler registers the handler to the global registry.
 func RegisterProxyHandler(
-	proxyType schema.RelixyType,
-	constructor schema.NewRelixyHandlerFunc,
+	proxyType base_schema.RelixyType,
+	constructor openapi.NewRelixyHandlerFunc,
 ) {
 	proxyHandlerConstructors[proxyType] = constructor
 }

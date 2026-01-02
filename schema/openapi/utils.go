@@ -1,11 +1,11 @@
-package schema
+package openapi
 
 import "slices"
 
 // ExtractCommonParametersOfOperation extracts common parameters from operation's parameters.
 func ExtractCommonParametersOfOperation(
 	pathParams []Parameter,
-	operation *RelixyOperation,
+	operation *RelixyOpenAPIv3Operation,
 ) []Parameter {
 	if operation == nil || len(operation.Parameters) == 0 {
 		return pathParams

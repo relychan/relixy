@@ -8,9 +8,11 @@ import (
 	"os"
 
 	"github.com/invopop/jsonschema"
+
+	// "github.com/relychan/relixy/config"
+
 	"github.com/relychan/goutils"
-	"github.com/relychan/relixy/config"
-	"github.com/relychan/relixy/schema"
+	"github.com/relychan/relixy/schema/openapi"
 )
 
 func main() {
@@ -19,50 +21,52 @@ func main() {
 		panic(fmt.Errorf("failed to write jsonschema for RelixyAPIDocument: %w", err))
 	}
 
-	err = jsonSchemaServerConfiguration()
-	if err != nil {
-		panic(fmt.Errorf("failed to write jsonschema for RelixyServerConfig: %w", err))
-	}
+	// err = jsonSchemaServerConfiguration()
+	// if err != nil {
+	// 	panic(fmt.Errorf("failed to write jsonschema for RelixyServerConfig: %w", err))
+	// }
 }
 
 func jsonSchemaConfiguration() error {
 	r := new(jsonschema.Reflector)
 
-	err := r.AddGoComments(
-		"github.com/relychan/relixy/schema",
-		"../schema",
-		jsonschema.WithFullComment(),
-	)
-	if err != nil {
-		return err
-	}
-
-	reflectSchema := r.Reflect(schema.RelixyAPIDocument{})
-
-	for _, externalType := range []any{
-		schema.RelixyPathItem{},
-		schema.RelixyMediaType{},
-		schema.RelixyEncoding{},
-		schema.RelixyHeader{},
-		schema.GraphQLVariableDefinition{},
-		schema.RelixyGraphQLRequestConfig{},
-		schema.RelixyGraphQLResponseConfig{},
-		schema.RelixyAPIKeyAuthConfig{},
-		schema.RelixyHTTPAuthConfig{},
-		schema.RelixyBasicAuthConfig{},
-		schema.RelixyOAuth2Config{},
-		schema.RelixyOpenIDConnectConfig{},
-		schema.RelixyCookieAuthConfig{},
-		schema.RelixyMutualTLSAuthConfig{},
-	} {
-		externalSchema := r.Reflect(externalType)
-
-		for key, def := range externalSchema.Definitions {
-			if _, ok := reflectSchema.Definitions[key]; !ok {
-				reflectSchema.Definitions[key] = def
-			}
+	for _, name := range []string{"/schema/openapi", "/schema/base_schema"} {
+		err := r.AddGoComments(
+			"github.com/relychan/relixy"+name,
+			"../schema",
+			jsonschema.WithFullComment(),
+		)
+		if err != nil {
+			return err
 		}
 	}
+
+	reflectSchema := r.Reflect(openapi.RelixyOpenAPIv3Resource{})
+
+	// for _, externalType := range []any{
+	// 	openapi.RelixyOpenAPIv3PathItem{},
+	// 	openapi.RelixyMediaType{},
+	// 	openapi.RelixyEncoding{},
+	// 	openapi.RelixyHeader{},
+	// 	base_schema.GraphQLVariableDefinition{},
+	// 	base_schema.RelixyGraphQLRequestConfig{},
+	// 	base_schema.RelixyGraphQLResponseConfig{},
+	// 	openapi.RelixyAPIKeyAuthConfig{},
+	// 	openapi.RelixyHTTPAuthConfig{},
+	// 	openapi.RelixyBasicAuthConfig{},
+	// 	openapi.RelixyOAuth2Config{},
+	// 	openapi.RelixyOpenIDConnectConfig{},
+	// 	openapi.RelixyCookieAuthConfig{},
+	// 	openapi.RelixyMutualTLSAuthConfig{},
+	// } {
+	// 	externalSchema := r.Reflect(externalType)
+
+	// 	for key, def := range externalSchema.Definitions {
+	// 		if _, ok := reflectSchema.Definitions[key]; !ok {
+	// 			reflectSchema.Definitions[key] = def
+	// 		}
+	// 	}
+	// }
 
 	// custom schema types
 	reflectSchema.Definitions["Duration"] = &jsonschema.Schema{
@@ -72,97 +76,97 @@ func jsonSchemaConfiguration() error {
 		Pattern:     `^(\d+(\.\d+)?h)?(\d+(\.\d+)?m)?(\d+(\.\d+)?s)?(\d+(\.\d+)?ms)?$`,
 	}
 
-	reflectSchema.Definitions["TemplateTransformerConfig"] = &jsonschema.Schema{
-		Ref: "https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json",
-	}
+	// reflectSchema.Definitions["TemplateTransformerConfig"] = &jsonschema.Schema{
+	// 	Ref: "https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json",
+	// }
 
-	reflectSchema.Definitions["HTTPClientConfig"] = &jsonschema.Schema{
-		Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json",
-	}
+	// reflectSchema.Definitions["HTTPClientConfig"] = &jsonschema.Schema{
+	// 	Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json",
+	// }
 
-	reflectSchema.Definitions["TLSConfig"] = &jsonschema.Schema{
-		Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json#/$defs/TLSConfig",
-	}
+	// reflectSchema.Definitions["TLSConfig"] = &jsonschema.Schema{
+	// 	Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json#/$defs/TLSConfig",
+	// }
 
-	reflectSchema.Definitions["HTTPHealthCheckConfig"] = &jsonschema.Schema{
-		Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json#/$defs/HTTPHealthCheckConfig",
-	}
+	// reflectSchema.Definitions["HTTPHealthCheckConfig"] = &jsonschema.Schema{
+	// 	Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json#/$defs/HTTPHealthCheckConfig",
+	// }
 
 	// delete unused types
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelixyEncoding]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelixyPathItem]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.GraphQLVariableDefinition]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelixyHeader]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelixySchema]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelixyMediaType]",
-	)
-	delete(reflectSchema.Definitions, "OrderedMap[string,[]string]")
-	delete(reflectSchema.Definitions, "OrderedMap[string,string]")
-	delete(reflectSchema.Definitions, "HTTPTransportConfig")
-	delete(reflectSchema.Definitions, "HTTPRetryConfig")
-	delete(reflectSchema.Definitions, "TLSClientCertificate")
-	delete(reflectSchema.Definitions, "HTTPDialerConfig")
-	delete(reflectSchema.Definitions, "HTTPClientAuthConfig")
+	// delete(
+	// 	reflectSchema.Definitions,
+	// 	"OrderedMap[string,*github.com/relychan/relixy/schema.RelixyEncoding]",
+	// )
+	// delete(
+	// 	reflectSchema.Definitions,
+	// 	"OrderedMap[string,*github.com/relychan/relixy/schema.RelixyPathItem]",
+	// )
+	// delete(
+	// 	reflectSchema.Definitions,
+	// 	"OrderedMap[string,*github.com/relychan/relixy/schema.GraphQLVariableDefinition]",
+	// )
+	// delete(
+	// 	reflectSchema.Definitions,
+	// 	"OrderedMap[string,*github.com/relychan/relixy/schema.RelixyHeader]",
+	// )
+	// delete(
+	// 	reflectSchema.Definitions,
+	// 	"OrderedMap[string,*github.com/relychan/relixy/schema.RelixySchema]",
+	// )
+	// delete(
+	// 	reflectSchema.Definitions,
+	// 	"OrderedMap[string,*github.com/relychan/relixy/schema.RelixyMediaType]",
+	// )
+	// delete(reflectSchema.Definitions, "OrderedMap[string,[]string]")
+	// delete(reflectSchema.Definitions, "OrderedMap[string,string]")
+	// delete(reflectSchema.Definitions, "HTTPTransportConfig")
+	// delete(reflectSchema.Definitions, "HTTPRetryConfig")
+	// delete(reflectSchema.Definitions, "TLSClientCertificate")
+	// delete(reflectSchema.Definitions, "HTTPDialerConfig")
+	// delete(reflectSchema.Definitions, "HTTPClientAuthConfig")
 
 	buffer := new(bytes.Buffer)
 	enc := json.NewEncoder(buffer)
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", " ")
 
-	err = enc.Encode(reflectSchema)
+	err := enc.Encode(reflectSchema)
 	if err != nil {
 		return err
 	}
 
 	return os.WriteFile( //nolint:gosec
-		"relixy.schema.json",
+		"relixy-openapi.schema.json",
 		buffer.Bytes(), 0o644,
 	)
 }
 
-func jsonSchemaServerConfiguration() error {
-	r := new(jsonschema.Reflector)
+// func jsonSchemaServerConfiguration() error {
+// 	r := new(jsonschema.Reflector)
 
-	err := r.AddGoComments(
-		"github.com/relychan/relixy/config",
-		"../config",
-		jsonschema.WithFullComment(),
-	)
-	if err != nil {
-		return err
-	}
+// 	err := r.AddGoComments(
+// 		"github.com/relychan/relixy/config",
+// 		"../config",
+// 		jsonschema.WithFullComment(),
+// 	)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	reflectSchema := r.Reflect(config.RelixyServerConfig{})
+// 	reflectSchema := r.Reflect(config.RelixyServerConfig{})
 
-	buffer := new(bytes.Buffer)
-	enc := json.NewEncoder(buffer)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", " ")
+// 	buffer := new(bytes.Buffer)
+// 	enc := json.NewEncoder(buffer)
+// 	enc.SetEscapeHTML(false)
+// 	enc.SetIndent("", " ")
 
-	err = enc.Encode(reflectSchema)
-	if err != nil {
-		return err
-	}
+// 	err = enc.Encode(reflectSchema)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return os.WriteFile( //nolint:gosec
-		"relixy-server.schema.json",
-		buffer.Bytes(), 0o644,
-	)
-}
+// 	return os.WriteFile( //nolint:gosec
+// 		"relixy-server.schema.json",
+// 		buffer.Bytes(), 0o644,
+// 	)
+// }

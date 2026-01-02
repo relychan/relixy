@@ -104,12 +104,12 @@ github.com/relychan/gohttpc v0.0.0-20251231181802-fa4980777a9c h1:DJdL755og3bdz5
 github.com/relychan/gohttpc v0.0.0-20251231181802-fa4980777a9c/go.mod h1:SrtJMeWhMubXBbBtMEIQp+WgN3wgIPSfT0wkzKAlHOg=
 github.com/relychan/gohttps v0.0.0-20251206085650-5f2727ade1fa h1:IKG7M145hiVMpXRNoFhJ6nOsEeRn+ixOy6Y3fqTg/R8=
 github.com/relychan/gohttps v0.0.0-20251206085650-5f2727ade1fa/go.mod h1:J4ZyZSHr4oGeFlxn+VgYKZ4r5hzZfnoj+yg+1py/UMM=
-github.com/relychan/gotransform v0.0.0-20251230164839-634794cf57f2 h1:I21K245m1F/4VhpZIP/K/cAQZeQ1L++vAnKuPfk9B4o=
-github.com/relychan/gotransform v0.0.0-20251230164839-634794cf57f2/go.mod h1:ubEX5Assz7SC9ftwQtTXL9CG2yeuP+BBISDD+yvc3BU=
+github.com/relychan/gotransform v0.0.0-20260102021651-b47ff69e3c82 h1:BMnvuchm/1K8W7VC+tNN+EZC2SKpKM4ob9e0DWSIVD0=
+github.com/relychan/gotransform v0.0.0-20260102021651-b47ff69e3c82/go.mod h1:ubEX5Assz7SC9ftwQtTXL9CG2yeuP+BBISDD+yvc3BU=
 github.com/relychan/goutils v0.0.0-20251230062103-93a30b1ea43d h1:3ZMRY5rwce4CoCVbNC0JUJtFZSqcYXPncMBgn6Ie1oc=
 github.com/relychan/goutils v0.0.0-20251230062103-93a30b1ea43d/go.mod h1:qDzZOmGZQCAaNLYm2/Ml4LMrNK/CTW6vi10a6LBkyIc=
-github.com/relychan/rely-auth v0.0.0-20251231030447-86a180e9dbd9 h1:KUQdRtXxOPiJ70ecngCp2wZFyn52y9xUfwMZC2TnPMc=
-github.com/relychan/rely-auth v0.0.0-20251231030447-86a180e9dbd9/go.mod h1:UXElegtFhf7fQ7ZpAF5bPjAtCeCl0lTeSje/gHLb4TI=
+github.com/relychan/rely-auth v0.0.0-20260102100750-0fe878d570bd h1:rApH2mxnBqjKvH5JR8cJj4a7YQw5U/sc740UFHDBH68=
+github.com/relychan/rely-auth v0.0.0-20260102100750-0fe878d570bd/go.mod h1:FhVJ0aU/2F6jbxp9IN8xH2NifKcgDbf+T2dU33Nd91c=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
 github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
 github.com/sergi/go-diff v1.0.0 h1:Kpca3qRNrduNnOQeazBd0ysaKrUJiIuISHxogkT9RPQ=

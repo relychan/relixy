@@ -13,7 +13,7 @@ import (
 	"github.com/relychan/goutils"
 	"github.com/relychan/relixy/authn"
 	"github.com/relychan/relixy/proxyc"
-	"github.com/relychan/relixy/schema"
+	"github.com/relychan/relixy/schema/openapi"
 	"github.com/relychan/relixy/types"
 	"github.com/relychan/rely-auth/auth"
 	"github.com/relychan/rely-auth/auth/authmetrics"
@@ -26,7 +26,7 @@ func NewState(
 	conf *RelixyServerConfig,
 	ts *gotel.OTelExporters,
 ) (*types.State, error) {
-	result, err := goutils.ReadJSONOrYAMLFile[schema.RelixyAPIDocument](conf.GetConfigPath())
+	result, err := goutils.ReadJSONOrYAMLFile[openapi.RelixyOpenAPIv3Resource](conf.GetConfigPath())
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func NewState(
 		BasePath: conf.Router.BasePath,
 	}
 
-	httpConfig := result.Settings.HTTP
+	httpConfig := result.Definition.Settings.HTTP
 	if httpConfig == nil {
 		httpConfig = new(httpconfig.HTTPClientConfig)
 	}
@@ -61,7 +61,7 @@ func NewState(
 
 	proxyClientOptions.HTTPClient = httpClient
 
-	proxyClient, err := proxyc.NewProxyClient(ctx, result, proxyClientOptions)
+	proxyClient, err := proxyc.NewProxyClient(ctx, &result.Definition, proxyClientOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create proxy client: %w", err)
 	}
@@ -93,7 +93,7 @@ func SetupMiddlewares(
 		),
 	}
 
-	if len(conf.Auth.Definitions) > 0 {
+	if len(conf.Auth.Definition.Modes) > 0 {
 		// setup global metrics
 		authMetrics, err := authmetrics.NewRelyAuthMetrics(ts.Meter)
 		if err != nil {

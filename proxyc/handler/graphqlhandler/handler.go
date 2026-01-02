@@ -16,7 +16,8 @@ import (
 	"github.com/jmespath-community/go-jmespath"
 	"github.com/relychan/goutils"
 	"github.com/relychan/goutils/httpheader"
-	"github.com/relychan/relixy/schema"
+	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/openapi"
 	"github.com/vektah/gqlparser/ast"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -25,21 +26,21 @@ import (
 // GraphQLHandler implements the RelixyHandler interface for GraphQL proxy.
 type GraphQLHandler struct {
 	requestPath         string
-	parameters          []schema.Parameter
+	parameters          []openapi.Parameter
 	query               string
 	operation           ast.Operation
 	variableDefinitions ast.VariableDefinitionList
 	variables           map[string]graphqlVariable
 	extensions          map[string]graphqlVariable
 	operationName       string
-	responseConfig      schema.RelixyGraphQLResponseConfig
+	responseConfig      base_schema.RelixyGraphQLResponseConfig
 }
 
 // NewGraphQLHandler creates a GraphQL request from operation.
 func NewGraphQLHandler( //nolint:ireturn,nolintlint
-	operation *schema.RelixyOperation,
-	options *schema.NewRelixyHandlerOptions,
-) (schema.RelixyHandler, error) {
+	operation *openapi.RelixyOpenAPIv3Operation,
+	options *openapi.NewRelixyHandlerOptions,
+) (openapi.RelixyHandler, error) {
 	handler, err := ValidateGraphQLString(operation.Proxy.Request.Query)
 	if err != nil {
 		return nil, err
@@ -47,7 +48,7 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 
 	handler.requestPath = operation.Proxy.Path
 	handler.responseConfig = operation.Proxy.Response
-	handler.parameters = schema.MergeParameters(options.Parameters, operation.Parameters)
+	handler.parameters = openapi.MergeParameters(options.Parameters, operation.Parameters)
 
 	getEnvFunc := options.GetEnvFunc()
 
@@ -65,15 +66,15 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 }
 
 // Type returns type of the current handler.
-func (*GraphQLHandler) Type() schema.RelixyType {
-	return schema.ProxyTypeGraphQL
+func (*GraphQLHandler) Type() base_schema.RelixyType {
+	return base_schema.ProxyTypeGraphQL
 }
 
 // Handle resolves the HTTP request and proxies that request to the remote server.
 func (ge *GraphQLHandler) Handle( //nolint:funlen
 	ctx context.Context,
 	request *http.Request,
-	options *schema.RelixyHandleOptions,
+	options *openapi.RelixyHandleOptions,
 ) (*http.Response, any, error) {
 	span := trace.SpanFromContext(ctx)
 
@@ -423,7 +424,7 @@ func (ge *GraphQLHandler) printLog(
 	attrs = append(
 		attrs,
 		slog.String("type", "proxy-handler"),
-		slog.String("handler_type", string(schema.ProxyTypeGraphQL)),
+		slog.String("handler_type", string(base_schema.ProxyTypeGraphQL)),
 		slog.String("operation_name", ge.operationName),
 		slog.String("operation_type", string(ge.operation)),
 		slog.String("request_url", request.URL.String()),

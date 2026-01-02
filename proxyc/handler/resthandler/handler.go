@@ -5,38 +5,39 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/relychan/relixy/schema"
+	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/openapi"
 )
 
 // RESTHandler implements the RelixyHandler interface for REST proxy.
 type RESTHandler struct {
 	method      string
 	requestPath string
-	parameters  []schema.Parameter
+	parameters  []openapi.Parameter
 }
 
 // NewRESTHandler creates a RESTHandler from operation.
 func NewRESTHandler( //nolint:ireturn
-	operation *schema.RelixyOperation,
-	options *schema.NewRelixyHandlerOptions,
-) (schema.RelixyHandler, error) {
+	operation *openapi.RelixyOpenAPIv3Operation,
+	options *openapi.NewRelixyHandlerOptions,
+) (openapi.RelixyHandler, error) {
 	return &RESTHandler{
 		method:      options.Method,
 		requestPath: operation.Proxy.Path,
-		parameters:  schema.MergeParameters(options.Parameters, operation.Parameters),
+		parameters:  openapi.MergeParameters(options.Parameters, operation.Parameters),
 	}, nil
 }
 
 // Type returns type of the current handler.
-func (*RESTHandler) Type() schema.RelixyType {
-	return schema.ProxyTypeREST
+func (*RESTHandler) Type() base_schema.RelixyType {
+	return base_schema.ProxyTypeREST
 }
 
 // Handle resolves the HTTP request and proxies that request to the remote server.
 func (re *RESTHandler) Handle(
 	ctx context.Context,
 	request *http.Request,
-	options *schema.RelixyHandleOptions,
+	options *openapi.RelixyHandleOptions,
 ) (*http.Response, any, error) {
 	requestPath := re.requestPath
 	if requestPath == "" {

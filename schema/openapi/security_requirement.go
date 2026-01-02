@@ -1,4 +1,4 @@
-package schema
+package openapi
 
 // SecurityRequirement wraps the security requirement specification.
 type SecurityRequirement map[string][]string
