@@ -12,16 +12,9 @@ import (
 	"github.com/relychan/rely-auth/auth"
 )
 
-// RelixyRouterConfig holds configurations of the rest handler.
-type RelixyRouterConfig struct {
-	// Set the base path for all API handlers.
-	BasePath string `json:"basePath,omitempty" yaml:"basePath,omitempty" env:"RELIXY_ROUTE_BASE_PATH"`
-}
-
 // RelixyServerConfig holds information of required configurations to run the relixy server.
 type RelixyServerConfig struct {
 	Server     gohttps.ServerConfig `json:"server" yaml:"server"`
-	Router     RelixyRouterConfig   `json:"router,omitempty" yaml:"router"`
 	Telemetry  gotel.OTLPConfig     `json:"telemetry" yaml:"telemetry"`
 	Auth       auth.RelyAuthConfig  `json:"auth" yaml:"auth"`
 	ConfigPath string               `json:"configPath" yaml:"configPath" env:"RELIXY_CONFIG_PATH"`

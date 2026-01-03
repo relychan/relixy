@@ -120,9 +120,9 @@ func (RelixyGraphQLRequestConfig) JSONSchema() *jsonschema.Schema {
 type RelixyGraphQLResponseConfig struct {
 	// HTTP error code will be used if the response body has errors.
 	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
-	HTTPErrorCode *int `json:"httpErrorCode,omitempty" yaml:"httpErrorCode,omitempty" jsonschema:"min=400,max=599,default=400"`
+	HTTPErrorCode *int `json:"httpErrorCode,omitempty" yaml:"httpErrorCode,omitempty" jsonschema:"minimum=400,maximum=599,default=400"`
 	// Configurations for transforming response data.
-	Transform *gotransform.TemplateTransformerConfig `json:"transform,omitempty" yaml:"transform,omitempty" jsonschema:"oneof_ref=https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json,oneof_type=null"` //nolint:lll
+	Transform *gotransform.TemplateTransformerConfig `json:"transform,omitempty" yaml:"transform,omitempty"`
 }
 
 // IsZero checks if the configuration is empty.

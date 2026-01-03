@@ -9,8 +9,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/pb33f/libopenapi/datamodel/high/base"
+	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/goutils"
-	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
 )
 
@@ -65,7 +66,7 @@ type Node struct {
 
 func (n *Node) InsertRoute(
 	pattern string,
-	operations *openapi.RelixyOpenAPIv3PathItem,
+	operations *highv3.PathItem,
 	options *InsertRouteOptions,
 ) (*Node, error) {
 	var parent *Node
@@ -332,9 +333,9 @@ func (n *Node) replaceChild(label, tail byte, child *Node) error {
 	return fmt.Errorf("%w: %s", ErrReplaceMissingChildNode, child.pattern)
 }
 
-func (n *Node) setEndpoint(
+func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 	pattern string,
-	operations *openapi.RelixyOpenAPIv3PathItem,
+	operations *highv3.PathItem,
 	options *InsertRouteOptions,
 ) error {
 	paramKeys, err := patParamKeys(pattern)
@@ -349,22 +350,32 @@ func (n *Node) setEndpoint(
 	params = openapi.ExtractCommonParametersOfOperation(params, operations.Put)
 	params = openapi.ExtractCommonParametersOfOperation(params, operations.Patch)
 	params = openapi.ExtractCommonParametersOfOperation(params, operations.Delete)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Head)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Options)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Query)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Trace)
+
+	if operations.AdditionalOperations != nil {
+		for iter := operations.AdditionalOperations.First(); iter != nil; iter = iter.Next() {
+			params = openapi.ExtractCommonParametersOfOperation(params, iter.Value())
+		}
+	}
 
 	// validates and add unknown parameters from the request pattern
 	for _, key := range paramKeys {
-		if slices.ContainsFunc(params, func(param openapi.Parameter) bool {
+		if slices.ContainsFunc(params, func(param *highv3.Parameter) bool {
 			return param.In == openapi.InPath && param.Name == key
 		}) {
 			continue
 		}
 
-		params = append(params, openapi.Parameter{
+		params = append(params, &highv3.Parameter{
 			Name:     key,
 			In:       openapi.InPath,
 			Required: goutils.ToPtr(true),
-			Schema: &openapi.RelixyOpenAPIv3Schema{
-				Type: []base_schema.PrimitiveType{base_schema.String},
-			},
+			Schema: base.CreateSchemaProxy(&base.Schema{
+				Type: []string{"string"},
+			}),
 		})
 	}
 
@@ -382,7 +393,7 @@ func (n *Node) setEndpoint(
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create handler for GET %s: %w", pattern, err)
+			return newInvalidMetadataError(method, pattern, err)
 		}
 
 		n.handlers[method] = handler
@@ -397,7 +408,7 @@ func (n *Node) setEndpoint(
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create handler for POST %s: %w", pattern, err)
+			return newInvalidMetadataError(method, pattern, err)
 		}
 
 		n.handlers[http.MethodPost] = handler
@@ -412,7 +423,7 @@ func (n *Node) setEndpoint(
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create handler for PUT %s: %w", pattern, err)
+			return newInvalidMetadataError(method, pattern, err)
 		}
 
 		n.handlers[method] = handler
@@ -427,7 +438,7 @@ func (n *Node) setEndpoint(
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create handler for PATCH %s: %w", pattern, err)
+			return newInvalidMetadataError(method, pattern, err)
 		}
 
 		n.handlers[method] = handler
@@ -442,10 +453,92 @@ func (n *Node) setEndpoint(
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create handler for DELETE %s: %w", pattern, err)
+			return newInvalidMetadataError(method, pattern, err)
 		}
 
 		n.handlers[method] = handler
+	}
+
+	if operations.Head != nil {
+		method := http.MethodHead
+
+		handler, err := NewProxyHandler(operations.Head, &openapi.NewRelixyHandlerOptions{
+			Method:     method,
+			Parameters: operations.Parameters,
+			GetEnv:     options.GetEnv,
+		})
+		if err != nil {
+			return newInvalidMetadataError(method, pattern, err)
+		}
+
+		n.handlers[method] = handler
+	}
+
+	if operations.Options != nil {
+		method := http.MethodOptions
+
+		handler, err := NewProxyHandler(operations.Options, &openapi.NewRelixyHandlerOptions{
+			Method:     method,
+			Parameters: operations.Parameters,
+			GetEnv:     options.GetEnv,
+		})
+		if err != nil {
+			return newInvalidMetadataError(method, pattern, err)
+		}
+
+		n.handlers[method] = handler
+	}
+
+	if operations.Query != nil {
+		method := "QUERY"
+
+		handler, err := NewProxyHandler(operations.Query, &openapi.NewRelixyHandlerOptions{
+			Method:     method,
+			Parameters: operations.Parameters,
+			GetEnv:     options.GetEnv,
+		})
+		if err != nil {
+			return newInvalidMetadataError(method, pattern, err)
+		}
+
+		n.handlers[method] = handler
+	}
+
+	if operations.Trace != nil {
+		method := http.MethodTrace
+
+		handler, err := NewProxyHandler(operations.Trace, &openapi.NewRelixyHandlerOptions{
+			Method:     method,
+			Parameters: operations.Parameters,
+			GetEnv:     options.GetEnv,
+		})
+		if err != nil {
+			return newInvalidMetadataError(method, pattern, err)
+		}
+
+		n.handlers[method] = handler
+	}
+
+	if operations.AdditionalOperations != nil {
+		for iter := operations.AdditionalOperations.First(); iter != nil; iter = iter.Next() {
+			method := iter.Key()
+			op := iter.Value()
+
+			if op == nil {
+				continue
+			}
+
+			handler, err := NewProxyHandler(op, &openapi.NewRelixyHandlerOptions{
+				Method:     method,
+				Parameters: operations.Parameters,
+				GetEnv:     options.GetEnv,
+			})
+			if err != nil {
+				return newInvalidMetadataError(method, pattern, err)
+			}
+
+			n.handlers[method] = handler
+		}
 	}
 
 	return nil

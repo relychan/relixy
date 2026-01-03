@@ -1,0 +1,141 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://github.com/relychan/relixy/schema/base_schema/relixy-action",
+ "$ref": "#/$defs/RelixyAction",
+ "$defs": {
+  "EnvAny": {
+   "anyOf": [
+    {
+     "required": [
+      "value"
+     ],
+     "title": "value"
+    },
+    {
+     "required": [
+      "env"
+     ],
+     "title": "env"
+    }
+   ],
+   "properties": {
+    "value": {
+     "description": "Default literal value if the env is empty"
+    },
+    "env": {
+     "type": "string",
+     "description": "Environment variable to be evaluated"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "GraphQLVariableDefinition": {
+   "properties": {
+    "path": {
+     "type": "string"
+    },
+    "default": {
+     "$ref": "#/$defs/EnvAny"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelixyAction": {
+   "oneOf": [
+    {
+     "properties": {
+      "type": {
+       "type": "string",
+       "enum": [
+        "rest"
+       ],
+       "description": "Type of the proxy action"
+      },
+      "path": {
+       "type": "string",
+       "description": "Overrides the request path. Use the original request path if empty"
+      }
+     },
+     "type": "object",
+     "required": [
+      "type"
+     ],
+     "title": "RelixyActionREST",
+     "description": "Proxy configuration to the remote REST service"
+    },
+    {
+     "properties": {
+      "type": {
+       "type": "string",
+       "enum": [
+        "graphql"
+       ],
+       "description": "Type of the proxy action"
+      },
+      "request": {
+       "$ref": "#/$defs/RelixyGraphQLRequestConfig",
+       "description": "Configuration for the GraphQL request"
+      },
+      "response": {
+       "$ref": "#/$defs/RelixyGraphQLResponseConfig",
+       "description": "Configuration for the GraphQL response"
+      }
+     },
+     "type": "object",
+     "required": [
+      "type",
+      "request"
+     ],
+     "title": "RelixyActionGraphQL",
+     "description": "Configurations for proxying request to the remote GraphQL server"
+    }
+   ]
+  },
+  "RelixyGraphQLRequestConfig": {
+   "properties": {
+    "query": {
+     "type": "string",
+     "description": "GraphQL query string to send"
+    },
+    "variables": {
+     "additionalProperties": {
+      "$ref": "#/$defs/GraphQLVariableDefinition"
+     },
+     "type": "object",
+     "description": "Definition of GraphQL variables"
+    },
+    "extensions": {
+     "additionalProperties": {
+      "$ref": "#/$defs/GraphQLVariableDefinition"
+     },
+     "type": "object",
+     "description": "Definition of GraphQL extensions"
+    }
+   },
+   "type": "object",
+   "required": [
+    "query"
+   ]
+  },
+  "RelixyGraphQLResponseConfig": {
+   "properties": {
+    "httpErrorCode": {
+     "type": "integer",
+     "maximum": 599,
+     "minimum": 400,
+     "default": 400
+    },
+    "transform": {
+     "$ref": "#/$defs/TemplateTransformerConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "TemplateTransformerConfig": {
+   "$ref": "https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json"
+  }
+ }
+}

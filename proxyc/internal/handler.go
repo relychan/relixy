@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/relixy/proxyc/handler/graphqlhandler"
 	"github.com/relychan/relixy/proxyc/handler/resthandler"
 	"github.com/relychan/relixy/schema/base_schema"
@@ -28,21 +29,38 @@ var proxyHandlerConstructors = map[base_schema.RelixyType]openapi.NewRelixyHandl
 
 // NewProxyHandler creates a proxy handler by type.
 func NewProxyHandler( //nolint:ireturn
-	operation *openapi.RelixyOpenAPIv3Operation,
+	operation *highv3.Operation,
 	options *openapi.NewRelixyHandlerOptions,
 ) (openapi.RelixyHandler, error) {
-	proxyType := base_schema.ProxyTypeREST
+	var proxyAction base_schema.RelixyAction
 
-	if operation.Proxy.Type != "" {
-		proxyType = operation.Proxy.Type
+	if operation.Extensions != nil {
+		rawProxyAction, exist := operation.Extensions.Get(openapi.XRelyProxyAction)
+		if exist && rawProxyAction != nil {
+			err := rawProxyAction.Decode(&proxyAction)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
-	constructor, ok := proxyHandlerConstructors[proxyType]
+	switch proxyAction.Type {
+	case base_schema.ProxyTypeGraphQL:
+		_, err := graphqlhandler.ValidateGraphQLString(proxyAction.Request.Query)
+		if err != nil {
+			return nil, err
+		}
+	case "":
+		proxyAction.Type = base_schema.ProxyTypeREST
+	default:
+	}
+
+	constructor, ok := proxyHandlerConstructors[proxyAction.Type]
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrUnsupportedProxyType, proxyType)
+		return nil, fmt.Errorf("%w: %s", ErrUnsupportedProxyType, proxyAction.Type)
 	}
 
-	return constructor(operation, options)
+	return constructor(operation, &proxyAction, options)
 }
 
 // RegisterProxyHandler registers the handler to the global registry.

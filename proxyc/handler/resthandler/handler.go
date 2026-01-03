@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http"
 
+	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
 )
@@ -13,19 +14,25 @@ import (
 type RESTHandler struct {
 	method      string
 	requestPath string
-	parameters  []openapi.Parameter
+	parameters  []*highv3.Parameter
 }
 
 // NewRESTHandler creates a RESTHandler from operation.
 func NewRESTHandler( //nolint:ireturn
-	operation *openapi.RelixyOpenAPIv3Operation,
+	operation *highv3.Operation,
+	proxyAction *base_schema.RelixyAction,
 	options *openapi.NewRelixyHandlerOptions,
 ) (openapi.RelixyHandler, error) {
-	return &RESTHandler{
-		method:      options.Method,
-		requestPath: operation.Proxy.Path,
-		parameters:  openapi.MergeParameters(options.Parameters, operation.Parameters),
-	}, nil
+	handler := &RESTHandler{
+		method:     options.Method,
+		parameters: openapi.MergeParameters(options.Parameters, operation.Parameters),
+	}
+
+	if proxyAction != nil && proxyAction.Path != "" {
+		handler.requestPath = proxyAction.Path
+	}
+
+	return handler, nil
 }
 
 // Type returns type of the current handler.

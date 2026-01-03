@@ -14,6 +14,7 @@ import (
 	"github.com/hasura/gotel"
 	"github.com/hasura/gotel/otelutils"
 	"github.com/jmespath-community/go-jmespath"
+	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/goutils"
 	"github.com/relychan/goutils/httpheader"
 	"github.com/relychan/relixy/schema/base_schema"
@@ -26,7 +27,7 @@ import (
 // GraphQLHandler implements the RelixyHandler interface for GraphQL proxy.
 type GraphQLHandler struct {
 	requestPath         string
-	parameters          []openapi.Parameter
+	parameters          []*highv3.Parameter
 	query               string
 	operation           ast.Operation
 	variableDefinitions ast.VariableDefinitionList
@@ -38,27 +39,35 @@ type GraphQLHandler struct {
 
 // NewGraphQLHandler creates a GraphQL request from operation.
 func NewGraphQLHandler( //nolint:ireturn,nolintlint
-	operation *openapi.RelixyOpenAPIv3Operation,
+	operation *highv3.Operation,
+	proxyAction *base_schema.RelixyAction,
 	options *openapi.NewRelixyHandlerOptions,
 ) (openapi.RelixyHandler, error) {
-	handler, err := ValidateGraphQLString(operation.Proxy.Request.Query)
+	if proxyAction == nil || proxyAction.Type != base_schema.ProxyTypeGraphQL {
+		return nil, ErrProxyActionInvalid
+	}
+
+	handler, err := ValidateGraphQLString(proxyAction.Request.Query)
 	if err != nil {
 		return nil, err
 	}
 
-	handler.requestPath = operation.Proxy.Path
-	handler.responseConfig = operation.Proxy.Response
+	handler.requestPath = proxyAction.Path
+	handler.responseConfig = proxyAction.Response
 	handler.parameters = openapi.MergeParameters(options.Parameters, operation.Parameters)
 
 	getEnvFunc := options.GetEnvFunc()
 
-	handler.variables, err = validateGraphQLVariables(operation.Proxy.Request.Variables, getEnvFunc)
+	handler.variables, err = validateGraphQLVariables(
+		proxyAction.Request.Variables,
+		getEnvFunc,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	handler.extensions, err = validateGraphQLVariables(
-		operation.Proxy.Request.Extensions,
+		proxyAction.Request.Extensions,
 		getEnvFunc,
 	)
 

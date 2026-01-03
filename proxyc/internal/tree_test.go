@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/relychan/relixy/schema/openapi"
+	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"gotest.tools/v3/assert"
 )
 
@@ -13,15 +13,15 @@ func TestTreeNodes(t *testing.T) {
 		Path     string
 		Pattern  string
 		Method   string
-		Handlers *openapi.RelixyOpenAPIv3PathItem
+		Handlers *highv3.PathItem
 		Route    Route
 	}{
 		{
 			Pattern: "/posts",
 			Path:    "/posts",
 			Method:  http.MethodGet,
-			Handlers: &openapi.RelixyOpenAPIv3PathItem{
-				Get: &openapi.RelixyOpenAPIv3Operation{},
+			Handlers: &highv3.PathItem{
+				Get: &highv3.Operation{},
 			},
 			Route: Route{
 				Node: &Node{
@@ -34,8 +34,8 @@ func TestTreeNodes(t *testing.T) {
 			Path:    "/posts/1",
 			Pattern: "/posts/{id}",
 			Method:  http.MethodPost,
-			Handlers: &openapi.RelixyOpenAPIv3PathItem{
-				Post: &openapi.RelixyOpenAPIv3Operation{},
+			Handlers: &highv3.PathItem{
+				Post: &highv3.Operation{},
 			},
 			Route: Route{
 				Node: &Node{
@@ -50,8 +50,8 @@ func TestTreeNodes(t *testing.T) {
 			Path:    "/posts/1/comments/abc",
 			Pattern: "/posts/{id}/comments/{commentId}",
 			Method:  http.MethodGet,
-			Handlers: &openapi.RelixyOpenAPIv3PathItem{
-				Get: &openapi.RelixyOpenAPIv3Operation{},
+			Handlers: &highv3.PathItem{
+				Get: &highv3.Operation{},
 			},
 			Route: Route{
 				Node: &Node{
@@ -67,8 +67,8 @@ func TestTreeNodes(t *testing.T) {
 			Path:    "/v1/random/route",
 			Pattern: "/v1/*",
 			Method:  http.MethodGet,
-			Handlers: &openapi.RelixyOpenAPIv3PathItem{
-				Get: &openapi.RelixyOpenAPIv3Operation{},
+			Handlers: &highv3.PathItem{
+				Get: &highv3.Operation{},
 			},
 			Route: Route{
 				Node: &Node{

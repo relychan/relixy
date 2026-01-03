@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	ErrProxyActionInvalid           = errors.New("proxy action must exist with the graphql type")
 	ErrGraphQLQueryEmpty            = errors.New("query is required for graphql proxy")
 	ErrGraphQLUnsupportedQueryBatch = errors.New("graphql query batch is not supported")
 )

@@ -26,8 +26,6 @@ import (
 )
 
 func TestRESTHandler_RESTServer(t *testing.T) {
-	t.Setenv("RELIXY_ROUTE_BASE_PATH", "/api/v1")
-
 	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
 	defer func() {
 		server.Close()

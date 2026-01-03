@@ -1,3 +1,4 @@
+// Package openapi defines schemas for Open API resources
 package openapi
 
 import (
@@ -19,8 +20,6 @@ type RelixyOpenAPISettings struct {
 	ForwardHeaders *RelixyOpenAPIForwardHeadersConfig `json:"forwardHeaders,omitempty" yaml:"forwardHeaders,omitempty"`
 	// HealthCheck define the health check policy for load balancer recovery.
 	HealthCheck *base_schema.RelixyHealthCheckConfig `json:"healthCheck,omitempty" yaml:"healthCheck,omitempty"`
-	// SecuritySchemes define security schemes that can be used by the operations.
-	// SecuritySchemes []RelixySecurityScheme `json:"securitySchemes,omitempty" yaml:"securitySchemes,omitempty"`
 }
 
 // RelixyOpenAPIForwardHeadersConfig contains configurations for headers forwarding,.

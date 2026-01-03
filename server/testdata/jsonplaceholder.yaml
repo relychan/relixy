@@ -1,10 +1,11 @@
-# yaml-language-server: $schema=../../jsonschema/relixy-openapi.schema.json
+# yaml-language-server: $schema=../../jsonschema/relixy.schema.json
 version: v1
 kind: OpenAPI3
 metadata:
   name: default
 definition:
   settings:
+    basePath: "/api/v1"
     headers: {}
     forwardHeaders:
       request: []
@@ -14,6 +15,7 @@ definition:
         maxAttempts:
           value: 3
   spec:
+    openapi: "3.2.0"
     servers:
       - url: https://jsonplaceholder.typicode.com
     paths:
@@ -22,11 +24,11 @@ definition:
           operationId: getAlbums
           summary: "Get albums summary"
           description: "Get albums"
-          proxy:
+          x-rely-proxy-action:
             type: rest
       /posts/{id}:
         get:
           operationId: getPostById
           description: "Get post by ID"
-          proxy:
+          x-rely-proxy-action:
             type: rest

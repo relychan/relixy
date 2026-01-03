@@ -52,7 +52,7 @@ func (RelixyOpenAPIv3ResourceDefinition) JSONSchemaExtend(schema *jsonschema.Sch
 	schema.Properties.
 		Set("spec", &jsonschema.Schema{
 			Description: "Specification of the OpenAPI v3 documentation.",
-			Ref:         "openapi-3.2.json",
+			Ref:         "openapi-3.json",
 		})
 }
 
@@ -95,7 +95,7 @@ func (j *RelixyOpenAPIv3ResourceDefinition) UnmarshalJSON(b []byte) error {
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (j *RelixyOpenAPIv3ResourceDefinition) UnmarshalYAML(value *yaml.Node) error {
-	rawValue := map[string]*yaml.Node{}
+	rawValue := map[string]yaml.Node{}
 
 	err := value.Decode(&rawValue)
 	if err != nil {
@@ -103,11 +103,17 @@ func (j *RelixyOpenAPIv3ResourceDefinition) UnmarshalYAML(value *yaml.Node) erro
 	}
 
 	rawSpec, ok := rawValue["spec"]
-	if !ok || rawSpec == nil {
+	if !ok {
 		return fmt.Errorf("%w OpenAPI v3", ErrResourceSpecRequired)
 	}
 
-	doc, err := libopenapi.NewDocument([]byte(rawSpec.Value))
+	// Marshal the YAML node back to bytes for libopenapi
+	specBytes, err := yaml.Marshal(rawSpec)
+	if err != nil {
+		return err
+	}
+
+	doc, err := libopenapi.NewDocument(specBytes)
 	if err != nil {
 		return err
 	}
@@ -120,7 +126,7 @@ func (j *RelixyOpenAPIv3ResourceDefinition) UnmarshalYAML(value *yaml.Node) erro
 	j.Spec = &spec.Model
 
 	rawSettings, ok := rawValue["settings"]
-	if ok && rawSettings != nil {
+	if ok {
 		err = rawSettings.Decode(&j.Settings)
 		if err != nil {
 			return err

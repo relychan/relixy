@@ -1,48 +1,55 @@
 # yaml-language-server: $schema=../../../../jsonschema/relixy.schema.json
-settings:
-  headers: {}
-  forwardHeaders:
-    request: ["X-Hasura-Role", "Authorization", "X-Hasura-ddn-token"]
-    response: []
-servers:
-  - url:
-      env: GRAPHQL_SERVER_URL
-paths:
-  /v1/api/rest/artistbyname/{name}:
-    get:
-      operationId: artistByName
-      proxy:
-        type: graphql
-        request:
-          query: |
-            query artistByName($name: string!) { 
-              artist(where: {
-                name: { _eq: $name }
-              }) { 
-                name 
-              }
-            }
-          variables:
-            name:
-              expression: param.name
-  /v1/api/rest/artists:
-    get:
-      operationId: artists
-      proxy:
-        type: graphql
-        request:
-          query: |
-            query artists($limit: Int = 10, $offset: Int = 0) { 
-              artist(limit: $limit, offset: $offset) { 
-                name 
-              }
-            }
-          variables:
-            limit:
-              expression: query.limit[0]
-              default:
-                value: 19
-            offset:
-              expression: query.offset[0]
-              default:
-                value: 0
+version: v1
+kind: OpenAPI3
+metadata:
+  name: default
+definition:
+  settings:
+    headers: {}
+    forwardHeaders:
+      request: ["X-Hasura-Role", "Authorization", "X-Hasura-ddn-token"]
+      response: []
+  spec:
+    openapi: "3.2.0"
+    jsonSchemaDialect: https://spec.openapis.org/oas/3.2/dialect/2025-09-17
+    servers:
+      - x-rely-url-env: GRAPHQL_SERVER_URL
+    paths:
+      /v1/api/rest/artistbyname/{name}:
+        get:
+          operationId: artistByName
+          x-rely-proxy-action:
+            type: graphql
+            request:
+              query: |
+                query artistByName($name: string!) { 
+                  artist(where: {
+                    name: { _eq: $name }
+                  }) { 
+                    name 
+                  }
+                }
+              variables:
+                name:
+                  path: param.name
+      /v1/api/rest/artists:
+        get:
+          operationId: artists
+          x-rely-proxy-action:
+            type: graphql
+            request:
+              query: |
+                query artists($limit: Int = 10, $offset: Int = 0) { 
+                  artist(limit: $limit, offset: $offset) { 
+                    name 
+                  }
+                }
+              variables:
+                limit:
+                  path: query.limit[0]
+                  default:
+                    value: 19
+                offset:
+                  path: query.offset[0]
+                  default:
+                    value: 0

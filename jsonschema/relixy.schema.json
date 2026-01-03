@@ -1,65 +1,13 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
- "$id": "https://github.com/relychan/relixy/schema/relixy-api-document",
- "$ref": "#/$defs/RelixyAPIDocument",
+ "$id": "https://github.com/relychan/relixy/schema/openapi/relixy-open-ap-iv3-resource",
+ "$ref": "#/$defs/RelixyOpenAPIv3Resource",
  "$defs": {
-  "Discriminator": {
-   "properties": {
-    "propertyName": {
-     "type": "string",
-     "description": "The name of the discriminating property in the payload that will hold the discriminating value.\nThe discriminating property MAY be defined as required or optional, but when defined as optional\nthe Discriminator Object MUST include a defaultMapping field that specifies which schema is expected to validate the structure of the model when the discriminating property is not present."
-    },
-    "mapping": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object",
-     "description": "An object to hold mappings between payload values and schema names or URI reference"
-    },
-    "defaultMapping": {
-     "type": "string",
-     "description": "The schema name or URI reference to a schema that is expected to validate the structure of the model\nwhen the discriminating property is not present in the payload or contains a value for which there is no explicit or implicit mapping.\nOpenAPI 3.2+ defaultMapping for fallback schema"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "propertyName"
-   ],
-   "description": "Discriminator is only used by OpenAPI 3+ documents, it represents a polymorphic discriminator used for schemas\nWhen request bodies or response payloads may be one of a number of different schemas, a discriminator object can be used to aid in serialization, deserialization, and validation.\nThe discriminator is a specific object in a schema which is used to inform the consumer of the document of an alternative schema based on the value associated with it.\nWhen using the discriminator, inline schemas will not be considered."
-  },
   "Duration": {
    "type": "string",
    "minLength": 2,
    "pattern": "^(\\d+(\\.\\d+)?h)?(\\d+(\\.\\d+)?m)?(\\d+(\\.\\d+)?s)?(\\d+(\\.\\d+)?ms)?$",
    "description": "Duration string"
-  },
-  "EnvAny": {
-   "anyOf": [
-    {
-     "required": [
-      "value"
-     ],
-     "title": "value"
-    },
-    {
-     "required": [
-      "env"
-     ],
-     "title": "env"
-    }
-   ],
-   "properties": {
-    "value": {
-     "description": "Default literal value if the env is empty"
-    },
-    "env": {
-     "type": "string",
-     "description": "Environment variable to be evaluated"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
   },
   "EnvBool": {
    "anyOf": [
@@ -79,34 +27,6 @@
    "properties": {
     "value": {
      "type": "boolean",
-     "description": "Default literal value if the env is empty"
-    },
-    "env": {
-     "type": "string",
-     "description": "Environment variable to be evaluated"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
-  },
-  "EnvInt": {
-   "anyOf": [
-    {
-     "required": [
-      "value"
-     ],
-     "title": "value"
-    },
-    {
-     "required": [
-      "env"
-     ],
-     "title": "env"
-    }
-   ],
-   "properties": {
-    "value": {
-     "type": "integer",
      "description": "Default literal value if the env is empty"
     },
     "env": {
@@ -145,1316 +65,176 @@
    "additionalProperties": false,
    "type": "object"
   },
-  "GraphQLVariableDefinition": {
-   "properties": {
-    "path": {
-     "type": "string",
-     "description": "JMESPath to evaluate the variable from request."
-    },
-    "default": {
-     "$ref": "#/$defs/EnvAny",
-     "description": "Default value if the path or value is empty."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "GraphQLVariableDefinition defines information of the GraphQL variable."
-  },
   "HTTPClientConfig": {
    "$ref": "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json"
   },
   "HTTPHealthCheckConfig": {
-   "$ref": "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json#/$defs/HTTPHealthCheckConfig"
-  },
-  "OAuthFlow": {
    "properties": {
-    "authorizationUrl": {
+    "path": {
+     "type": "string"
+    },
+    "method": {
      "type": "string",
-     "description": "The authorization URL to be used for this flow. This MUST be in the form of a URL. The OAuth2 standard requires the use of TLS."
+     "enum": [
+      "GET",
+      "POST"
+     ],
+     "default": "GET"
     },
-    "tokenUrl": {
-     "$ref": "#/$defs/EnvString",
-     "description": "The token URL to be used for this flow. This MUST be in the form of a URL. The OAuth2 standard requires the use of TLS."
-    },
-    "refreshUrl": {
-     "type": "string",
-     "description": "The URL to be used for obtaining refresh tokens. This MUST be in the form of a URL. The OAuth2 standard requires the use of TLS."
-    },
-    "scopes": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object",
-     "description": "The available scopes for the OAuth2 security scheme. A map between the scope name and a short description for it. The map MAY be empty."
-    },
-    "clientId": {
-     "$ref": "#/$defs/EnvString",
-     "description": "Client ID of the authentication."
-    },
-    "clientSecret": {
-     "$ref": "#/$defs/EnvString",
-     "description": "Client Secret of the authentication."
-    },
-    "endpointParams": {
+    "body": true,
+    "headers": {
      "additionalProperties": {
       "$ref": "#/$defs/EnvString"
      },
-     "type": "object",
-     "description": "Optional query parameters that are added to the request endpoint."
+     "type": "object"
     },
-    "deviceAuthorizationUrl": {
-     "type": "string",
-     "description": "The device authorization URL to be used for this flow. This MUST be in the form of a URL. The OAuth2 standard requires the use of TLS."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "OAuthFlow contains flow configurations for [OAuth 2.0] authentication.\n\n[OAuth 2.0]: https://swagger.io/docs/specification/authentication/oauth2"
-  },
-  "Parameter": {
-   "properties": {
-    "name": {
-     "type": "string",
-     "description": "The name of the parameter. Parameter names are case-sensitive."
+    "interval": {
+     "type": "integer",
+     "default": 60
     },
-    "in": {
-     "$ref": "#/$defs/ParameterLocation",
-     "description": "The location of the parameter. Possible values are query, header, path or cookie."
+    "timeout": {
+     "type": "integer",
+     "default": 5
     },
-    "description": {
-     "type": "string",
-     "description": "A brief description of the parameter. This could contain examples of use.\nCommonMark syntax MAY be used for rich text representation."
+    "successStatus": {
+     "type": "integer",
+     "enum": [
+      200,
+      201,
+      204
+     ],
+     "default": 200
     },
-    "required": {
-     "type": "boolean",
-     "description": "Determines whether this parameter is mandatory.\nIf the parameter location is path, this field is REQUIRED and its value MUST be true.\nOtherwise, the field MAY be included and its default value is false."
+    "successThreshold": {
+     "type": "integer",
+     "default": 1
     },
-    "deprecated": {
-     "type": "boolean",
-     "description": "Specifies that a parameter is deprecated and SHOULD be transitioned out of usage. Default value is false."
-    },
-    "allowEmptyValue": {
-     "type": "boolean",
-     "description": "If true, clients MAY pass a zero-length string value in place of parameters that would otherwise be omitted entirely,\nwhich the server SHOULD interpret as the parameter being unused.\nDefault value is false. If style is used, and if behavior is n/a (cannot be serialized), the value of allowEmptyValue SHALL be ignored.\nInteractions between this field and the parameter’s Schema Object are implementation-defined.\nThis field is valid only for query parameters.\n\nDeprecated: Use of this field is NOT RECOMMENDED, and it is likely to be removed in a later revision."
-    },
-    "style": {
-     "type": "string",
-     "description": "Describes how the parameter value will be serialized depending on the type of the parameter value.\nDefault values (based on value of in): for query - form; for path - simple; for header - simple;\nfor cookie - form (for compatibility reasons; note that style: cookie SHOULD be used with in: cookie."
-    },
-    "explode": {
-     "type": "boolean",
-     "description": "When this is true, parameter values of type array or object generate separate parameters for each value of the array or key-value pair of the map.\nFor other types of parameters, or when style is \"deepObject\", this field has no effect. When style is \"form\" or \"cookie\", the default value is true.\nFor all other styles, the default value is false."
-    },
-    "allowReserved": {
-     "type": "boolean",
-     "description": "When this is true, parameter values are serialized using reserved expansion, as defined by RFC6570 Section 3.2.3,\nwhich allows RFC3986’s reserved character set, as well as percent-encoded triples, to pass through unchanged,\nwhile still percent-encoding all other disallowed characters (including % outside of percent-encoded triples).\nApplications are still responsible for percent-encoding reserved characters that are not allowed by the rules of the in destination or media type,\nor are not allowed in the path by this specification; see URL Percent-Encoding for details.\nThe default value is false. This field only applies to in and style values that automatically percent-encode."
-    },
-    "schema": {
-     "$ref": "#/$defs/RelixySchema",
-     "description": "The schema defining the type used for the parameter."
-    },
-    "content": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelixyMediaType"
-     },
-     "type": "object",
-     "description": "A map containing the representations for the parameter. The key is the media type and the value describes it. The map MUST only contain one entry."
+    "failureThreshold": {
+     "type": "integer",
+     "default": 3
     }
    },
    "additionalProperties": false,
    "type": "object",
    "required": [
-    "name",
-    "in"
-   ],
-   "description": "Parameter represents a high-level OpenAPI 3+ Parameter object, that is backed by a low-level one.\nA unique parameter is defined by a combination of a name and location.\nhttps://spec.openapis.org/oas/v3.2.0#parameter-object"
+    "path"
+   ]
   },
-  "ParameterLocation": {
-   "type": "string",
-   "enum": [
-    "query",
-    "header",
-    "path",
-    "cookie",
-    "body",
-    "formData"
-   ],
-   "description": "Location of the parameter which is defined in OpenAPI specifications"
-  },
-  "PrimitiveType": {
-   "type": "string",
-   "enum": [
-    "string",
-    "number",
-    "integer",
-    "boolean",
-    "array",
-    "object",
-    "null"
-   ],
-   "description": "A primitive type in OpenAPI specification"
-  },
-  "RelixyAPIDocument": {
+  "RelixyHealthCheckConfig": {
    "properties": {
-    "$schema": {
+    "http": {
+     "$ref": "#/$defs/HTTPHealthCheckConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelixyOpenAPIForwardHeadersConfig": {
+   "properties": {
+    "request": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "response": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelixyOpenAPISettings": {
+   "properties": {
+    "basePath": {
      "type": "string"
     },
-    "settings": {
-     "$ref": "#/$defs/RelixySettings",
-     "description": "Global settings of the proxy."
+    "http": {
+     "$ref": "#/$defs/HTTPClientConfig"
     },
-    "info": {
-     "$ref": "#/$defs/RelixyAPIDocumentInfo",
-     "description": "Info represents a specification Info definitions\nProvides metadata about the API. The metadata MAY be used by tooling as required.\n- https://spec.openapis.org/oas/v3.1.0#info-object"
-    },
-    "servers": {
-     "items": {
-      "$ref": "#/$defs/RelixyServer"
-     },
-     "type": "array",
-     "description": "Servers is a slice of Server instances which provide connectivity information to a target server."
-    },
-    "security": {
-     "items": {
-      "$ref": "#/$defs/SecurityRequirements"
-     },
-     "type": "array",
-     "description": "Security contains global security requirements/roles for the specification\nA declaration of which security mechanisms can be used across the API. The list of values includes alternative\nsecurity requirement objects that can be used. Only one of the security requirement objects need to be satisfied\nto authorize a request. Individual operations can override this definition. To make security optional,\nan empty security requirement ({}) can be included in the array."
-    },
-    "tags": {
-     "items": {
-      "$ref": "#/$defs/RelixyTag"
-     },
-     "type": "array",
-     "description": "Tags is a slice of Tag instances defined by the specification\nA list of tags used by the document with additional metadata. The order of the tags can be used to reflect on\ntheir order by the parsing tools. Not all tags that are used by the Operation Object must be declared.\nThe tags that are not declared MAY be organized randomly or based on the tools’ logic.\nEach tag name in the list MUST be unique."
-    },
-    "paths": {
+    "headers": {
      "additionalProperties": {
-      "$ref": "#/$defs/RelixyPathItem"
+      "$ref": "#/$defs/EnvString"
      },
-     "type": "object",
-     "description": "Holds the relative paths to the individual endpoints and their operations. The path is appended to the URL from the Server Object in order to construct the full URL. The Paths Object MAY be empty, due to Access Control List (ACL) constraints."
+     "type": "object"
+    },
+    "forwardHeaders": {
+     "$ref": "#/$defs/RelixyOpenAPIForwardHeadersConfig"
+    },
+    "healthCheck": {
+     "$ref": "#/$defs/RelixyHealthCheckConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelixyOpenAPIv3Resource": {
+   "properties": {
+    "version": {
+     "type": "string",
+     "enum": [
+      "v1"
+     ]
+    },
+    "kind": {
+     "type": "string",
+     "const": "OpenAPI3",
+     "description": "Kind of the resource which is always OpenAPI3."
+    },
+    "metadata": {
+     "$ref": "#/$defs/RelixyResourceMetadata"
+    },
+    "definition": {
+     "$ref": "#/$defs/RelixyOpenAPIv3ResourceDefinition"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "version",
+    "kind",
+    "metadata",
+    "definition"
+   ]
+  },
+  "RelixyOpenAPIv3ResourceDefinition": {
+   "properties": {
+    "settings": {
+     "$ref": "#/$defs/RelixyOpenAPISettings"
+    },
+    "spec": {
+     "$ref": "openapi-3.json",
+     "description": "Specification of the OpenAPI v3 documentation."
     }
    },
    "additionalProperties": false,
    "type": "object",
    "required": [
     "settings",
-    "servers",
-    "paths"
-   ],
-   "description": "RelixyAPIDocument represents the structure of an API document."
-  },
-  "RelixyAPIDocumentInfo": {
-   "properties": {
-    "summary": {
-     "type": "string",
-     "description": "A short summary of the API."
-    },
-    "title": {
-     "type": "string",
-     "description": "REQUIRED. The title of the API."
-    },
-    "description": {
-     "type": "string",
-     "description": "A description of the API. CommonMark syntax MAY be used for rich text representation."
-    },
-    "termsOfService": {
-     "type": "string",
-     "description": "A URI for the Terms of Service for the API. This MUST be in the form of a URI."
-    },
-    "contact": {
-     "$ref": "#/$defs/RelixyAPIDocumentInfoContact",
-     "description": "The contact information for the exposed API."
-    },
-    "license": {
-     "$ref": "#/$defs/RelixyAPIDocumentInfoLicense",
-     "description": "The license information for the exposed API."
-    },
-    "version": {
-     "type": "string",
-     "description": "REQUIRED. The version of the OpenAPI document (which is distinct from the OpenAPI Specification version or the version of the API being described or the version of the OpenAPI Description)."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyAPIDocumentInfo represents a high-level Info object that provides metadata about the API.\nThe metadata MAY be used by the clients if needed, and MAY be presented\nin editing or documentation generation tools for convenience."
-  },
-  "RelixyAPIDocumentInfoContact": {
-   "properties": {
-    "name": {
-     "type": "string",
-     "description": "The identifying name of the contact person/organization."
-    },
-    "url": {
-     "type": "string",
-     "description": "The URI for the contact information. This MUST be in the form of a URI."
-    },
-    "email": {
-     "type": "string",
-     "description": "The email address of the contact person/organization. This MUST be in the form of an email address."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyAPIDocumentInfoContact represents a high-level representation of the Contact definitions."
-  },
-  "RelixyAPIDocumentInfoLicense": {
-   "properties": {
-    "name": {
-     "type": "string",
-     "description": "REQUIRED. The license name used for the API."
-    },
-    "url": {
-     "type": "string",
-     "description": "An SPDX-Licenses expression for the API. The identifier field is mutually exclusive of the url field."
-    },
-    "identifier": {
-     "type": "string",
-     "description": "A URI for the license used for the API. This MUST be in the form of a URI.\nThe url field is mutually exclusive of the identifier field."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyAPIDocumentInfoLicense represents a high-level representation of the License definitions."
-  },
-  "RelixyAPIKeyAuthConfig": {
-   "properties": {
-    "type": {
-     "type": "string",
-     "enum": [
-      "apiKey"
-     ],
-     "description": "The type of the security scheme that is always 'apiKey'."
-    },
-    "in": {
-     "type": "string",
-     "enum": [
-      "query",
-      "header",
-      "cookie"
-     ],
-     "description": "The location of the API key. Valid values are 'query', 'header', or 'cookie'."
-    },
-    "name": {
-     "type": "string",
-     "description": "The name of the header, query or cookie parameter to be used."
-    },
-    "value": {
-     "$ref": "#/$defs/EnvString",
-     "description": "The value of the API key that is either a literal value of an environment variable."
-    },
-    "deprecated": {
-     "type": "boolean",
-     "description": "Declares this security scheme to be deprecated.\nConsumers SHOULD refrain from usage of the declared scheme. Default value is false."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "type",
-    "in",
-    "name",
-    "value"
-   ],
-   "description": "RelixyAPIKeyAuthConfig contains configurations for [apiKey authentication]\n\n[apiKey authentication]: https://swagger.io/docs/specification/authentication/api-keys/"
-  },
-  "RelixyAction": {
-   "oneOf": [
-    {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "rest"
-       ],
-       "description": "Type of the proxy action"
-      },
-      "path": {
-       "type": "string",
-       "description": "Overrides the request path. Use the original request path if empty"
-      }
-     },
-     "type": "object",
-     "required": [
-      "type"
-     ],
-     "title": "RelixyActionREST",
-     "description": "Proxy configuration to the remote REST service"
-    },
-    {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "graphql"
-       ],
-       "description": "Type of the proxy action"
-      },
-      "request": {
-       "$ref": "#/$defs/RelixyGraphQLRequestConfig",
-       "description": "Configuration for the GraphQL request"
-      },
-      "response": {
-       "$ref": "#/$defs/RelixyGraphQLResponseConfig",
-       "description": "Configuration for the GraphQL response"
-      }
-     },
-     "type": "object",
-     "required": [
-      "type",
-      "request"
-     ],
-     "title": "RelixyActionGraphQL",
-     "description": "Configurations for proxying request to the remote GraphQL server"
-    }
+    "spec"
    ]
   },
-  "RelixyBasicAuthConfig": {
-   "properties": {
-    "type": {
-     "type": "string",
-     "enum": [
-      "basic"
-     ],
-     "description": "The type of the security scheme that is always 'basic'."
-    },
-    "name": {
-     "type": "string",
-     "description": "The name of the header to be used."
-    },
-    "username": {
-     "$ref": "#/$defs/EnvString",
-     "description": "The username of this basic authentication."
-    },
-    "password": {
-     "$ref": "#/$defs/EnvString",
-     "description": "The password of this basic authentication."
-    },
-    "deprecated": {
-     "type": "boolean",
-     "description": "Declares this security scheme to be deprecated.\nConsumers SHOULD refrain from usage of the declared scheme. Default value is false."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "type",
-    "name",
-    "username",
-    "password"
-   ],
-   "description": "RelixyBasicAuthConfig contains configurations for the [basic] authentication.\n\n[basic]: https://swagger.io/docs/specification/authentication/basic-authentication"
-  },
-  "RelixyCookieAuthConfig": {
-   "properties": {
-    "type": {
-     "type": "string",
-     "enum": [
-      "cookie"
-     ],
-     "description": "The type of the security scheme that is always 'cookie'."
-    },
-    "deprecated": {
-     "type": "boolean",
-     "description": "Declares this security scheme to be deprecated.\nConsumers SHOULD refrain from usage of the declared scheme. Default value is false."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "type"
-   ],
-   "description": "RelixyCookieAuthConfig represents a cookie authentication configuration."
-  },
-  "RelixyEncoding": {
-   "properties": {
-    "contentType": {
-     "type": "string",
-     "description": "The Content-Type for encoding a specific property.\nThe value is a comma-separated list, each element of which is either a specific media type (e.g. image/png) or a wildcard media type (e.g. image/*)."
-    },
-    "headers": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelixyHeader"
-     },
-     "type": "object",
-     "description": "A map allowing additional information to be provided as headers. Content-Type is described separately and SHALL be ignored in this section. This field SHALL be ignored if the media type is not a multipart."
-    },
-    "style": {
-     "type": "string",
-     "description": "Describes how a specific property value will be serialized depending on its type.\nSee Parameter Object for details on the style field.\nThe behavior follows the same values as query parameters,\nincluding the default value of \"form\" which applies only when contentType is not being used due to one or both of explode or allowReserved being explicitly specified.\nNote that the initial ? used in query strings is not used in application/x-www-form-urlencoded message bodies, and MUST be removed\n(if using an RFC6570 implementation) or simply not added (if constructing the string manually).\nThis field SHALL be ignored if the media type is not application/x-www-form-urlencoded or multipart/form-data.\nIf a value is explicitly defined, then the value of contentType (implicit or explicit) SHALL be ignored."
-    },
-    "explode": {
-     "type": "boolean",
-     "description": "When this is true, property values of type array or object generate separate parameters for each value of the array, or key-value-pair of the map.\nFor other types of properties, or when style is \"deepObject\", this field has no effect.\nWhen style is \"form\", the default value is true. For all other styles, the default value is false.\nThis field SHALL be ignored if the media type is not application/x-www-form-urlencoded or multipart/form-data.\nIf a value is explicitly defined, then the value of contentType (implicit or explicit) SHALL be ignored."
-    },
-    "allowReserved": {
-     "type": "boolean",
-     "description": "When this is true, parameter values are serialized using reserved expansion, as defined by RFC6570 Section 3.2.3,\nwhich allows RFC3986’s reserved character set, as well as percent-encoded triples, to pass through unchanged,\nwhile still percent-encoding all other disallowed characters (including % outside of percent-encoded triples).\nApplications are still responsible for percent-encoding reserved characters that are not allowed in the target media type;\nsee URL Percent-Encoding for details. The default value is false.\nThis field SHALL be ignored if the media type is not application/x-www-form-urlencoded or multipart/form-data.\nIf a value is explicitly defined, then the value of contentType (implicit or explicit) SHALL be ignored."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyEncoding represents an OpenAPI 3+ Encoding object\n  - https://spec.openapis.org/oas/v3.2.0#encoding-object"
-  },
-  "RelixyForwardHeadersConfig": {
-   "properties": {
-    "request": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array",
-     "description": "Defines header names to be forwarded from the client request."
-    },
-    "response": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array",
-     "description": "Defines header names to be forwarded from the response."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyForwardHeadersConfig contains configurations for headers forwarding,."
-  },
-  "RelixyGraphQLRequestConfig": {
-   "properties": {
-    "query": {
-     "type": "string",
-     "description": "GraphQL query string to send"
-    },
-    "variables": {
-     "additionalProperties": {
-      "$ref": "#/$defs/GraphQLVariableDefinition"
-     },
-     "type": "object",
-     "description": "Definition of GraphQL variables"
-    },
-    "extensions": {
-     "additionalProperties": {
-      "$ref": "#/$defs/GraphQLVariableDefinition"
-     },
-     "type": "object",
-     "description": "Definition of GraphQL extensions"
-    }
-   },
-   "type": "object",
-   "required": [
-    "query"
-   ]
-  },
-  "RelixyGraphQLResponseConfig": {
-   "properties": {
-    "httpErrorCode": {
-     "type": "integer",
-     "description": "HTTP error code will be used if the response body has errors.\nIf not set, forward the HTTP status from the GraphQL response which is usually 200 OK.",
-     "default": 400
-    },
-    "transform": {
-     "oneOf": [
-      {
-       "$ref": "https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json"
-      },
-      {
-       "type": "null"
-      }
-     ],
-     "description": "Configurations for transforming response data."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyGraphQLResponseConfig represents configurations for the proxy response."
-  },
-  "RelixyHTTPAuthConfig": {
-   "properties": {
-    "type": {
-     "type": "string",
-     "enum": [
-      "http"
-     ],
-     "description": "The type of the security scheme that is always 'http'."
-    },
-    "name": {
-     "type": "string",
-     "description": "The name of the header to be used."
-    },
-    "scheme": {
-     "type": "string",
-     "description": "The name of the HTTP Authentication scheme to be used in the Authorization header as defined in RFC9110."
-    },
-    "value": {
-     "$ref": "#/$defs/EnvString",
-     "description": "The value of the HTTP credential."
-    },
-    "bearerFormat": {
-     "type": "string",
-     "description": "A hint to the client to identify how the bearer token is formatted.\nBearer tokens are usually generated by an authorization server,\nso this information is primarily for documentation purposes."
-    },
-    "deprecated": {
-     "type": "boolean",
-     "description": "Declares this security scheme to be deprecated.\nConsumers SHOULD refrain from usage of the declared scheme. Default value is false."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "type",
-    "name",
-    "scheme",
-    "value"
-   ],
-   "description": "RelixyHTTPAuthConfig contains configurations for http authentication\nIf the scheme is [bearer], the authenticator follows OpenAPI 3 specification.\n\n[bearer]: https://swagger.io/docs/specification/authentication/bearer-authentication"
-  },
-  "RelixyHeader": {
-   "properties": {
-    "description": {
-     "type": "string",
-     "description": "A brief description of the header. This could contain examples of use.\nCommonMark syntax MAY be used for rich text representation."
-    },
-    "required": {
-     "type": "boolean",
-     "description": "Determines whether this header is mandatory. The default value is false."
-    },
-    "deprecated": {
-     "type": "boolean",
-     "description": "Specifies that the header is deprecated and SHOULD be transitioned out of usage. Default value is false."
-    },
-    "style": {
-     "type": "string",
-     "description": "Describes how the header value will be serialized.\nThe default (and only legal value for headers) is simple."
-    },
-    "explode": {
-     "type": "boolean",
-     "description": "When this is true, header values of type array or object generate a single header whose value is a comma-separated list of the array items or key-value pairs of the map.\nFor other data types this field has no effect. The default value is false."
-    },
-    "schema": {
-     "$ref": "#/$defs/RelixySchema",
-     "description": "The schema defining the type used for the header."
-    },
-    "content": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelixyMediaType"
-     },
-     "type": "object"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyHeader represents a high-level OpenAPI 3+ Header object that is backed by a low-level one.\n  - https://spec.openapis.org/oas/v3.2.0#header-object"
-  },
-  "RelixyHealthCheckConfig": {
-   "properties": {
-    "http": {
-     "$ref": "#/$defs/HTTPHealthCheckConfig",
-     "description": "Configurations for health check through HTTP protocol."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyHealthCheckConfig holds health check configurations for server recovery."
-  },
-  "RelixyMediaType": {
-   "properties": {
-    "schema": {
-     "$ref": "#/$defs/RelixySchema",
-     "description": "The schema defining the content of the request, response, or parameter."
-    },
-    "itemSchema": {
-     "$ref": "#/$defs/RelixySchema",
-     "description": "A schema describing each item within a sequential media type."
-    },
-    "encoding": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelixyEncoding"
-     },
-     "type": "object",
-     "description": "A map between a property name and its encoding information, as defined under Encoding By Name. The encoding field SHALL only apply when the media type is multipart or application/x-www-form-urlencoded. If no Encoding Object is provided for a property, the behavior is determined by the default values documented for the Encoding Object. This field MUST NOT be present if prefixEncoding or itemEncoding are present."
-    },
-    "prefixEncoding": {
-     "items": {
-      "$ref": "#/$defs/RelixyEncoding"
-     },
-     "type": "array",
-     "description": "An array of positional encoding information, as defined under Encoding By Position.\nThe prefixEncoding field SHALL only apply when the media type is multipart.\nIf no Encoding Object is provided for a property, the behavior is determined by the default values documented for the Encoding Object.\nThis field MUST NOT be present if encoding is present."
-    },
-    "itemEncoding": {
-     "$ref": "#/$defs/RelixyEncoding",
-     "description": "A single Encoding Object that provides encoding information for multiple array items, as defined under Encoding By Position.\nThe itemEncoding field SHALL only apply when the media type is multipart.\nIf no Encoding Object is provided for a property, the behavior is determined by the default values documented for the Encoding Object.\nThis field MUST NOT be present if encoding is present."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyMediaType represents a high-level OpenAPI MediaType object that is backed by a low-level one.\nEach Media Type Object provides schema and examples for the media type identified by its key.\n  - https://spec.openapis.org/oas/v3.2.0#media-type-object"
-  },
-  "RelixyMutualTLSAuthConfig": {
-   "properties": {
-    "type": {
-     "type": "string",
-     "enum": [
-      "mutualTLS"
-     ],
-     "description": "The type of the security scheme that is always 'mutualTLS'."
-    },
-    "deprecated": {
-     "type": "boolean",
-     "description": "Declares this security scheme to be deprecated.\nConsumers SHOULD refrain from usage of the declared scheme. Default value is false."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "type"
-   ],
-   "description": "RelixyMutualTLSAuthConfig represents a mutualTLS authentication configuration."
-  },
-  "RelixyOAuth2Config": {
-   "properties": {
-    "type": {
-     "type": "string",
-     "enum": [
-      "oauth2"
-     ],
-     "description": "The type of the security scheme that is always 'oauth2'."
-    },
-    "flows": {
-     "oneOf": [
-      {
-       "properties": {
-        "password": {
-         "$ref": "#/$defs/OAuthFlow",
-         "description": "The flow configurations for OAuth 2.0 authentication"
-        }
-       },
-       "type": "object",
-       "required": [
-        "password"
-       ],
-       "title": "OAuthPasswordFlow",
-       "description": "Configuration for the OAuth Resource Owner Password flow"
-      },
-      {
-       "properties": {
-        "implicit": {
-         "$ref": "#/$defs/OAuthFlow",
-         "description": "The flow configurations for OAuth 2.0 authentication"
-        }
-       },
-       "type": "object",
-       "required": [
-        "implicit"
-       ],
-       "title": "OAuthImplicitFlow",
-       "description": "Configuration for the OAuth Implicit flow"
-      },
-      {
-       "properties": {
-        "clientCredentials": {
-         "$ref": "#/$defs/OAuthFlow",
-         "description": "The flow configurations for OAuth 2.0 authentication"
-        }
-       },
-       "type": "object",
-       "required": [
-        "clientCredentials",
-        "clientId",
-        "clientSecret",
-        "tokenUrl"
-       ],
-       "title": "OAuthClientCredentialsFlow",
-       "description": "Configuration for the OAuth Client Credentials flow. Previously called application in OpenAPI 2.0."
-      },
-      {
-       "properties": {
-        "authorizationCode": {
-         "$ref": "#/$defs/OAuthFlow",
-         "description": "The flow configurations for OAuth 2.0 authentication"
-        }
-       },
-       "type": "object",
-       "required": [
-        "authorizationCode"
-       ],
-       "title": "OAuthAuthorizationCodeFlow",
-       "description": "Configuration for the OAuth Authorization Code flow. Previously called accessCode in OpenAPI 2.0."
-      },
-      {
-       "properties": {
-        "deviceAuthorization": {
-         "$ref": "#/$defs/OAuthFlow",
-         "description": "The flow configurations for OAuth 2.0 authentication"
-        }
-       },
-       "type": "object",
-       "required": [
-        "deviceAuthorization",
-        "deviceAuthorizationUrl"
-       ],
-       "title": "OAuthDeviceAuthorizationFlow",
-       "description": "Configuration for the OAuth Device Authorization flow."
-      }
-     ]
-    },
-    "oauth2MetadataUrl": {
-     "type": "string",
-     "description": "URL to the OAuth2 authorization server metadata RFC8414. TLS is required."
-    },
-    "deprecated": {
-     "type": "boolean",
-     "description": "Declares this security scheme to be deprecated.\nConsumers SHOULD refrain from usage of the declared scheme. Default value is false."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "type",
-    "flows"
-   ],
-   "description": "RelixyOAuth2Config contains configurations for [OAuth 2.0] API specification\n\n[OAuth 2.0]: https://swagger.io/docs/specification/authentication/oauth2"
-  },
-  "RelixyOpenIDConnectConfig": {
-   "properties": {
-    "type": {
-     "type": "string",
-     "enum": [
-      "openIdConnect"
-     ],
-     "description": "The type of the security scheme that is always 'openIdConnect'."
-    },
-    "openIdConnectUrl": {
-     "type": "string",
-     "description": "Well-known URL to discover the OpenID-Connect-Discovery provider metadata."
-    },
-    "deprecated": {
-     "type": "boolean",
-     "description": "Declares this security scheme to be deprecated.\nConsumers SHOULD refrain from usage of the declared scheme. Default value is false."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "type",
-    "openIdConnectUrl"
-   ],
-   "description": "RelixyOpenIDConnectConfig contains configurations for [OpenID Connect] API specification\n\n[OpenID Connect]: https://swagger.io/docs/specification/authentication/openid-connect-discovery"
-  },
-  "RelixyOperation": {
-   "properties": {
-    "tags": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array",
-     "description": "List of tags for this operation."
-    },
-    "summary": {
-     "type": "string",
-     "description": "Summary information of the operation."
-    },
-    "description": {
-     "type": "string",
-     "description": "Description of the operation."
-    },
-    "operationId": {
-     "type": "string",
-     "description": "ID of the operation. It should be unique."
-    },
-    "parameters": {
-     "items": {
-      "$ref": "#/$defs/Parameter"
-     },
-     "type": "array",
-     "description": "Request parameters of the operation."
-    },
-    "requestBody": {
-     "$ref": "#/$defs/RelixyRequestBody",
-     "description": "Request body information."
-    },
-    "deprecated": {
-     "type": "boolean",
-     "description": "Responses   *highv3.Responses    `json:\"responses,omitempty\" yaml:\"responses,omitempty\"`\nDefines whether this operation is deprecated."
-    },
-    "security": {
-     "$ref": "#/$defs/SecurityRequirements",
-     "description": "Requires the security for this operation."
-    },
-    "proxy": {
-     "$ref": "#/$defs/RelixyAction",
-     "description": "Defines action information to proxy request to the remote server."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "proxy"
-   ],
-   "description": "RelixyOperation represents the definition of an API operation."
-  },
-  "RelixyPathItem": {
-   "properties": {
-    "description": {
-     "type": "string",
-     "description": "Description of the path item."
-    },
-    "summary": {
-     "type": "string",
-     "description": "Summary of the path item."
-    },
-    "get": {
-     "$ref": "#/$defs/RelixyOperation",
-     "description": "Defines the operation information of the GET method."
-    },
-    "put": {
-     "$ref": "#/$defs/RelixyOperation",
-     "description": "Defines the operation information of the PUT method."
-    },
-    "post": {
-     "$ref": "#/$defs/RelixyOperation",
-     "description": "Defines the operation information of the POST method."
-    },
-    "delete": {
-     "$ref": "#/$defs/RelixyOperation",
-     "description": "Defines the operation information of the DELETE method."
-    },
-    "patch": {
-     "$ref": "#/$defs/RelixyOperation",
-     "description": "Defines the operation information of the PATCH method."
-    },
-    "parameters": {
-     "items": {
-      "$ref": "#/$defs/Parameter"
-     },
-     "type": "array",
-     "description": "Common parameters of the path item."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyPathItem represents a definition object of an API path item."
-  },
-  "RelixyRequestBody": {
-   "properties": {
-    "description": {
-     "type": "string",
-     "description": "Description of the request body."
-    },
-    "content": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelixyMediaType"
-     },
-     "type": "object",
-     "description": "The content of the request body. The key is a media type or media type range, and the value describes it. For requests that match multiple keys, only the most specific key is applicable. e.g. text/plain overrides text/*"
-    },
-    "required": {
-     "type": "boolean",
-     "description": "Determines if the request body is required in the request. Defaults to false."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyRequestBody represents a high-level OpenAPI 3+ RequestBody object, backed by a low-level one.\n  - https://spec.openapis.org/oas/v3.2.0#request-body-object"
-  },
-  "RelixySchema": {
-   "properties": {
-    "$schema": {
-     "type": "string",
-     "description": "3.1 only, used to define a dialect for this schema, label is '$schema'."
-    },
-    "$ref": {
-     "type": "string",
-     "description": "Used to define a reference for this schema."
-    },
-    "exclusiveMaximum": {
-     "type": "number",
-     "description": "The value of 'exclusiveMaximum' MUST be a number, representing an exclusive upper limit for a numeric instance.\nIf the instance is a number, then the instance is valid only if it has a value strictly less than (not equal to) 'exclusiveMaximum'."
-    },
-    "exclusiveMinimum": {
-     "type": "number",
-     "description": "The value of 'exclusiveMinimum' MUST be a number, representing an exclusive lower limit for a numeric instance.\nIf the instance is a number, then the instance is valid only if it has a value strictly greater than (not equal to) 'exclusiveMinimum'."
-    },
-    "type": {
-     "items": {
-      "$ref": "#/$defs/PrimitiveType"
-     },
-     "type": "array",
-     "description": "Types of the schema. Values MUST be one of the primitive types 'null', 'boolean', 'object', 'array', 'number', or 'string',\nor 'integer' which matches any number with a zero fractional part."
-    },
-    "allOf": {
-     "items": {
-      "$ref": "#/$defs/RelixySchema"
-     },
-     "type": "array",
-     "description": "The allOf keyword restricts instances to validate against every given subschema.\nThis keyword can be thought of as a logical conjunction (AND) operation,\nas instances are valid if they satisfy every constraint of every subschema (the intersection of the constraints)."
-    },
-    "oneOf": {
-     "items": {
-      "$ref": "#/$defs/RelixySchema"
-     },
-     "type": "array",
-     "description": "The oneOf keyword restricts instances to validate against exactly one (and only one) of the given subschemas and fail on the rest.\nThis keyword represents a logical exclusive disjunction (XOR) operation.\nIn practice, the vast majority of schemas don’t require exclusive disjunction semantics but a simple disjunction.\nIf you are not sure, the anyOf keyword is probably a better fit."
-    },
-    "anyOf": {
-     "items": {
-      "$ref": "#/$defs/RelixySchema"
-     },
-     "type": "array",
-     "description": "The anyOf keyword restricts instances to validate against at least one (but potentially multiple) of the given subschemas.\nThis keyword represents a logical disjunction (OR) operation, as instances are valid if they satisfy the constraints of one or more subschemas (the union of the constraints)."
-    },
-    "discriminator": {
-     "$ref": "#/$defs/Discriminator",
-     "description": "When request bodies or response payloads may be one of a number of different schemas,\nthese should use the JSON Schema anyOf or oneOf keywords to describe the possible schemas (see [Composition and Inheritance]).\n\n[Composition and Inheritance]: https://spec.openapis.org/oas/v3.2.0.html#composition-and-inheritance-polymorphism"
-    },
-    "prefixItems": {
-     "items": {
-      "$ref": "#/$defs/RelixySchema"
-     },
-     "type": "array",
-     "description": "The prefixItems keyword restricts a number of items from the start of an array instance to validate against the given sequence of subschemas,\nwhere the item at a given index in the array instance is evaluated against the subschema at the given index in the prefixItems array, if any.\nInformation about the number of subschemas that were evaluated against the array instance is reported using annotations.\nArray items outside the range described by the prefixItems keyword is evaluated against the items keyword, if present."
-    },
-    "contains": {
-     "$ref": "#/$defs/RelixySchema",
-     "description": "3.1 Specific properties"
-    },
-    "minContains": {
-     "type": "integer",
-     "description": "An instance array is valid against minContains in two ways, depending on the form of the annotation result of an adjacent 'contains' keyword.\nThe first way is if the annotation result is an array and the length of that array is greater than or equal to the 'minContains' value.\nThe second way is if the annotation result is a boolean \"true\" and the instance array length is greater than or equal to the 'minContains' value.\n\nIf 'contains' is not present within the same schema object, then 'minContains' has no effect.\nThe value of 'minContains' MUST be a non-negative integer.\nA value of 0 is allowed, but is only useful for setting a range of occurrences from 0 to the value of 'maxContains'.\nA value of 0 with no 'maxContains' causes 'contains' to always pass validation.\nOmitting this keyword has the same behavior as a value of 1."
-    },
-    "maxContains": {
-     "type": "integer",
-     "description": "An instance array is valid against 'maxContains' in two ways, depending on the form of the annotation result of an adjacent 'contains'.\nThe first way is if the annotation result is an array and the length of that array is less than or equal to the 'maxContains' value.\nThe second way is if the annotation result is a boolean 'true' and the instance array length is less than or equal to the 'maxContains' value.\n\nIf 'contains' is not present within the same schema object, then 'maxContains' has no effect.\nThe value of 'maxContains' MUST be a non-negative integer."
-    },
-    "if": {
-     "$ref": "#/$defs/RelixySchema",
-     "description": "The if keyword introduces a subschema whose evaluation result restricts instances to validate against the then or else sibling subschemas (if present).\nNote that the evaluation outcome of this subschema controls which other subschema to apply (if any) but has no direct effect on the overall validation result."
-    },
-    "else": {
-     "$ref": "#/$defs/RelixySchema",
-     "description": "The else keyword restricts instances to validate against the given subschema if the if sibling keyword failed to validate against the instance."
-    },
-    "then": {
-     "$ref": "#/$defs/RelixySchema",
-     "description": "The then keyword restricts instances to validate against the given subschema if the if sibling keyword successfully validated against the instance."
-    },
-    "dependentSchemas": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelixySchema"
-     },
-     "type": "object",
-     "description": "The dependentSchemas keyword restricts object instances to validate against one or more of the given subschemas if the corresponding properties are defined. Note that the given subschemas are evaluated against the object that defines the property dependency."
-    },
-    "dependentRequired": {
-     "additionalProperties": {
-      "items": {
-       "type": "string"
-      },
-      "type": "array"
-     },
-     "type": "object",
-     "description": "Specifies properties that are required if a specific other property is present. Their requirement is dependent on the presence of the other property. The value of this field MUST be an object. Properties in this object, if any, MUST be arrays. Elements in each array, if any, MUST be strings, and MUST be unique. Validation succeeds if, for each name that appears in both the instance and as a name within this keyword's value, every item in the corresponding array is also the name of a property in the instance. Omitting this field has the same behavior as an empty object."
-    },
-    "patternProperties": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelixySchema"
-     },
-     "type": "object",
-     "description": "The patternProperties keyword restricts properties of an object instance that match certain regular expressions to match their corresponding subschemas definitions. Information about the properties that this keyword was evaluated for is reported using annotations."
-    },
-    "propertyNames": {
-     "$ref": "#/$defs/RelixySchema",
-     "description": "The propertyNames keyword restricts object instances to only define properties whose names match the given schema.\nThis keyword is evaluated against every property of the object instance, independently of keywords that indirectly introduce property names such as properties and patternProperties.\nAnnotations coming from inside this keyword are dropped."
-    },
-    "unevaluatedItems": {
-     "$ref": "#/$defs/RelixySchema",
-     "description": "The unevaluatedItems keyword is a generalisation of the items keyword that considers related keywords even when they are not direct siblings of this keyword.\nMore specifically, this keyword is affected by occurrences of prefixItems, items, contains, and unevaluatedItems itself,\nas long as the evaluate path that led to unevaluatedItems is a prefix of the evaluate path of the others."
-    },
-    "items": {
-     "$ref": "#/$defs/RelixySchema",
-     "description": "Schema of elements if the type is array."
-    },
-    "$anchor": {
-     "type": "string",
-     "description": "The $anchor keyword associates a subschema with the given URI fragment identifier, which can be referenced using the $ref keyword.\nThe fragment identifier is resolved against the URI of the schema resource.\nTherefore, using this keyword to declare the same anchor more than once within the same schema resource results in an invalid schema."
-    },
-    "not": {
-     "$ref": "#/$defs/RelixySchema",
-     "description": "The not keyword restricts instances to fail validation against the given subschema.\nThis keyword represents a logical negation (NOT) operation.\nIn other words, the instance successfully validates against the schema only if it does not match the given subschema."
-    },
-    "properties": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelixySchema"
-     },
-     "type": "object",
-     "description": "Definition of object properties if the type is object."
-    },
-    "title": {
-     "type": "string",
-     "description": "Title of the schema."
-    },
-    "multipleOf": {
-     "type": "number",
-     "minimum": 1,
-     "description": "A numeric instance is valid only if division by this field's value results in an integer.\nThe value of 'multipleOf' MUST be a number, strictly greater than 0."
-    },
-    "maximum": {
-     "type": "number",
-     "description": "The value of 'maximum' MUST be a number, representing an inclusive upper limit for a numeric instance.\nIf the instance is a number, then this field validates only if the instance is less than or exactly equal to 'maximum'."
-    },
-    "minimum": {
-     "type": "number",
-     "description": "The value of 'minimum' MUST be a number, representing an inclusive lower limit for a numeric instance.\nIf the instance is a number, then this field validates only if the instance is greater than or exactly equal to 'minimum'."
-    },
-    "maxLength": {
-     "type": "integer",
-     "minimum": 0,
-     "description": "A string instance is valid against this field if its length is less than, or equal to, the value of this field.\nThe length of a string instance is defined as the number of its characters as defined by RFC 8259.\nThe value of this field MUST be a non-negative integer."
-    },
-    "minLength": {
-     "type": "integer",
-     "minimum": 0,
-     "description": "A string instance is valid against this field if its length is greater than, or equal to, the value of this field.\nThe length of a string instance is defined as the number of its characters as defined by RFC 8259.\nThe value of this field MUST be a non-negative integer.\nOmitting this field has the same behavior as a value of 0."
-    },
-    "pattern": {
-     "type": "string",
-     "description": "A string instance is considered valid if the regular expression matches the instance successfully.\nThe value of this field MUST be a string. This string SHOULD be a valid regular expression, according to the ECMA-262 regular expression dialect.\nRecall: regular expressions are not implicitly anchored."
-    },
-    "format": {
-     "type": "string",
-     "description": "As defined by the JSON Schema Validation specification, data types can have an optional modifier keyword: format.\nAs described in that specification, format is treated as a non-validating annotation by default;\nthe ability to validate format varies across implementations."
-    },
-    "maxItems": {
-     "type": "integer",
-     "minimum": 0,
-     "description": "An array instance is valid against 'maxItems' if its size is less than, or equal to, the value of this field.\nThe value of this keyword MUST be a non-negative integer."
-    },
-    "minItems": {
-     "type": "integer",
-     "minimum": 0,
-     "description": "An array instance is valid against 'minItems' if its size is greater than, or equal to, the value of this field.\nThe value of this field MUST be a non-negative integer.\nOmitting this field has the same behavior as a value of 0."
-    },
-    "uniqueItems": {
-     "type": "boolean",
-     "description": "If this field has boolean value false, the instance validates successfully.\nIf it has boolean value true, the instance validates successfully if all of its elements are unique.\nOmitting this field has the same behavior as a value of false."
-    },
-    "maxProperties": {
-     "type": "integer",
-     "minimum": 0,
-     "description": "An object instance is valid against 'maxProperties' if its number of properties is less than, or equal to, the value of this field.\nThe value of this keyword MUST be a non-negative integer."
-    },
-    "minProperties": {
-     "type": "integer",
-     "minimum": 0,
-     "description": "An object instance is valid against 'minProperties' if its number of properties is greater than, or equal to, the value of this field.\nThe value of this field MUST be a non-negative integer.\nOmitting this field has the same behavior as a value of 0."
-    },
-    "required": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array",
-     "description": "The value of this field MUST be an array. Elements of this array, if any, MUST be strings, and MUST be unique.\nAn object instance is valid against this field if every item in the array is the name of a property in the instance.\nOmitting this field has the same behavior as an empty array."
-    },
-    "enum": {
-     "items": true,
-     "type": "array",
-     "description": "The value of this field MUST be an array. This array SHOULD have at least one element. Elements in the array SHOULD be unique.\nAn instance validates successfully against this keyword if its value is equal to one of the elements in this keyword's array value.\nElements in the array might be of any type, including null."
-    },
-    "additionalProperties": {
-     "$ref": "#/$defs/RelixySchema",
-     "description": "Define a dictionary (also known as a map, hashmap or associative array) is a set of key/value pairs."
-    },
-    "description": {
-     "type": "string",
-     "description": "Description of the schema."
-    },
-    "default": {
-     "description": "The default keyword declares a default instance value for a schema or any of its subschemas,\ntypically to support specialised tooling like documentation and form generators.\nThis keyword does not affect validation, but the evaluator will collect its value as an annotation."
-    },
-    "const": {
-     "description": "Use of this field is functionally equivalent to an 'enum' with a single value.\nAn instance validates successfully against this keyword if its value is equal to the value of the field.\nThe value of this field MAY be of any type, including null."
-    },
-    "nullable": {
-     "type": "boolean",
-     "description": "This keyword only takes effect if type is explicitly defined within the same Schema Object.\nA true value indicates that both null values and values of the type specified by type are allowed."
-    },
-    "readOnly": {
-     "type": "boolean",
-     "description": "Relevant only for Schema Object properties definitions.\nDeclares the property as \"read only\".\nThis means that it MAY be sent as part of a response but SHOULD NOT be sent as part of the request.\nIf the property is marked as readOnly being true and is in the required list, the required will take effect on the response only.\nA property MUST NOT be marked as both readOnly and writeOnly being true. Default value is false."
-    },
-    "writeOnly": {
-     "type": "boolean",
-     "description": "Relevant only for Schema Object properties definitions. Declares the property as \"write only\".\nTherefore, it MAY be sent as part of a request but SHOULD NOT be sent as part of the response.\nIf the property is marked as writeOnly being true and is in the required list, the required will take effect on the request only.\nA property MUST NOT be marked as both readOnly and writeOnly being true. Default value is false."
-    },
-    "deprecated": {
-     "type": "boolean",
-     "description": "Specifies that schema is deprecated and SHOULD be transitioned out of usage. Default value is false."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixySchema represents a JSON Schema that support Swagger, OpenAPI 3 and OpenAPI 3.1\n\nUntil 3.1 OpenAPI had a strange relationship with JSON Schema. It's been a super-set/sub-set\nmix, which has been confusing. So, instead of building a bunch of different models, we have compressed\nall variations into a single model that makes it easy to support multiple spec types.\n\n  - v2 schema: https://swagger.io/specification/v2/#schemaObject\n  - v3 schema: https://swagger.io/specification/#schema-object\n  - JSON Schema 2020-12: https://www.learnjsonschema.com/2020-12/"
-  },
-  "RelixySecurityScheme": {
-   "oneOf": [
-    {
-     "$ref": "#/$defs/RelixyAPIKeyAuthConfig",
-     "description": "Configurations for the apiKey authentication"
-    },
-    {
-     "$ref": "#/$defs/RelixyHTTPAuthConfig",
-     "description": "Configurations for the http authentication"
-    },
-    {
-     "$ref": "#/$defs/RelixyBasicAuthConfig",
-     "description": "Configurations for the basic authentication"
-    },
-    {
-     "$ref": "#/$defs/RelixyOAuth2Config",
-     "description": "Configurations for OAuth 2.0 authentication"
-    },
-    {
-     "$ref": "#/$defs/RelixyOpenIDConnectConfig",
-     "description": "Configurations for OpenID Connect authentication"
-    },
-    {
-     "$ref": "#/$defs/RelixyCookieAuthConfig",
-     "description": "Configurations for Cookie authentication"
-    },
-    {
-     "$ref": "#/$defs/RelixyMutualTLSAuthConfig",
-     "description": "Configurations for mutualTLS authentication"
-    }
-   ]
-  },
-  "RelixyServer": {
-   "properties": {
-    "url": {
-     "$ref": "#/$defs/EnvString",
-     "description": "Defines the server URL"
-    },
-    "name": {
-     "type": "string",
-     "description": "An optional unique string to refer to the host designated by the URL."
-    },
-    "description": {
-     "type": "string",
-     "description": "Description of the server."
-    },
-    "headers": {
-     "additionalProperties": {
-      "$ref": "#/$defs/EnvString"
-     },
-     "type": "object",
-     "description": "Defines custom headers to be injected to the remote server.\nMerged with the global headers."
-    },
-    "weight": {
-     "type": "integer",
-     "description": "Defines the weight of the server endpoint for load balancing.\nOnly take effect if there are many servers."
-    },
-    "securitySchemes": {
-     "items": {
-      "$ref": "#/$defs/RelixySecurityScheme"
-     },
-     "type": "array",
-     "description": "SecuritySchemes define security schemes that can be used by the operations.\nUse global security schemes if empty."
-    },
-    "security": {
-     "$ref": "#/$defs/SecurityRequirements",
-     "description": "Security contains global security requirements/roles for the target.\nUse global securities if empty."
-    },
-    "tls": {
-     "$ref": "#/$defs/TLSConfig",
-     "description": "TLS configuration of the server. Used for mTLS authentication."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "url"
-   ],
-   "description": "RelixyServer contains server configurations."
-  },
-  "RelixySettings": {
-   "properties": {
-    "http": {
-     "$ref": "#/$defs/HTTPClientConfig",
-     "description": "Global settings for the HTTP client."
-    },
-    "headers": {
-     "additionalProperties": {
-      "$ref": "#/$defs/EnvString"
-     },
-     "type": "object",
-     "description": "Headers define custom headers to be injected to the remote server.\nMerged with the global headers."
-    },
-    "forwardHeaders": {
-     "$ref": "#/$defs/RelixyForwardHeadersConfig",
-     "description": "ForwardHeaders define configurations for headers forwarding"
-    },
-    "securitySchemes": {
-     "items": {
-      "$ref": "#/$defs/RelixySecurityScheme"
-     },
-     "type": "array",
-     "description": "SecuritySchemes define security schemes that can be used by the operations."
-    },
-    "healthCheck": {
-     "$ref": "#/$defs/RelixyHealthCheckConfig",
-     "description": "HealthCheck define the health check policy for load balancer recovery."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixySettings hold settings of the rely proxy."
-  },
-  "RelixyTag": {
+  "RelixyResourceMetadata": {
    "properties": {
     "name": {
      "type": "string",
-     "description": "Name of the tag."
-    },
-    "summary": {
-     "type": "string",
-     "description": "Summary of the tag."
+     "default": "default"
     },
     "description": {
-     "type": "string",
-     "description": "Description of the tag."
-    },
-    "parent": {
-     "type": "string",
-     "description": "Parent tag."
-    },
-    "kind": {
-     "type": "string",
-     "description": "Kind of the tag."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyTag represents a high-level Tag instance for grouping and filtering."
-  },
-  "SecurityRequirement": {
-   "additionalProperties": {
-    "items": {
      "type": "string"
     },
-    "type": "array"
+    "instruction": {
+     "type": "string"
+    }
    },
+   "additionalProperties": false,
    "type": "object",
-   "description": "SecurityRequirement wraps the security requirement specification."
-  },
-  "SecurityRequirements": {
-   "items": {
-    "$ref": "#/$defs/SecurityRequirement"
-   },
-   "type": "array",
-   "description": "SecurityRequirements wraps list of security requirements with helpers."
-  },
-  "TLSConfig": {
-   "$ref": "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json#/$defs/TLSConfig"
-  },
-  "TemplateTransformerConfig": {
-   "$ref": "https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json"
+   "required": [
+    "name"
+   ]
   }
  }
 }

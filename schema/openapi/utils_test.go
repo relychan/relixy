@@ -3,90 +3,92 @@ package openapi
 import (
 	"testing"
 
+	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	"github.com/relychan/goutils"
 	"gotest.tools/v3/assert"
 )
 
 func TestExtractCommonParametersOfOperation(t *testing.T) {
 	testCases := []struct {
 		name               string
-		pathParams         []Parameter
-		operation          *RelixyOpenAPIv3Operation
-		expectedPathParams []Parameter
-		expectedOpParams   []Parameter
+		pathParams         []*highv3.Parameter
+		operation          *highv3.Operation
+		expectedPathParams []*highv3.Parameter
+		expectedOpParams   []*highv3.Parameter
 	}{
 		{
 			name:               "nil operation",
-			pathParams:         []Parameter{{Name: "id", In: InPath}},
+			pathParams:         []*highv3.Parameter{{Name: "id", In: string(InPath)}},
 			operation:          nil,
-			expectedPathParams: []Parameter{{Name: "id", In: InPath}},
+			expectedPathParams: []*highv3.Parameter{{Name: "id", In: string(InPath)}},
 			expectedOpParams:   nil,
 		},
 		{
 			name:               "operation with no parameters",
-			pathParams:         []Parameter{{Name: "id", In: InPath}},
-			operation:          &RelixyOpenAPIv3Operation{Parameters: []Parameter{}},
-			expectedPathParams: []Parameter{{Name: "id", In: InPath}},
-			expectedOpParams:   []Parameter{},
+			pathParams:         []*highv3.Parameter{{Name: "id", In: string(InPath)}},
+			operation:          &highv3.Operation{Parameters: []*highv3.Parameter{}},
+			expectedPathParams: []*highv3.Parameter{{Name: "id", In: string(InPath)}},
+			expectedOpParams:   []*highv3.Parameter{},
 		},
 		{
 			name:       "operation with duplicate path parameter",
-			pathParams: []Parameter{{Name: "id", In: InPath}},
-			operation: &RelixyOpenAPIv3Operation{
-				Parameters: []Parameter{
+			pathParams: []*highv3.Parameter{{Name: "id", In: string(InPath)}},
+			operation: &highv3.Operation{
+				Parameters: []*highv3.Parameter{
 					{Name: "id", In: InPath},
 					{Name: "filter", In: InQuery},
 				},
 			},
-			expectedPathParams: []Parameter{{Name: "id", In: InPath}},
-			expectedOpParams:   []Parameter{{Name: "filter", In: InQuery}},
+			expectedPathParams: []*highv3.Parameter{{Name: "id", In: InPath}},
+			expectedOpParams:   []*highv3.Parameter{{Name: "filter", In: InQuery}},
 		},
 		{
 			name:       "operation with new path parameter",
-			pathParams: []Parameter{{Name: "id", In: InPath}},
-			operation: &RelixyOpenAPIv3Operation{
-				Parameters: []Parameter{
+			pathParams: []*highv3.Parameter{{Name: "id", In: InPath}},
+			operation: &highv3.Operation{
+				Parameters: []*highv3.Parameter{
 					{Name: "commentId", In: InPath},
 					{Name: "filter", In: InQuery},
 				},
 			},
-			expectedPathParams: []Parameter{
+			expectedPathParams: []*highv3.Parameter{
 				{Name: "id", In: InPath},
 				{Name: "commentId", In: InPath},
 			},
-			expectedOpParams: []Parameter{{Name: "filter", In: InQuery}},
+			expectedOpParams: []*highv3.Parameter{{Name: "filter", In: InQuery}},
 		},
 		{
 			name:       "operation with query and header parameters",
-			pathParams: []Parameter{{Name: "id", In: InPath}},
-			operation: &RelixyOpenAPIv3Operation{
-				Parameters: []Parameter{
+			pathParams: []*highv3.Parameter{{Name: "id", In: InPath}},
+			operation: &highv3.Operation{
+				Parameters: []*highv3.Parameter{
 					{Name: "filter", In: InQuery},
 					{Name: "Authorization", In: InHeader},
 				},
 			},
-			expectedPathParams: []Parameter{{Name: "id", In: InPath}},
-			expectedOpParams: []Parameter{
+			expectedPathParams: []*highv3.Parameter{{Name: "id", In: InPath}},
+			expectedOpParams: []*highv3.Parameter{
 				{Name: "filter", In: InQuery},
 				{Name: "Authorization", In: InHeader},
 			},
 		},
 		{
 			name:       "operation with same name but different location",
-			pathParams: []Parameter{{Name: "id", In: InPath}},
-			operation: &RelixyOpenAPIv3Operation{
-				Parameters: []Parameter{
+			pathParams: []*highv3.Parameter{{Name: "id", In: InPath}},
+			operation: &highv3.Operation{
+				Parameters: []*highv3.Parameter{
 					{Name: "id", In: InQuery},
 				},
 			},
-			expectedPathParams: []Parameter{{Name: "id", In: InPath}},
-			expectedOpParams:   []Parameter{{Name: "id", In: InQuery}},
+			expectedPathParams: []*highv3.Parameter{{Name: "id", In: InPath}},
+			expectedOpParams:   []*highv3.Parameter{{Name: "id", In: InQuery}},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Make a copy of pathParams to avoid mutation affecting the test
-			pathParamsCopy := make([]Parameter, len(tc.pathParams))
+			pathParamsCopy := make([]*highv3.Parameter, len(tc.pathParams))
 			copy(pathParamsCopy, tc.pathParams)
 
 			result := ExtractCommonParametersOfOperation(pathParamsCopy, tc.operation)
@@ -102,82 +104,82 @@ func TestExtractCommonParametersOfOperation(t *testing.T) {
 func TestMergeParameters(t *testing.T) {
 	testCases := []struct {
 		name     string
-		dest     []Parameter
-		src      []Parameter
-		expected []Parameter
+		dest     []*highv3.Parameter
+		src      []*highv3.Parameter
+		expected []*highv3.Parameter
 	}{
 		{
 			name:     "empty dest and src",
-			dest:     []Parameter{},
-			src:      []Parameter{},
-			expected: []Parameter{},
+			dest:     []*highv3.Parameter{},
+			src:      []*highv3.Parameter{},
+			expected: []*highv3.Parameter{},
 		},
 		{
 			name:     "empty src",
-			dest:     []Parameter{{Name: "id", In: InPath}},
-			src:      []Parameter{},
-			expected: []Parameter{{Name: "id", In: InPath}},
+			dest:     []*highv3.Parameter{{Name: "id", In: InPath}},
+			src:      []*highv3.Parameter{},
+			expected: []*highv3.Parameter{{Name: "id", In: InPath}},
 		},
 		{
 			name: "empty dest",
-			dest: []Parameter{},
-			src:  []Parameter{{Name: "id", In: InPath}},
-			expected: []Parameter{
+			dest: []*highv3.Parameter{},
+			src:  []*highv3.Parameter{{Name: "id", In: InPath}},
+			expected: []*highv3.Parameter{
 				{Name: "id", In: InPath},
 			},
 		},
 		{
 			name: "merge without duplicates",
-			dest: []Parameter{
+			dest: []*highv3.Parameter{
 				{Name: "id", In: InPath},
 			},
-			src: []Parameter{
+			src: []*highv3.Parameter{
 				{Name: "filter", In: InQuery},
 			},
-			expected: []Parameter{
+			expected: []*highv3.Parameter{
 				{Name: "id", In: InPath},
 				{Name: "filter", In: InQuery},
 			},
 		},
 		{
 			name: "merge with duplicate - src overrides dest",
-			dest: []Parameter{
-				{Name: "id", In: InPath, Required: boolPtr(true)},
+			dest: []*highv3.Parameter{
+				{Name: "id", In: InPath, Required: goutils.ToPtr(true)},
 			},
-			src: []Parameter{
-				{Name: "id", In: InPath, Required: boolPtr(false)},
+			src: []*highv3.Parameter{
+				{Name: "id", In: InPath, Required: goutils.ToPtr(false)},
 			},
-			expected: []Parameter{
-				{Name: "id", In: InPath, Required: boolPtr(false)},
+			expected: []*highv3.Parameter{
+				{Name: "id", In: InPath, Required: goutils.ToPtr(false)},
 			},
 		},
 		{
 			name: "merge with same name but different location",
-			dest: []Parameter{
+			dest: []*highv3.Parameter{
 				{Name: "id", In: InPath},
 			},
-			src: []Parameter{
+			src: []*highv3.Parameter{
 				{Name: "id", In: InQuery},
 			},
-			expected: []Parameter{
+			expected: []*highv3.Parameter{
 				{Name: "id", In: InPath},
 				{Name: "id", In: InQuery},
 			},
 		},
 		{
 			name: "merge multiple parameters",
-			dest: []Parameter{
+			dest: []*highv3.Parameter{
 				{Name: "id", In: InPath},
 				{Name: "filter", In: InQuery},
 			},
-			src: []Parameter{
-				{Name: "filter", In: InQuery, Required: boolPtr(true)},
+			src: []*highv3.Parameter{
+				{Name: "filter", In: InQuery, Required: goutils.ToPtr(true)},
 				{Name: "sort", In: InQuery},
 				{Name: "Authorization", In: InHeader},
 			},
-			expected: []Parameter{
+			expected: []*highv3.Parameter{
 				{Name: "id", In: InPath},
-				{Name: "filter", In: InQuery, Required: boolPtr(true)},
+				{Name: "filter", In: InQuery, Required: goutils.ToPtr(true)},
 				{Name: "sort", In: InQuery},
 				{Name: "Authorization", In: InHeader},
 			},
@@ -190,9 +192,4 @@ func TestMergeParameters(t *testing.T) {
 			assert.DeepEqual(t, tc.expected, result)
 		})
 	}
-}
-
-// Helper function to create a bool pointer
-func boolPtr(b bool) *bool {
-	return &b
 }

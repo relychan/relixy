@@ -16,7 +16,7 @@ import (
 
 // ProxyClient helps manage and execute REST and GraphQL APIs from the API document.
 type ProxyClient struct {
-	clientOptions  *ProxyClientOptions
+	clientOptions  *gohttpc.ClientOptions
 	lbClient       *loadbalancer.LoadBalancerClient
 	metadata       *openapi.RelixyOpenAPIv3ResourceDefinition
 	node           *internal.Node
@@ -24,18 +24,11 @@ type ProxyClient struct {
 	getEnv         goenvconf.GetEnvFunc
 }
 
-// ProxyClientOptions holds optional options to create a proxy client.
-type ProxyClientOptions struct {
-	*gohttpc.ClientOptions
-
-	BasePath string
-}
-
 // NewProxyClient creates a proxy client from the API document.
 func NewProxyClient(
 	ctx context.Context,
 	metadata *openapi.RelixyOpenAPIv3ResourceDefinition,
-	clientOptions *ProxyClientOptions,
+	clientOptions *gohttpc.ClientOptions,
 ) (*ProxyClient, error) {
 	client := &ProxyClient{
 		metadata:       metadata,
@@ -185,7 +178,7 @@ func (pc *ProxyClient) initServer(
 ) (*loadbalancer.Host, error) {
 	rawServerURL := server.URL
 
-	rawURLFromEnv, exist := server.Extensions.Get("urlFromEnv")
+	rawURLFromEnv, exist := server.Extensions.Get(openapi.XRelyURLEnv)
 	if !exist && rawURLFromEnv != nil {
 		var urlFromEnv string
 
@@ -197,7 +190,11 @@ func (pc *ProxyClient) initServer(
 		if urlFromEnv != "" {
 			serverURL, err := pc.getEnv(urlFromEnv)
 			if err != nil {
-				return nil, fmt.Errorf("failed to decode urlFromEnv %s from server: %w", urlFromEnv, err)
+				return nil, fmt.Errorf(
+					"failed to decode urlFromEnv %s from server: %w",
+					urlFromEnv,
+					err,
+				)
 			}
 
 			if serverURL != "" {
@@ -223,7 +220,7 @@ func (pc *ProxyClient) initServer(
 		host.SetName(server.Name)
 	}
 
-	rawWeight, exist := server.Extensions.Get("weight")
+	rawWeight, exist := server.Extensions.Get(openapi.XRelyServerWeight)
 	if !exist && rawWeight != nil {
 		var weight int
 
@@ -237,7 +234,7 @@ func (pc *ProxyClient) initServer(
 		}
 	}
 
-	rawHeaders, exist := server.Extensions.Get("headers")
+	rawHeaders, exist := server.Extensions.Get(openapi.XRelyServerHeaders)
 	if exist && rawHeaders != nil {
 		headerEnvs := map[string]goenvconf.EnvString{}
 
@@ -262,7 +259,6 @@ func (pc *ProxyClient) initServer(
 
 			host.SetHeaders(headers)
 		}
-
 	}
 
 	return host, nil

@@ -3,9 +3,19 @@ package openapi
 import (
 	"fmt"
 	"slices"
+)
 
-	"github.com/invopop/jsonschema"
-	"github.com/relychan/goutils"
+const (
+	// XRelyURLEnv is the extension name enum of the server URL.
+	XRelyURLEnv                = "x-rely-url-env"
+	XRelyServerWeight          = "x-rely-server-weight"
+	XRelyServerHeaders         = "x-rely-server-headers"
+	XRelyServerSecuritySchemes = "x-rely-server-security-schemes"
+	XRelyServerSecurity        = "x-rely-server-security"
+	XRelyServerTLS             = "x-rely-server-tls"
+	XRelyProxyAction           = "x-rely-proxy-action"
+	// XRelySecurityCredentials is the extension name enum of security credentials.
+	XRelySecurityCredentials = "x-rely-security-credentials"
 )
 
 const (
@@ -100,15 +110,21 @@ func ParseOAuthFlowType(value string) (OAuthFlowType, error) {
 type ParameterLocation string
 
 const (
-	InQuery    ParameterLocation = "query"
-	InHeader   ParameterLocation = "header"
-	InPath     ParameterLocation = "path"
-	InCookie   ParameterLocation = "cookie"
-	InBody     ParameterLocation = "body"
-	InFormData ParameterLocation = "formData"
+	// InQuery is the constant enum that indicates the parameter location in query.
+	InQuery = "query"
+	// InHeader is the constant enum that indicates the parameter location in header.
+	InHeader = "header"
+	// InPath is the constant enum that indicates the parameter location in path.
+	InPath = "path"
+	// InCookie is the constant enum that indicates the parameter location in cookie.
+	InCookie = "cookie"
+	// InBody is the constant enum that indicates the parameter location in body.
+	InBody = "body"
+	// InFormData is the constant enum that indicates the parameter location in formData.
+	InFormData = "formData"
 )
 
-var enumValueParameterLocations = []ParameterLocation{
+var enumValueParameterLocations = []string{
 	InQuery,
 	InHeader,
 	InPath,
@@ -117,35 +133,7 @@ var enumValueParameterLocations = []ParameterLocation{
 	InFormData,
 }
 
-// IsValid checks if the style enum is valid.
-func (j ParameterLocation) IsValid() bool {
-	return slices.Contains(enumValueParameterLocations, j)
-}
-
-// JSONSchema defines a custom definition for JSON schema.
-func (ParameterLocation) JSONSchema() *jsonschema.Schema {
-	return &jsonschema.Schema{
-		Type:        "string",
-		Description: "Location of the parameter which is defined in OpenAPI specifications",
-		Enum:        goutils.ToAnySlice(SupportedParameterLocations()),
-	}
-}
-
-// SupportedParameterLocations returns supported parameter locations.
-func SupportedParameterLocations() []ParameterLocation {
-	return enumValueParameterLocations
-}
-
-// ParseParameterLocation parses ParameterLocation from string.
-func ParseParameterLocation(input string) (ParameterLocation, error) {
-	result := ParameterLocation(input)
-	if !result.IsValid() {
-		return result, fmt.Errorf(
-			"%w; got: %s",
-			ErrInvalidParameterLocation,
-			input,
-		)
-	}
-
-	return result, nil
+// IsParameterLocationValid checks if the input string is a valid parameter location.
+func IsParameterLocationValid(input string) bool {
+	return slices.Contains(enumValueParameterLocations, input)
 }

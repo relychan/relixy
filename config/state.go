@@ -38,13 +38,10 @@ func NewState(
 
 	gohttpc.SetHTTPClientMetrics(httpMetrics)
 
-	proxyClientOptions := &proxyc.ProxyClientOptions{
-		ClientOptions: gohttpc.NewClientOptions(
-			gohttpc.WithLogger(ts.Logger),
-			gohttpc.WithTracer(ts.Tracer),
-		),
-		BasePath: conf.Router.BasePath,
-	}
+	proxyClientOptions := gohttpc.NewClientOptions(
+		gohttpc.WithLogger(ts.Logger),
+		gohttpc.WithTracer(ts.Tracer),
+	)
 
 	httpConfig := result.Definition.Settings.HTTP
 	if httpConfig == nil {
@@ -53,7 +50,7 @@ func NewState(
 
 	httpClient, err := httpconfig.NewHTTPClientFromConfig(
 		httpConfig,
-		proxyClientOptions.ClientOptions,
+		proxyClientOptions,
 	)
 	if err != nil {
 		return nil, err

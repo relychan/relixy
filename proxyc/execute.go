@@ -28,12 +28,12 @@ func (pc *ProxyClient) Execute(
 
 	requestPath := req.URL.Path
 
-	if pc.clientOptions.BasePath != "" && req.URL.Path != "" {
+	if pc.metadata.Settings.BasePath != "" && req.URL.Path != "" {
 		// The URL path may omit the slash character
 		if req.URL.Path[0] == '/' {
-			requestPath = strings.TrimPrefix(req.URL.Path, pc.clientOptions.BasePath)
+			requestPath = strings.TrimPrefix(req.URL.Path, pc.metadata.Settings.BasePath)
 		} else {
-			requestPath = strings.TrimPrefix(req.URL.Path, pc.clientOptions.BasePath[1:])
+			requestPath = strings.TrimPrefix(req.URL.Path, pc.metadata.Settings.BasePath[1:])
 		}
 	}
 

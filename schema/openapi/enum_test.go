@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"slices"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -85,13 +86,13 @@ func TestParseSecuritySchemeType(t *testing.T) {
 func TestSupportedSecuritySchemeTypes(t *testing.T) {
 	schemes := SupportedSecuritySchemeTypes()
 	assert.Assert(t, len(schemes) == 7)
-	assert.Assert(t, contains(schemes, APIKeyScheme))
-	assert.Assert(t, contains(schemes, HTTPAuthScheme))
-	assert.Assert(t, contains(schemes, BasicAuthScheme))
-	assert.Assert(t, contains(schemes, CookieAuthScheme))
-	assert.Assert(t, contains(schemes, OAuth2Scheme))
-	assert.Assert(t, contains(schemes, OpenIDConnectScheme))
-	assert.Assert(t, contains(schemes, MutualTLSScheme))
+	assert.Assert(t, slices.Contains(schemes, APIKeyScheme))
+	assert.Assert(t, slices.Contains(schemes, HTTPAuthScheme))
+	assert.Assert(t, slices.Contains(schemes, BasicAuthScheme))
+	assert.Assert(t, slices.Contains(schemes, CookieAuthScheme))
+	assert.Assert(t, slices.Contains(schemes, OAuth2Scheme))
+	assert.Assert(t, slices.Contains(schemes, OpenIDConnectScheme))
+	assert.Assert(t, slices.Contains(schemes, MutualTLSScheme))
 }
 
 func TestParseOAuthFlowType(t *testing.T) {
@@ -150,35 +151,4 @@ func TestParseOAuthFlowType(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestSupportedParameterLocations(t *testing.T) {
-	locations := SupportedParameterLocations()
-	assert.Assert(t, len(locations) == 6)
-	assert.Assert(t, containsParamLocation(locations, InQuery))
-	assert.Assert(t, containsParamLocation(locations, InHeader))
-	assert.Assert(t, containsParamLocation(locations, InPath))
-	assert.Assert(t, containsParamLocation(locations, InCookie))
-	assert.Assert(t, containsParamLocation(locations, InBody))
-	assert.Assert(t, containsParamLocation(locations, InFormData))
-}
-
-// Helper function to check if a slice contains a SecuritySchemeType
-func contains(slice []SecuritySchemeType, item SecuritySchemeType) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
-}
-
-// Helper function to check if a slice contains a ParameterLocation
-func containsParamLocation(slice []ParameterLocation, item ParameterLocation) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
 }

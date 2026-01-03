@@ -1,3 +1,4 @@
+// Package gqlschema defines schemas for GraphQL resources
 package gqlschema
 
 import "github.com/relychan/relixy/schema/base_schema"

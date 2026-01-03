@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/hasura/goenvconf"
+	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/gohttpc/loadbalancer"
 	"github.com/relychan/relixy/schema/base_schema"
 )
@@ -33,7 +34,7 @@ type RelixyHandler interface {
 // NewRelixyHandlerOptions hold request options for the proxy handler.
 type NewRelixyHandlerOptions struct {
 	Method     string
-	Parameters []Parameter
+	Parameters []*highv3.Parameter
 	GetEnv     goenvconf.GetEnvFunc
 }
 
@@ -47,4 +48,4 @@ func (nrp NewRelixyHandlerOptions) GetEnvFunc() goenvconf.GetEnvFunc {
 }
 
 // NewRelixyHandlerFunc abstracts a function to create a new proxy handler.
-type NewRelixyHandlerFunc func(operation *RelixyOpenAPIv3Operation, options *NewRelixyHandlerOptions) (RelixyHandler, error)
+type NewRelixyHandlerFunc func(operation *highv3.Operation, proxyAction *base_schema.RelixyAction, options *NewRelixyHandlerOptions) (RelixyHandler, error)

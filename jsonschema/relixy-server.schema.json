@@ -196,12 +196,38 @@
   },
   "RelyAuthConfig": {
    "properties": {
+    "version": {
+     "type": "string",
+     "enum": [
+      "v1"
+     ]
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "AuthConfig"
+     ]
+    },
+    "definition": {
+     "$ref": "#/$defs/RelyAuthDefinition"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "version",
+    "kind",
+    "definition"
+   ]
+  },
+  "RelyAuthDefinition": {
+   "properties": {
     "settings": {
      "$ref": "#/$defs/RelyAuthSettings"
     },
-    "definitions": {
+    "modes": {
      "items": {
-      "$ref": "#/$defs/RelyAuthDefinition"
+      "$ref": "#/$defs/RelyAuthMode"
      },
      "type": "array"
     }
@@ -209,10 +235,10 @@
    "additionalProperties": false,
    "type": "object",
    "required": [
-    "definitions"
+    "modes"
    ]
   },
-  "RelyAuthDefinition": {
+  "RelyAuthMode": {
    "oneOf": [
     {
      "$ref": "#/$defs/RelyAuthAPIKeyConfig",
