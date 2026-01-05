@@ -716,9 +716,9 @@ func (n *Node) isLeaf() bool {
 
 // patNextSegment returns the next segment details from a pattern:
 // node type, param key, regexp string, param tail byte, param starting index, param ending index.
-func patNextSegment(
+func patNextSegment( //nolint
 	pattern string,
-) (nodeTyp, string, string, byte, int, int, error) {
+) (nodeTyp, string, string, byte, int, int, error) { //nolint
 	ps := strings.Index(pattern, "{")
 	ws := strings.Index(pattern, "*")
 
