@@ -22,7 +22,6 @@ import (
 
 // NewState creates the handler state from config.
 func NewState(
-	ctx context.Context,
 	conf *RelixyServerConfig,
 	ts *gotel.OTelExporters,
 ) (*types.State, error) {
@@ -58,7 +57,7 @@ func NewState(
 
 	proxyClientOptions.HTTPClient = httpClient
 
-	proxyClient, err := proxyc.NewProxyClient(ctx, &result.Definition, proxyClientOptions)
+	proxyClient, err := proxyc.NewProxyClient(&result.Definition, proxyClientOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create proxy client: %w", err)
 	}

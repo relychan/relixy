@@ -2160,6 +2160,14 @@
               "$ref": "#/$defs/map-of-strings",
               "description": "The available scopes for the OAuth2 security scheme. A map between the scope name and a short description for it. The map MAY be empty."
             },
+            "x-rely-oauth2-token-url-env": {
+              "type": "string",
+              "description": "A custom environment variable for the tokenUrl. Fallback to tokenUrl if empty"
+            },
+            "x-rely-oauth2-refresh-url-env": {
+              "type": "string",
+              "description": "A custom environment variable for the refreshUrl. Fallback to refreshUrl if empty"
+            },
             "x-rely-security-credentials": {
               "type": "object",
               "properties": {
@@ -2170,6 +2178,13 @@
                 "clientSecret": {
                   "$ref": "#/$defs/EnvString",
                   "description": "The client Secret of the client credentials auth flow"
+                },
+                "endpointParams": {
+                  "type": "object",
+                  "description": "Optional query parameters for the token and refresh URLs",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/EnvString"
+                  }
                 }
               },
               "required": [

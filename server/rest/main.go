@@ -61,7 +61,7 @@ func setupRouter(
 	conf *config.RelixyServerConfig,
 	ts *gotel.OTelExporters,
 ) (*chi.Mux, func(), error) {
-	state, err := config.NewState(ctx, conf, ts)
+	state, err := config.NewState(conf, ts)
 	if err != nil {
 		return nil, nil, err
 	}

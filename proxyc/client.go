@@ -2,7 +2,6 @@
 package proxyc
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/hasura/goenvconf"
@@ -10,6 +9,7 @@ import (
 	"github.com/relychan/gohttpc"
 	"github.com/relychan/gohttpc/loadbalancer"
 	"github.com/relychan/gohttpc/loadbalancer/roundrobin"
+	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 	"github.com/relychan/relixy/proxyc/internal"
 	"github.com/relychan/relixy/schema/openapi"
 )
@@ -21,12 +21,11 @@ type ProxyClient struct {
 	metadata       *openapi.RelixyOpenAPIv3ResourceDefinition
 	node           *internal.Node
 	defaultHeaders map[string]string
-	getEnv         goenvconf.GetEnvFunc
+	authenticators *proxyhandler.OpenAPIAuthenticator
 }
 
 // NewProxyClient creates a proxy client from the API document.
 func NewProxyClient(
-	ctx context.Context,
 	metadata *openapi.RelixyOpenAPIv3ResourceDefinition,
 	clientOptions *gohttpc.ClientOptions,
 ) (*ProxyClient, error) {
@@ -36,7 +35,7 @@ func NewProxyClient(
 		defaultHeaders: map[string]string{},
 	}
 
-	err := client.init(ctx)
+	err := client.init()
 	if err != nil {
 		return nil, err
 	}
@@ -62,13 +61,7 @@ func (pc *ProxyClient) Close() error {
 	return nil
 }
 
-func (pc *ProxyClient) init(ctx context.Context) error {
-	pc.getEnv = goenvconf.GetOSEnv
-
-	if pc.clientOptions.CustomEnvGetter != nil {
-		pc.getEnv = pc.clientOptions.CustomEnvGetter(ctx)
-	}
-
+func (pc *ProxyClient) init() error {
 	err := pc.initServers()
 	if err != nil {
 		return err
@@ -79,7 +72,15 @@ func (pc *ProxyClient) init(ctx context.Context) error {
 		return err
 	}
 
-	node, err := BuildMetadataTree(ctx, pc.metadata.Spec, pc.clientOptions)
+	pc.authenticators, err = proxyhandler.NewOpenAPIv3Authenticator(
+		pc.metadata.Spec,
+		pc.clientOptions.GetEnvFunc(),
+	)
+	if err != nil {
+		return err
+	}
+
+	node, err := BuildMetadataTree(pc.metadata.Spec, pc.clientOptions)
 	if err != nil {
 		return err
 	}
@@ -90,8 +91,10 @@ func (pc *ProxyClient) init(ctx context.Context) error {
 }
 
 func (pc *ProxyClient) initDefaultHeaders() error {
+	getEnv := pc.clientOptions.GetEnvFunc()
+
 	for key, envValue := range pc.metadata.Settings.Headers {
-		value, err := envValue.GetOrDefault("")
+		value, err := envValue.GetCustom(getEnv)
 		if err != nil {
 			return fmt.Errorf("failed to load header %s: %w", key, err)
 		}
@@ -172,10 +175,11 @@ func (pc *ProxyClient) initServers() error {
 	return nil
 }
 
-func (pc *ProxyClient) initServer(
+func (pc *ProxyClient) initServer( //nolint:cyclop
 	server *highv3.Server,
 	healthCheckBuilder *loadbalancer.HTTPHealthCheckPolicyBuilder,
 ) (*loadbalancer.Host, error) {
+	getEnv := pc.clientOptions.GetEnvFunc()
 	rawServerURL := server.URL
 
 	rawURLFromEnv, exist := server.Extensions.Get(openapi.XRelyURLEnv)
@@ -188,7 +192,7 @@ func (pc *ProxyClient) initServer(
 		}
 
 		if urlFromEnv != "" {
-			serverURL, err := pc.getEnv(urlFromEnv)
+			serverURL, err := getEnv(urlFromEnv)
 			if err != nil {
 				return nil, fmt.Errorf(
 					"failed to decode urlFromEnv %s from server: %w",
@@ -247,7 +251,7 @@ func (pc *ProxyClient) initServer(
 			headers := make(map[string]string)
 
 			for key, header := range headerEnvs {
-				value, err := header.GetCustom(pc.getEnv)
+				value, err := header.GetCustom(getEnv)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get header %s: %w", key, err)
 				}

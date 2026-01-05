@@ -12,11 +12,11 @@ require (
 	github.com/jmespath-community/go-jmespath v1.1.2-0.20250228093220-ef5fae83c6c0
 	github.com/pb33f/libopenapi v0.31.1
 	github.com/pb33f/ordered-map/v2 v2.3.0
-	github.com/relychan/gohttpc v0.0.0-20251231181802-fa4980777a9c
+	github.com/relychan/gohttpc v0.0.0-20260105072806-2bdb705536d9
 	github.com/relychan/gohttps v0.0.0-20251206085650-5f2727ade1fa
 	github.com/relychan/gotransform v0.0.0-20260102021651-b47ff69e3c82
 	github.com/relychan/goutils v0.0.0-20251230062103-93a30b1ea43d
-	github.com/relychan/rely-auth v0.0.0-20260102100750-0fe878d570bd
+	github.com/relychan/rely-auth v0.0.0-20260105075659-4d6c64331a6b
 	github.com/vektah/gqlparser v1.3.1
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	go.opentelemetry.io/otel v1.39.0

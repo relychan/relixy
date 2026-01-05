@@ -3,12 +3,6 @@
  "$id": "https://github.com/relychan/relixy/schema/openapi/relixy-open-ap-iv3-resource",
  "$ref": "#/$defs/RelixyOpenAPIv3Resource",
  "$defs": {
-  "Duration": {
-   "type": "string",
-   "minLength": 2,
-   "pattern": "^(\\d+(\\.\\d+)?h)?(\\d+(\\.\\d+)?m)?(\\d+(\\.\\d+)?s)?(\\d+(\\.\\d+)?ms)?$",
-   "description": "Duration string"
-  },
   "EnvBool": {
    "anyOf": [
     {
@@ -149,6 +143,9 @@
   },
   "RelixyOpenAPISettings": {
    "properties": {
+    "expose": {
+     "type": "boolean"
+    },
     "basePath": {
      "type": "string"
     },

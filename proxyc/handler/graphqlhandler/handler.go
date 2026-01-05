@@ -17,6 +17,7 @@ import (
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/goutils"
 	"github.com/relychan/goutils/httpheader"
+	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
 	"github.com/vektah/gqlparser/ast"
@@ -41,8 +42,8 @@ type GraphQLHandler struct {
 func NewGraphQLHandler( //nolint:ireturn,nolintlint
 	operation *highv3.Operation,
 	proxyAction *base_schema.RelixyAction,
-	options *openapi.NewRelixyHandlerOptions,
-) (openapi.RelixyHandler, error) {
+	options *proxyhandler.NewRelixyHandlerOptions,
+) (proxyhandler.RelixyHandler, error) {
 	if proxyAction == nil || proxyAction.Type != base_schema.ProxyTypeGraphQL {
 		return nil, ErrProxyActionInvalid
 	}
@@ -83,7 +84,7 @@ func (*GraphQLHandler) Type() base_schema.RelixyType {
 func (ge *GraphQLHandler) Handle( //nolint:funlen
 	ctx context.Context,
 	request *http.Request,
-	options *openapi.RelixyHandleOptions,
+	options *proxyhandler.RelixyHandleOptions,
 ) (*http.Response, any, error) {
 	span := trace.SpanFromContext(ctx)
 
@@ -177,21 +178,8 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 		),
 	)
 
-	req := options.HTTPClient.R(http.MethodPost, ge.requestPath)
+	req := options.NewRequest(http.MethodPost, ge.requestPath)
 	reqHeader := req.Header()
-
-	for key, value := range options.DefaultHeaders {
-		reqHeader.Set(key, value)
-	}
-
-	if options.Settings.ForwardHeaders != nil {
-		for _, key := range options.Settings.ForwardHeaders.Request {
-			value := reqHeader.Get(key)
-			if value != "" {
-				reqHeader.Set(key, value)
-			}
-		}
-	}
 
 	reqHeader.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
 

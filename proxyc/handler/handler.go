@@ -1,4 +1,5 @@
-package internal
+// Package handler defines the global proxy handler with default constructors
+package handler
 
 import (
 	"errors"
@@ -6,32 +7,24 @@ import (
 
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/relixy/proxyc/handler/graphqlhandler"
+	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 	"github.com/relychan/relixy/proxyc/handler/resthandler"
 	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
 )
 
-var (
-	ErrUnsupportedProxyType = errors.New("unsupported proxy type")
-	ErrWildcardMustBeLast   = errors.New(
-		"wildcard '*' must be the last value in a route. trim trailing text or use a '{param}' instead",
-	)
-	ErrMissingClosingBracket            = errors.New("route param closing delimiter '}' is missing")
-	ErrDuplicatedParamKey               = errors.New("routing pattern contains duplicate param key")
-	ErrInvalidRegexpPatternParamInRoute = errors.New("invalid regexp pattern in route param")
-	ErrReplaceMissingChildNode          = errors.New("replacing missing child node")
-)
+var ErrUnsupportedProxyType = errors.New("unsupported proxy type")
 
-var proxyHandlerConstructors = map[base_schema.RelixyType]openapi.NewRelixyHandlerFunc{
+var proxyHandlerConstructors = map[base_schema.RelixyType]proxyhandler.NewRelixyHandlerFunc{
 	base_schema.ProxyTypeREST:    resthandler.NewRESTHandler,
 	base_schema.ProxyTypeGraphQL: graphqlhandler.NewGraphQLHandler,
 }
 
 // NewProxyHandler creates a proxy handler by type.
-func NewProxyHandler( //nolint:ireturn
+func NewProxyHandler( //nolint:ireturn,nolintlint
 	operation *highv3.Operation,
-	options *openapi.NewRelixyHandlerOptions,
-) (openapi.RelixyHandler, error) {
+	options *proxyhandler.NewRelixyHandlerOptions,
+) (proxyhandler.RelixyHandler, error) {
 	var proxyAction base_schema.RelixyAction
 
 	if operation.Extensions != nil {
@@ -66,7 +59,7 @@ func NewProxyHandler( //nolint:ireturn
 // RegisterProxyHandler registers the handler to the global registry.
 func RegisterProxyHandler(
 	proxyType base_schema.RelixyType,
-	constructor openapi.NewRelixyHandlerFunc,
+	constructor proxyhandler.NewRelixyHandlerFunc,
 ) {
 	proxyHandlerConstructors[proxyType] = constructor
 }

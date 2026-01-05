@@ -155,24 +155,10 @@
    "additionalProperties": false,
    "type": "object"
   },
-  "RelixyRouterConfig": {
-   "properties": {
-    "basePath": {
-     "type": "string",
-     "description": "Set the base path for all API handlers."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyRouterConfig holds configurations of the rest handler."
-  },
   "RelixyServerConfig": {
    "properties": {
     "server": {
      "$ref": "#/$defs/ServerConfig"
-    },
-    "router": {
-     "$ref": "#/$defs/RelixyRouterConfig"
     },
     "telemetry": {
      "$ref": "#/$defs/OTLPConfig"

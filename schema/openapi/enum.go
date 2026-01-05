@@ -7,20 +7,29 @@ import (
 
 const (
 	// XRelyURLEnv is the extension name enum of the server URL.
-	XRelyURLEnv                = "x-rely-url-env"
-	XRelyServerWeight          = "x-rely-server-weight"
-	XRelyServerHeaders         = "x-rely-server-headers"
+	XRelyURLEnv = "x-rely-url-env"
+	// XRelyServerWeight is the extension name enum for the weight of server if the load balancer is configured.
+	XRelyServerWeight = "x-rely-server-weight"
+	// XRelyServerHeaders is the extension name enum for custom headers for the server.
+	XRelyServerHeaders = "x-rely-server-headers"
+	// XRelyServerSecuritySchemes is the extension name enum for server security schemes.
 	XRelyServerSecuritySchemes = "x-rely-server-security-schemes"
-	XRelyServerSecurity        = "x-rely-server-security"
-	XRelyServerTLS             = "x-rely-server-tls"
-	XRelyProxyAction           = "x-rely-proxy-action"
-	// XRelySecurityCredentials is the extension name enum of security credentials.
+	// XRelyServerSecurity is the extension name enum for a server security.
+	XRelyServerSecurity = "x-rely-server-security"
+	// XRelyServerTLS is the extension name enum for a server TLS config.
+	XRelyServerTLS = "x-rely-server-tls"
+	// XRelyProxyAction is the extension name enum for a proxy action.
+	XRelyProxyAction = "x-rely-proxy-action"
+	// XRelySecurityCredentials is the extension name enum for security credentials.
 	XRelySecurityCredentials = "x-rely-security-credentials"
+	// XRelyOAuth2TokenURLEnv is the extension name enum of a custom environment variable for OAuth2 token URL.
+	XRelyOAuth2TokenURLEnv = "x-rely-oauth2-token-url-env" //nolint:gosec
+	// XRelyOAuth2RefreshURLEnv is the extension name enum of a custom environment variable for OAuth2 refresh URL.
+	XRelyOAuth2RefreshURLEnv = "x-rely-oauth2-refresh-url-env"
 )
 
 const (
 	HTTPAuthSchemeBearer = "bearer"
-	AuthorizationHeader  = "Authorization"
 )
 
 // SecuritySchemeType represents the authentication scheme enum.
@@ -65,46 +74,7 @@ func ParseSecuritySchemeType(value string) (SecuritySchemeType, error) {
 	return result, nil
 }
 
-// OAuthFlowType represents the OAuth flow type enum.
-type OAuthFlowType string
-
-const (
-	// AuthorizationCodeFlow is the constant string for the OAuth Authorization Code flow.
-	AuthorizationCodeFlow OAuthFlowType = "authorizationCode"
-	// ImplicitFlow is the constant string for the OAuth Implicit flow.
-	ImplicitFlow OAuthFlowType = "implicit"
-	// PasswordFlow is the constant string for the OAuth Resource Owner Password flow.
-	PasswordFlow OAuthFlowType = "password"
-	// ClientCredentialsFlow is the constant string for the OAuth Client Credentials flow.
-	ClientCredentialsFlow OAuthFlowType = "clientCredentials"
-	// DeviceAuthorizationFlow is the constant string for the OAuth Device Authorization flow.
-	DeviceAuthorizationFlow OAuthFlowType = "deviceAuthorization"
-)
-
-var enumValuesOAuthFlows = []OAuthFlowType{
-	AuthorizationCodeFlow,
-	ImplicitFlow,
-	PasswordFlow,
-	ClientCredentialsFlow,
-	DeviceAuthorizationFlow,
-}
-
-// ParseOAuthFlowType parses OAuthFlowType from string.
-func ParseOAuthFlowType(value string) (OAuthFlowType, error) {
-	result := OAuthFlowType(value)
-	if !slices.Contains(enumValuesOAuthFlows, result) {
-		return result, fmt.Errorf(
-			"%w; got <%s>",
-			ErrInvalidOAuthFlowType,
-			value,
-		)
-	}
-
-	return result, nil
-}
-
 // ParameterLocation is [the location] of the parameter.
-// Possible values are "query", "header", "path" or "cookie".
 //
 // [the location]: https://swagger.io/specification/#parameter-object
 type ParameterLocation string
@@ -124,7 +94,7 @@ const (
 	InFormData = "formData"
 )
 
-var enumValueParameterLocations = []string{
+var enumValueParameterLocations = []ParameterLocation{
 	InQuery,
 	InHeader,
 	InPath,
@@ -133,7 +103,21 @@ var enumValueParameterLocations = []string{
 	InFormData,
 }
 
-// IsParameterLocationValid checks if the input string is a valid parameter location.
-func IsParameterLocationValid(input string) bool {
-	return slices.Contains(enumValueParameterLocations, input)
+// IsValid checks if the style enum is valid.
+func (j ParameterLocation) IsValid() bool {
+	return slices.Contains(enumValueParameterLocations, j)
+}
+
+// ParseParameterLocation parses ParameterLocation from string.
+func ParseParameterLocation(input string) (ParameterLocation, error) {
+	result := ParameterLocation(input)
+	if !result.IsValid() {
+		return result, fmt.Errorf(
+			"%w; got: %s",
+			ErrInvalidParameterLocation,
+			input,
+		)
+	}
+
+	return result, nil
 }

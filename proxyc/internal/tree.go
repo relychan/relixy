@@ -12,6 +12,8 @@ import (
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/goutils"
+	"github.com/relychan/relixy/proxyc/handler"
+	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 	"github.com/relychan/relixy/schema/openapi"
 )
 
@@ -27,8 +29,14 @@ const (
 // Route holds parameter values from the request path.
 type Route struct {
 	Node        *Node
-	Handler     openapi.RelixyHandler
+	Method      MethodHandler
 	ParamValues map[string]string
+}
+
+// MethodHandler represents a handler data for a method.
+type MethodHandler struct {
+	Handler  proxyhandler.RelixyHandler
+	Security []*base.SecurityRequirement
 }
 
 // Node presents the route tree to organize the recursive route structure.
@@ -36,7 +44,7 @@ type Route struct {
 //
 // [Chi router]: https://github.com/go-chi/chi/tree/v5.2.3
 type Node struct {
-	handlers map[string]openapi.RelixyHandler
+	handlers map[string]MethodHandler
 
 	// regexp matcher for regexp nodes
 	rex *regexp.Regexp
@@ -67,7 +75,7 @@ type Node struct {
 func (n *Node) InsertRoute(
 	pattern string,
 	operations *highv3.PathItem,
-	options *InsertRouteOptions,
+	options *proxyhandler.InsertRouteOptions,
 ) (*Node, error) {
 	var parent *Node
 
@@ -208,13 +216,13 @@ func (n *Node) FindRoute(path string, method string) *Route {
 		return nil
 	}
 
-	handler, ok := rn.handlers[method]
+	h, ok := rn.handlers[method]
 	if !ok {
 		return nil
 	}
 
 	route.Node = rn
-	route.Handler = handler
+	route.Method = h
 
 	return route
 }
@@ -336,7 +344,7 @@ func (n *Node) replaceChild(label, tail byte, child *Node) error {
 func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 	pattern string,
 	operations *highv3.PathItem,
-	options *InsertRouteOptions,
+	options *proxyhandler.InsertRouteOptions,
 ) error {
 	paramKeys, err := patParamKeys(pattern)
 	if err != nil {
@@ -364,7 +372,7 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 	// validates and add unknown parameters from the request pattern
 	for _, key := range paramKeys {
 		if slices.ContainsFunc(params, func(param *highv3.Parameter) bool {
-			return param.In == openapi.InPath && param.Name == key
+			return param.In == string(openapi.InPath) && param.Name == key
 		}) {
 			continue
 		}
@@ -382,141 +390,171 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 	operations.Parameters = params
 	n.pattern = pattern
 
-	n.handlers = map[string]openapi.RelixyHandler{}
+	n.handlers = map[string]MethodHandler{}
 
 	if operations.Get != nil {
 		method := http.MethodGet
 
-		handler, err := NewProxyHandler(operations.Get, &openapi.NewRelixyHandlerOptions{
+		h, err := handler.NewProxyHandler(operations.Get, &proxyhandler.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidMetadataError(method, pattern, err)
+			return newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = handler
+		n.handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Get.Security,
+		}
 	}
 
 	if operations.Post != nil {
 		method := http.MethodPost
 
-		handler, err := NewProxyHandler(operations.Post, &openapi.NewRelixyHandlerOptions{
+		h, err := handler.NewProxyHandler(operations.Post, &proxyhandler.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidMetadataError(method, pattern, err)
+			return newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[http.MethodPost] = handler
+		n.handlers[http.MethodPost] = MethodHandler{
+			Handler:  h,
+			Security: operations.Post.Security,
+		}
 	}
 
 	if operations.Put != nil {
 		method := http.MethodPut
 
-		handler, err := NewProxyHandler(operations.Put, &openapi.NewRelixyHandlerOptions{
+		h, err := handler.NewProxyHandler(operations.Put, &proxyhandler.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidMetadataError(method, pattern, err)
+			return newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = handler
+		n.handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Put.Security,
+		}
 	}
 
 	if operations.Patch != nil {
 		method := http.MethodPatch
 
-		handler, err := NewProxyHandler(operations.Patch, &openapi.NewRelixyHandlerOptions{
+		h, err := handler.NewProxyHandler(operations.Patch, &proxyhandler.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidMetadataError(method, pattern, err)
+			return newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = handler
+		n.handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Patch.Security,
+		}
 	}
 
 	if operations.Delete != nil {
 		method := http.MethodDelete
 
-		handler, err := NewProxyHandler(operations.Delete, &openapi.NewRelixyHandlerOptions{
+		h, err := handler.NewProxyHandler(operations.Delete, &proxyhandler.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidMetadataError(method, pattern, err)
+			return newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = handler
+		n.handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Delete.Security,
+		}
 	}
 
 	if operations.Head != nil {
 		method := http.MethodHead
 
-		handler, err := NewProxyHandler(operations.Head, &openapi.NewRelixyHandlerOptions{
+		h, err := handler.NewProxyHandler(operations.Head, &proxyhandler.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidMetadataError(method, pattern, err)
+			return newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = handler
+		n.handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Head.Security,
+		}
 	}
 
 	if operations.Options != nil {
 		method := http.MethodOptions
 
-		handler, err := NewProxyHandler(operations.Options, &openapi.NewRelixyHandlerOptions{
-			Method:     method,
-			Parameters: operations.Parameters,
-			GetEnv:     options.GetEnv,
-		})
+		h, err := handler.NewProxyHandler(
+			operations.Options,
+			&proxyhandler.NewRelixyHandlerOptions{
+				Method:     method,
+				Parameters: operations.Parameters,
+				GetEnv:     options.GetEnv,
+			},
+		)
 		if err != nil {
-			return newInvalidMetadataError(method, pattern, err)
+			return newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = handler
+		n.handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Options.Security,
+		}
 	}
 
 	if operations.Query != nil {
 		method := "QUERY"
 
-		handler, err := NewProxyHandler(operations.Query, &openapi.NewRelixyHandlerOptions{
+		h, err := handler.NewProxyHandler(operations.Query, &proxyhandler.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidMetadataError(method, pattern, err)
+			return newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = handler
+		n.handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Query.Security,
+		}
 	}
 
 	if operations.Trace != nil {
 		method := http.MethodTrace
 
-		handler, err := NewProxyHandler(operations.Trace, &openapi.NewRelixyHandlerOptions{
+		h, err := handler.NewProxyHandler(operations.Trace, &proxyhandler.NewRelixyHandlerOptions{
 			Method:     method,
 			Parameters: operations.Parameters,
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidMetadataError(method, pattern, err)
+			return newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = handler
+		n.handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Trace.Security,
+		}
 	}
 
 	if operations.AdditionalOperations != nil {
@@ -528,16 +566,19 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 				continue
 			}
 
-			handler, err := NewProxyHandler(op, &openapi.NewRelixyHandlerOptions{
+			h, err := handler.NewProxyHandler(op, &proxyhandler.NewRelixyHandlerOptions{
 				Method:     method,
 				Parameters: operations.Parameters,
 				GetEnv:     options.GetEnv,
 			})
 			if err != nil {
-				return newInvalidMetadataError(method, pattern, err)
+				return newInvalidOperationMetadataError(method, pattern, err)
 			}
 
-			n.handlers[method] = handler
+			n.handlers[method] = MethodHandler{
+				Handler:  h,
+				Security: op.Security,
+			}
 		}
 	}
 
@@ -675,9 +716,9 @@ func (n *Node) isLeaf() bool {
 
 // patNextSegment returns the next segment details from a pattern:
 // node type, param key, regexp string, param tail byte, param starting index, param ending index.
-func patNextSegment( //nolint:revive
+func patNextSegment(
 	pattern string,
-) (nodeTyp, string, string, byte, int, int, error) { //nolint:revive
+) (nodeTyp, string, string, byte, int, int, error) {
 	ps := strings.Index(pattern, "{")
 	ws := strings.Index(pattern, "*")
 

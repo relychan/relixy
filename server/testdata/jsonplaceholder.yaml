@@ -18,6 +18,11 @@ definition:
     openapi: "3.2.0"
     servers:
       - url: https://jsonplaceholder.typicode.com
+    components:
+      securitySchemes:
+        apiKey:
+          type: http
+          scheme: bearer
     paths:
       /albums:
         get:

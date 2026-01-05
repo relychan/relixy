@@ -1,4 +1,5 @@
-package openapi
+// Package proxyhandler defines types for the proxy handler.
+package proxyhandler
 
 import (
 	"context"
@@ -6,17 +7,17 @@ import (
 
 	"github.com/hasura/goenvconf"
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
-	"github.com/relychan/gohttpc/loadbalancer"
+	"github.com/relychan/gohttpc"
 	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/openapi"
 )
 
 // RelixyHandleOptions hold request options for the proxy handler.
 type RelixyHandleOptions struct {
-	HTTPClient     *loadbalancer.LoadBalancerClient
-	Settings       *RelixyOpenAPISettings
-	Path           string
-	ParamValues    map[string]string
-	DefaultHeaders map[string]string
+	NewRequest  NewRequestFunc
+	Settings    *openapi.RelixyOpenAPISettings
+	Path        string
+	ParamValues map[string]string
 }
 
 // RelixyHandler abstracts the executor to proxy HTTP requests.
@@ -49,3 +50,6 @@ func (nrp NewRelixyHandlerOptions) GetEnvFunc() goenvconf.GetEnvFunc {
 
 // NewRelixyHandlerFunc abstracts a function to create a new proxy handler.
 type NewRelixyHandlerFunc func(operation *highv3.Operation, proxyAction *base_schema.RelixyAction, options *NewRelixyHandlerOptions) (RelixyHandler, error)
+
+// NewRequestFunc abstracts a function to create an HTTP request.
+type NewRequestFunc func(method string, url string) *gohttpc.RequestWithClient
