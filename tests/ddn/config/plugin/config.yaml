@@ -11,7 +11,6 @@ definition:
       response: []
   spec:
     openapi: "3.2.0"
-    jsonSchemaDialect: https://spec.openapis.org/oas/3.2/dialect/2025-09-17
     servers:
       - x-rely-url-env: GRAPHQL_SERVER_URL
     paths:

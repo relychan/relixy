@@ -3,6 +3,7 @@ package openapi
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp/cmpopts"
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/goutils"
 	"gotest.tools/v3/assert"
@@ -93,9 +94,9 @@ func TestExtractCommonParametersOfOperation(t *testing.T) {
 
 			result := ExtractCommonParametersOfOperation(pathParamsCopy, tc.operation)
 
-			assert.DeepEqual(t, tc.expectedPathParams, result)
+			assert.DeepEqual(t, tc.expectedPathParams, result, cmpopts.IgnoreUnexported(highv3.Parameter{}))
 			if tc.operation != nil {
-				assert.DeepEqual(t, tc.expectedOpParams, tc.operation.Parameters)
+				assert.DeepEqual(t, tc.expectedOpParams, tc.operation.Parameters, cmpopts.IgnoreUnexported(highv3.Parameter{}))
 			}
 		})
 	}
@@ -189,7 +190,7 @@ func TestMergeParameters(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			result := MergeParameters(tc.dest, tc.src)
-			assert.DeepEqual(t, tc.expected, result)
+			assert.DeepEqual(t, tc.expected, result, cmpopts.IgnoreUnexported(highv3.Parameter{}))
 		})
 	}
 }

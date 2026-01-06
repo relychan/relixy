@@ -52,7 +52,7 @@ func NewOpenAPIv3Authenticator(
 			}
 		}
 
-		if authScheme == nil {
+		if authScheme != nil {
 			result.securitySchemes[key] = authScheme
 		}
 	}

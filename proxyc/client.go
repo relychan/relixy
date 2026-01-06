@@ -125,52 +125,33 @@ func (pc *ProxyClient) initServers() error {
 		healthCheckBuilder = loadbalancer.NewHTTPHealthCheckPolicyBuilder()
 	}
 
-	switch len(pc.metadata.Spec.Servers) {
-	case 0:
+	if len(pc.metadata.Spec.Servers) == 0 {
 		return errServerURLRequired
-	case 1:
-		host, err := pc.initServer(pc.metadata.Spec.Servers[0], healthCheckBuilder)
-		if err != nil {
-			return err
-		}
-
-		if host == nil {
-			return ErrNoAvailableServer
-		}
-
-		wrr, err := roundrobin.NewWeightedRoundRobin([]*loadbalancer.Host{host})
-		if err != nil {
-			return err
-		}
-
-		pc.lbClient = loadbalancer.NewLoadBalancerClientWithOptions(wrr, pc.clientOptions)
-
-		return nil
-	default:
-		hosts := make([]*loadbalancer.Host, 0, len(pc.metadata.Spec.Servers))
-
-		for _, server := range pc.metadata.Spec.Servers {
-			host, err := pc.initServer(server, healthCheckBuilder)
-			if err != nil {
-				return err
-			}
-
-			if host != nil {
-				hosts = append(hosts, host)
-			}
-		}
-
-		if len(hosts) == 0 {
-			return ErrNoAvailableServer
-		}
-
-		wrr, err := roundrobin.NewWeightedRoundRobin(hosts)
-		if err != nil {
-			return err
-		}
-
-		pc.lbClient = loadbalancer.NewLoadBalancerClientWithOptions(wrr, pc.clientOptions)
 	}
+
+	hosts := make([]*loadbalancer.Host, 0, len(pc.metadata.Spec.Servers))
+
+	for _, server := range pc.metadata.Spec.Servers {
+		host, err := pc.initServer(server, healthCheckBuilder)
+		if err != nil {
+			return err
+		}
+
+		if host != nil {
+			hosts = append(hosts, host)
+		}
+	}
+
+	if len(hosts) == 0 {
+		return ErrNoAvailableServer
+	}
+
+	wrr, err := roundrobin.NewWeightedRoundRobin(hosts)
+	if err != nil {
+		return err
+	}
+
+	pc.lbClient = loadbalancer.NewLoadBalancerClientWithOptions(wrr, pc.clientOptions)
 
 	return nil
 }
@@ -183,7 +164,7 @@ func (pc *ProxyClient) initServer( //nolint:cyclop
 	rawServerURL := server.URL
 
 	rawURLFromEnv, exist := server.Extensions.Get(openapi.XRelyURLEnv)
-	if !exist && rawURLFromEnv != nil {
+	if exist && rawURLFromEnv != nil {
 		var urlFromEnv string
 
 		err := rawURLFromEnv.Decode(&urlFromEnv)
@@ -225,7 +206,7 @@ func (pc *ProxyClient) initServer( //nolint:cyclop
 	}
 
 	rawWeight, exist := server.Extensions.Get(openapi.XRelyServerWeight)
-	if !exist && rawWeight != nil {
+	if exist && rawWeight != nil {
 		var weight int
 
 		err := rawWeight.Decode(&weight)
