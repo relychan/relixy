@@ -159,4 +159,3 @@ func TestRelixyHealthCheckConfig_YAMLUnmarshal(t *testing.T) {
 		})
 	}
 }
-

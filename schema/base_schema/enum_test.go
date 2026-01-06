@@ -189,4 +189,3 @@ func TestPrimitiveType_JSONSchema(t *testing.T) {
 	assert.Equal(t, "A primitive type in OpenAPI specification", schema.Description)
 	assert.Assert(t, len(schema.Enum) == 7)
 }
-

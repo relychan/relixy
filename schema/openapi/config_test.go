@@ -213,5 +213,3 @@ func TestRelixyOpenAPIForwardHeadersConfig_YAMLMarshal(t *testing.T) {
 	assert.Equal(t, 1, len(result.Request))
 	assert.Equal(t, 1, len(result.Response))
 }
-
-

@@ -204,4 +204,3 @@ func TestRelixyGraphQLResponseConfig_YAMLMarshal(t *testing.T) {
 	assert.Assert(t, result.HTTPErrorCode != nil)
 	assert.Equal(t, 500, *result.HTTPErrorCode)
 }
-
