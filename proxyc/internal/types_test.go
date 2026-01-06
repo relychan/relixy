@@ -128,7 +128,7 @@ func TestNewInvalidOperationMetadataError(t *testing.T) {
 func TestNodeType(t *testing.T) {
 	testCases := []struct {
 		name     string
-		nodeType nodeTyp
+		nodeType nodeType
 		expected uint8
 	}{
 		{

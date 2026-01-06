@@ -17,19 +17,19 @@ import (
 	"github.com/relychan/relixy/schema/openapi"
 )
 
-type nodeTyp uint8
+type nodeType uint8
 
 const (
-	ntStatic   nodeTyp = iota // /home
-	ntRegexp                  // /{id:[0-9]+}
-	ntParam                   // /{user}
-	ntCatchAll                // /api/v1/*
+	ntStatic   nodeType = iota // /home
+	ntRegexp                   // /{id:[0-9]+}
+	ntParam                    // /{user}
+	ntCatchAll                 // /api/v1/*
 )
 
 // Route holds parameter values from the request path.
 type Route struct {
-	Node        *Node
-	Method      MethodHandler
+	Pattern     string
+	Method      *MethodHandler
 	ParamValues map[string]string
 }
 
@@ -40,20 +40,14 @@ type MethodHandler struct {
 }
 
 // Node presents the route tree to organize the recursive route structure.
-// Inspired by [Chi router]
-//
-// [Chi router]: https://github.com/go-chi/chi/tree/v5.2.3
-type Node struct {
+type Node struct { //nolint:recvcheck
 	handlers map[string]MethodHandler
 
 	// regexp matcher for regexp nodes
 	rex *regexp.Regexp
 
-	// pattern is the full pattern of the leaf
-	pattern string
-
-	// prefix is the common prefix we ignore
-	prefix string
+	// key represents the static key
+	key string
 
 	// parameter name if the node is param.
 	paramName string
@@ -62,14 +56,8 @@ type Node struct {
 	// in groups of the node type.
 	children [ntCatchAll + 1]nodes
 
-	// first byte of the child prefix
-	tail byte
-
 	// node type: static, regexp, param, catchAll
-	typ nodeTyp
-
-	// first byte of the prefix
-	label byte
+	typ nodeType
 }
 
 func (n *Node) InsertRoute(
@@ -77,132 +65,7 @@ func (n *Node) InsertRoute(
 	operations *highv3.PathItem,
 	options *proxyhandler.InsertRouteOptions,
 ) (*Node, error) {
-	var parent *Node
-
-	search := pattern
-
-	for {
-		// Handle key exhaustion
-		if len(search) == 0 {
-			// Insert or update the node's leaf handler
-			err := n.setEndpoint(pattern, operations, options)
-
-			return n, err
-		}
-
-		// We're going to be searching for a wild node next,
-		// in this case, we need to get the tail
-		var (
-			label     = search[0]
-			paramName string
-			segTail   byte
-			segEndIdx int
-			segTyp    nodeTyp
-			segRexpat string
-			err       error
-		)
-
-		if label == '{' || label == '*' {
-			segTyp, paramName, segRexpat, segTail, _, segEndIdx, err = patNextSegment(search)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		var prefix string
-
-		if segTyp == ntRegexp {
-			prefix = segRexpat
-		}
-
-		// Look for the edge to attach to
-		parent = n
-		n = n.getEdge(segTyp, label, segTail, prefix)
-
-		// No edge, create one
-		if n == nil {
-			child := &Node{
-				label:     label,
-				tail:      segTail,
-				prefix:    search,
-				paramName: paramName,
-			}
-
-			hn, err := parent.addChild(child, search)
-			if err != nil {
-				return nil, err
-			}
-
-			err = hn.setEndpoint(pattern, operations, options)
-
-			return hn, err
-		}
-
-		// Found an edge to match the pattern
-		if n.typ > ntStatic {
-			// We found a param node, trim the param from the search path and continue.
-			// This param/wild pattern segment would already be on the tree from a previous
-			// call to addChild when creating a new node.
-			search = search[segEndIdx:]
-
-			continue
-		}
-
-		// Static nodes fall below here.
-		// Determine longest prefix of the search key on match.
-		commonPrefix := longestPrefix(search, n.prefix)
-		if commonPrefix == len(n.prefix) {
-			// the common prefix is as long as the current node's prefix we're attempting to insert.
-			// keep the search going.
-			search = search[commonPrefix:]
-
-			continue
-		}
-
-		// Split the node
-		child := &Node{
-			typ:    ntStatic,
-			prefix: search[:commonPrefix],
-		}
-
-		err = parent.replaceChild(search[0], segTail, child)
-		if err != nil {
-			return nil, fmt.Errorf("failed to replace child node of pattern %s: %w", pattern, err)
-		}
-
-		// Restore the existing node
-		n.label = n.prefix[commonPrefix]
-		n.prefix = n.prefix[commonPrefix:]
-
-		_, err = child.addChild(n, n.prefix)
-		if err != nil {
-			return nil, err
-		}
-
-		// If the new key is a subset, set the method/handler on this node and finish.
-		search = search[commonPrefix:]
-		if len(search) == 0 {
-			err := child.setEndpoint(pattern, operations, options)
-
-			return child, err
-		}
-
-		// Create a new edge for the node
-		subchild := &Node{
-			typ:    ntStatic,
-			label:  search[0],
-			prefix: search,
-		}
-
-		hn, err := child.addChild(subchild, search)
-		if err != nil {
-			return nil, err
-		}
-
-		err = hn.setEndpoint(pattern, operations, options)
-
-		return hn, err
-	}
+	return n.insertChildNode(pattern, operations, nil, options)
 }
 
 func (n *Node) FindRoute(path string, method string) *Route {
@@ -211,146 +74,223 @@ func (n *Node) FindRoute(path string, method string) *Route {
 	}
 
 	// Find the routing handlers for the path
-	rn := n.findRouteRecursive(path, route)
-	if rn == nil {
+	m, pattern := route.findRouteRecursive(strings.TrimLeft(path, "/"), method, n, "")
+	if m == nil {
 		return nil
 	}
 
-	h, ok := rn.handlers[method]
-	if !ok {
-		return nil
-	}
+	route.Method = m
+	route.Pattern = pattern
 
-	route.Node = rn
-	route.Method = h
+	if pattern == "" {
+		route.Pattern = "/"
+	}
 
 	return route
 }
 
-// addChild appends the new `child` node to the tree using the `pattern` as the trie key.
-// For a URL router like chi's, we split the static, param, regexp and wildcard segments
-// into different nodes. In addition, addChild will recursively call itself until every
-// pattern segment is added to the url pattern tree as individual nodes, depending on type.
-func (n *Node) addChild(child *Node, prefix string) (*Node, error) {
-	search := prefix
-
-	// handler leaf node added to the tree is the child.
-	// this may be overridden later down the flow
-	hn := child
-
-	// Parse next segment
-	segTyp, paramName, segRexpat, segTail, segStartIdx, segEndIdx, err := patNextSegment(search)
-	if err != nil {
-		return nil, fmt.Errorf("failed to add child node %s: %w", child.pattern, err)
-	}
-
-	// Add child depending on next up segment
-	switch segTyp {
+// String implements the fmt.Stringer interface to print debug data.
+func (n Node) String() string {
+	switch n.typ {
+	case ntCatchAll:
+		return "*"
 	case ntStatic:
-		// Search prefix is all static (that is, has no params in path)
-		// noop
-
+		return n.key
+	case ntParam:
+		return "{" + n.paramName + "}"
+	case ntRegexp:
+		return "{" + n.paramName + ":" + n.rex.String() + "}"
 	default:
-		// Search prefix contains a param, regexp or wildcard
-		if segTyp == ntRegexp {
-			rex, err := regexp.Compile(segRexpat)
-			if err != nil {
-				return nil, fmt.Errorf("%w: %s", ErrInvalidRegexpPatternParamInRoute, segRexpat)
-			}
+		return ""
+	}
+}
 
-			child.prefix = segRexpat
-			child.rex = rex
+func (n *Node) insertChildNode( //nolint:gocognit,cyclop,funlen
+	pattern string,
+	operations *highv3.PathItem,
+	paramKeys []string,
+	options *proxyhandler.InsertRouteOptions,
+) (*Node, error) {
+	search := strings.TrimPrefix(pattern, "/")
+
+	// Handle key exhaustion
+	if search == "" {
+		childIndex := slices.IndexFunc(n.children[ntStatic], func(child *Node) bool {
+			return child.key == ""
+		})
+
+		var child *Node
+
+		if childIndex >= 0 {
+			child = n.children[ntStatic][childIndex]
+		} else {
+			child = &Node{
+				typ: ntStatic,
+			}
 		}
 
-		if segStartIdx == 0 {
-			// Route starts with a param
-			child.typ = segTyp
+		// Insert or update the node's leaf handler
+		handlers, err := createMethods(pattern, operations, paramKeys, options)
+		if err != nil || len(handlers) == 0 {
+			return nil, err
+		}
 
-			if segTyp == ntCatchAll {
-				segStartIdx = -1
+		if len(handlers) > 0 {
+			if len(child.handlers) > 0 {
+				return nil, ErrDuplicatedRoutingPattern
+			}
+
+			child.handlers = handlers
+
+			// insert new node
+			if childIndex < 0 {
+				n.children[ntStatic] = append(n.children[ntStatic], child)
+				n.children[ntStatic].Sort()
+			}
+
+			return child, nil
+		}
+
+		return nil, nil
+	}
+
+	if search[0] == '*' {
+		// wildcard must be placed at the edge.
+		if len(search) > 1 {
+			return nil, ErrWildcardMustBeLast
+		}
+
+		if len(n.children[ntCatchAll]) > 0 {
+			return nil, ErrDuplicatedRoutingPattern
+		}
+
+		handlers, err := createMethods(pattern, operations, nil, options)
+		if err != nil || len(handlers) == 0 {
+			return nil, err
+		}
+
+		if len(handlers) == 0 {
+			return nil, nil
+		}
+
+		child := &Node{
+			typ:      ntCatchAll,
+			handlers: handlers,
+		}
+
+		n.children[ntCatchAll] = append(n.children[ntCatchAll], child)
+
+		return child, nil
+	}
+
+	// We're going to be searching for a wild node next,
+	// in this case, we need to get the tail
+	if search[0] == '{' {
+		segTyp, paramName, segRexpat, remain, err := patNextSegment(search)
+		if err != nil {
+			return nil, err
+		}
+
+		if segTyp == ntParam {
+			childIndex := slices.IndexFunc(n.children[ntParam], func(child *Node) bool {
+				return child.paramName == paramName
+			})
+
+			var child *Node
+
+			if childIndex >= 0 {
+				child = n.children[ntParam][childIndex]
 			} else {
-				segStartIdx = segEndIdx
-			}
-
-			if segStartIdx < 0 {
-				segStartIdx = len(search)
-			}
-
-			child.tail = segTail // for params, we set the tail
-
-			if segStartIdx != len(search) {
-				// add static edge for the remaining part, split the end.
-				// its not possible to have adjacent param nodes, so its certainly
-				// going to be a static node next.
-				search = search[segStartIdx:] // advance search position
-
-				nn := &Node{
-					typ:       ntStatic,
-					label:     search[0],
-					prefix:    search,
+				child = &Node{
+					typ:       ntParam,
 					paramName: paramName,
 				}
 
-				hn, err = child.addChild(nn, search)
-				if err != nil {
-					return nil, fmt.Errorf("failed to add child node %s: %w", search, err)
-				}
-			}
-		} else if segStartIdx > 0 {
-			// Route has some param
-
-			// starts with a static segment
-			child.typ = ntStatic
-			child.prefix = search[:segStartIdx]
-			child.rex = nil
-
-			// add the param edge node
-			search = search[segStartIdx:]
-
-			nn := &Node{
-				typ:       segTyp,
-				label:     search[0],
-				tail:      segTail,
-				paramName: paramName,
+				n.children[ntParam] = append(n.children[ntParam], child)
+				n.children[ntParam].Sort()
 			}
 
-			hn, err = child.addChild(nn, search)
+			paramKeys = append(paramKeys, paramName)
+
+			return child.insertChildNode(remain, operations, paramKeys, options)
+		}
+
+		childIndex := slices.IndexFunc(n.children[ntRegexp], func(child *Node) bool {
+			return child.paramName == paramName && child.rex.String() == segRexpat
+		})
+
+		var child *Node
+
+		if childIndex >= 0 {
+			child = n.children[ntRegexp][childIndex]
+		} else {
+			rex, err := regexp.Compile(segRexpat)
 			if err != nil {
-				return nil, fmt.Errorf("failed to add child node %s: %w", search, err)
+				return nil, err
 			}
+
+			child = &Node{
+				typ:       ntRegexp,
+				paramName: paramName,
+				rex:       rex,
+			}
+
+			n.children[ntRegexp] = append(n.children[ntRegexp], child)
+			n.children[ntRegexp].Sort()
 		}
+
+		paramKeys = append(paramKeys, paramName)
+
+		return child.insertChildNode(remain, operations, paramKeys, options)
 	}
 
-	n.children[child.typ] = append(n.children[child.typ], child)
-	n.children[child.typ].Sort()
+	// Static nodes fall below here.
+	// Determine longest prefix of the search key on match.
+	staticKey, remain, _ := strings.Cut(search, "/")
 
-	return hn, nil
-}
+	childIndex := slices.IndexFunc(n.children[ntStatic], func(child *Node) bool {
+		return child.key == staticKey
+	})
 
-func (n *Node) replaceChild(label, tail byte, child *Node) error {
-	for i := range len(n.children[child.typ]) {
-		if n.children[child.typ][i].label == label && n.children[child.typ][i].tail == tail {
-			n.children[child.typ][i] = child
-			n.children[child.typ][i].label = label
-			n.children[child.typ][i].tail = tail
+	var child *Node
 
-			return nil
+	if childIndex >= 0 {
+		child = n.children[ntStatic][childIndex]
+	} else {
+		child = &Node{
+			typ: ntStatic,
+			key: staticKey,
 		}
+
+		n.children[ntStatic] = append(n.children[ntStatic], child)
+		n.children[ntStatic].Sort()
 	}
 
-	return fmt.Errorf("%w: %s", ErrReplaceMissingChildNode, child.pattern)
+	if remain != "" {
+		return child.insertChildNode(remain, operations, paramKeys, options)
+	}
+
+	// Insert or update the node's leaf handler
+	handlers, err := createMethods(pattern, operations, paramKeys, options)
+	if err != nil || len(handlers) == 0 {
+		return nil, err
+	}
+
+	if len(handlers) > 0 {
+		child.handlers = handlers
+
+		return child, nil
+	}
+
+	return nil, nil
 }
 
-func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
+func createMethods( //nolint:gocognit,cyclop,funlen,maintidx
 	pattern string,
 	operations *highv3.PathItem,
+	paramKeys []string,
 	options *proxyhandler.InsertRouteOptions,
-) error {
-	paramKeys, err := patParamKeys(pattern)
-	if err != nil {
-		return fmt.Errorf("failed to extract param keys in the pattern %s: %w", pattern, err)
-	}
-
+) (map[string]MethodHandler, error) {
 	params := operations.Parameters
 
 	params = openapi.ExtractCommonParametersOfOperation(params, operations.Get)
@@ -388,9 +328,8 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 	}
 
 	operations.Parameters = params
-	n.pattern = pattern
 
-	n.handlers = map[string]MethodHandler{}
+	handlers := map[string]MethodHandler{}
 
 	if operations.Get != nil {
 		method := http.MethodGet
@@ -401,10 +340,10 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidOperationMetadataError(method, pattern, err)
+			return nil, newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = MethodHandler{
+		handlers[method] = MethodHandler{
 			Handler:  h,
 			Security: operations.Get.Security,
 		}
@@ -419,10 +358,10 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidOperationMetadataError(method, pattern, err)
+			return nil, newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[http.MethodPost] = MethodHandler{
+		handlers[http.MethodPost] = MethodHandler{
 			Handler:  h,
 			Security: operations.Post.Security,
 		}
@@ -437,10 +376,10 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidOperationMetadataError(method, pattern, err)
+			return nil, newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = MethodHandler{
+		handlers[method] = MethodHandler{
 			Handler:  h,
 			Security: operations.Put.Security,
 		}
@@ -455,10 +394,10 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidOperationMetadataError(method, pattern, err)
+			return handlers, newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = MethodHandler{
+		handlers[method] = MethodHandler{
 			Handler:  h,
 			Security: operations.Patch.Security,
 		}
@@ -473,10 +412,10 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidOperationMetadataError(method, pattern, err)
+			return handlers, newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = MethodHandler{
+		handlers[method] = MethodHandler{
 			Handler:  h,
 			Security: operations.Delete.Security,
 		}
@@ -491,10 +430,10 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidOperationMetadataError(method, pattern, err)
+			return handlers, newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = MethodHandler{
+		handlers[method] = MethodHandler{
 			Handler:  h,
 			Security: operations.Head.Security,
 		}
@@ -512,10 +451,10 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 			},
 		)
 		if err != nil {
-			return newInvalidOperationMetadataError(method, pattern, err)
+			return handlers, newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = MethodHandler{
+		handlers[method] = MethodHandler{
 			Handler:  h,
 			Security: operations.Options.Security,
 		}
@@ -530,10 +469,10 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidOperationMetadataError(method, pattern, err)
+			return handlers, newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = MethodHandler{
+		handlers[method] = MethodHandler{
 			Handler:  h,
 			Security: operations.Query.Security,
 		}
@@ -548,10 +487,10 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 			GetEnv:     options.GetEnv,
 		})
 		if err != nil {
-			return newInvalidOperationMetadataError(method, pattern, err)
+			return handlers, newInvalidOperationMetadataError(method, pattern, err)
 		}
 
-		n.handlers[method] = MethodHandler{
+		handlers[method] = MethodHandler{
 			Handler:  h,
 			Security: operations.Trace.Security,
 		}
@@ -572,206 +511,140 @@ func (n *Node) setEndpoint( //nolint:gocognit,cyclop,funlen,maintidx
 				GetEnv:     options.GetEnv,
 			})
 			if err != nil {
-				return newInvalidOperationMetadataError(method, pattern, err)
+				return handlers, newInvalidOperationMetadataError(method, pattern, err)
 			}
 
-			n.handlers[method] = MethodHandler{
+			handlers[method] = MethodHandler{
 				Handler:  h,
 				Security: op.Security,
 			}
 		}
 	}
 
-	return nil
-}
-
-func (n *Node) getEdge(ntyp nodeTyp, label, tail byte, prefix string) *Node {
-	nds := n.children[ntyp]
-
-	for i := range nds {
-		if nds[i].label == label && nds[i].tail == tail {
-			if ntyp == ntRegexp && nds[i].prefix != prefix {
-				continue
-			}
-
-			return nds[i]
-		}
-	}
-
-	return nil
+	return handlers, nil
 }
 
 // Recursive edge traversal by checking all nodeTyp groups along the way.
 // It's like searching through a multi-dimensional radix trie.
-func (n *Node) findRouteRecursive(path string, route *Route) *Node { //nolint:gocognit,cyclop
-	nn := n
-	search := path
+func (r *Route) findRouteRecursive( //nolint:gocognit
+	search string,
+	method string,
+	node *Node,
+	parentPattern string,
+) (*MethodHandler, string) {
+	left, remain, _ := strings.Cut(search, "/")
 
-	for t, nds := range nn.children {
-		ntyp := nodeTyp(t) //nolint:gosec
+	for t, nds := range node.children {
+		ntyp := nodeType(t) //nolint:gosec
 
 		if len(nds) == 0 {
 			continue
 		}
 
-		var (
-			xn    *Node
-			label byte
-		)
-
-		xsearch := search
-
-		if search != "" {
-			label = search[0]
-		}
-
 		switch ntyp {
 		case ntStatic:
-			xn = nds.findEdge(label)
-			if xn == nil || !strings.HasPrefix(xsearch, xn.prefix) {
-				continue
-			}
+			for _, nd := range nds {
+				if nd.key != left {
+					continue
+				}
 
-			xsearch = xsearch[len(xn.prefix):]
+				if remain == "" {
+					method := nd.findMethod(method)
+					if method != nil {
+						if left != "" {
+							parentPattern += "/" + nd.String()
+						}
+
+						return method, parentPattern
+					}
+				} else {
+					method, pattern := r.findRouteRecursive(remain, method, nd, parentPattern+"/"+nd.String())
+					if method != nil {
+						return method, pattern
+					}
+				}
+			}
 		case ntParam, ntRegexp:
 			// short-circuit and return no matching route for empty param values
-			if xsearch == "" {
+			if search == "" {
 				continue
 			}
 
 			// serially loop through each node grouped by the tail delimiter
-			for idx := range nds {
-				xn = nds[idx]
-
-				// label for param nodes is the delimiter byte
-				p := strings.IndexByte(xsearch, xn.tail)
-
-				if p < 0 {
-					if xn.tail != '/' {
-						continue
-					}
-
-					p = len(xsearch)
-				} else if ntyp == ntRegexp && p == 0 {
+			for _, nd := range nds {
+				if nd.rex != nil && !nd.rex.MatchString(left) {
 					continue
 				}
 
-				if ntyp == ntRegexp && xn.rex != nil {
-					if !xn.rex.MatchString(xsearch[:p]) {
-						continue
-					}
-				} else if strings.IndexByte(xsearch[:p], '/') != -1 {
-					// avoid a match across path segments
-					continue
+				method, pattern := r.findRouteRecursive(
+					remain,
+					method,
+					nd,
+					parentPattern+"/"+nd.String(),
+				)
+				if method != nil {
+					r.ParamValues[nd.paramName] = left
+
+					return method, pattern
 				}
-
-				route.ParamValues[xn.paramName] = xsearch[:p]
-				xsearch = xsearch[p:]
-
-				if len(xsearch) == 0 {
-					if xn.isLeaf() {
-						return xn
-					}
-				}
-
-				// recursively find the next node on this branch
-				fin := xn.findRouteRecursive(xsearch, route)
-				if fin != nil {
-					return fin
-				}
-
-				// not found on this branch, reset vars
-				xsearch = search
 			}
 		default:
 			// catch-all nodes
-			xn = nds[0]
-			xsearch = ""
-		}
-
-		if xn == nil {
-			continue
-		}
-
-		// did we find it yet?
-		if len(xsearch) == 0 {
-			if xn.isLeaf() {
-				return xn
-			}
-		}
-
-		// recursively find the next node..
-		fin := xn.findRouteRecursive(xsearch, route)
-		if fin != nil {
-			return fin
+			return nds[0].findMethod(method), parentPattern + "/*"
 		}
 	}
 
-	return nil
-}
-
-func (n *Node) isLeaf() bool {
-	return n.handlers != nil
+	return nil, parentPattern
 }
 
 // patNextSegment returns the next segment details from a pattern:
 // node type, param key, regexp string, param tail byte, param starting index, param ending index.
-func patNextSegment( //nolint
+func patNextSegment(
 	pattern string,
-) (nodeTyp, string, string, byte, int, int, error) { //nolint
-	ps := strings.Index(pattern, "{")
-	ws := strings.Index(pattern, "*")
+) (nodeType, string, string, string, error) {
+	// Param/Regexp pattern is next
+	nt := ntParam
 
-	if ps < 0 && ws < 0 {
-		return ntStatic, "", "", 0, 0, len(pattern), nil // we return the entire thing
-	}
+	var closeIndex, regexIndex int
 
-	// Sanity check
-	if ps >= 0 && ws >= 0 && ws < ps {
-		return ntStatic, "", "", 0, 0, 0, ErrWildcardMustBeLast
-	}
+L:
+	for i := 1; i < len(pattern); i++ {
+		c := pattern[i]
 
-	var tail byte = '/' // Default endpoint tail to / byte
-
-	if ps >= 0 { //nolint:nestif
-		// Param/Regexp pattern is next
-		nt := ntParam
-
-		// Read to closing } taking into account opens and closes in curl count (cc)
-		cc := 0
-		pe := ps
-
-		for i, c := range pattern[ps:] {
-			if c == '{' {
-				cc++
-			} else if c == '}' {
-				cc--
-				if cc == 0 {
-					pe = ps + i
-
-					break
-				}
+		switch c {
+		case '/':
+			return 0, "", "", "", fmt.Errorf("%s: %w", pattern, ErrMissingClosingBracket)
+		case '}':
+			if i < len(pattern)-1 && pattern[i+1] != '/' {
+				return 0, "", "", "", fmt.Errorf("%s: %w", pattern, ErrMissingClosingBracket)
 			}
-		}
 
-		if pe == ps {
-			return ntStatic, "", "", 0, 0, 0,
-				fmt.Errorf("%s: %w", pattern, ErrMissingClosingBracket)
-		}
+			closeIndex = i
 
-		key := pattern[ps+1 : pe]
-		pe++ // set end to next position
-
-		if pe < len(pattern) {
-			tail = pattern[pe]
+			break L
+		case ':':
+			regexIndex = i + 1
+		default:
 		}
+	}
 
-		key, rexpat, isRegexp := strings.Cut(key, ":")
-		if isRegexp {
-			nt = ntRegexp
-		}
+	if closeIndex <= 1 {
+		return 0, "", "", "", fmt.Errorf("%s: %w", pattern, ErrParamKeyRequired)
+	}
+
+	if closeIndex < regexIndex {
+		return 0, "", "", "", fmt.Errorf("%s: %w", pattern, ErrInvalidRegexpPatternParamInRoute)
+	}
+
+	remain := pattern[closeIndex+1:]
+
+	if regexIndex > 0 {
+		param := pattern[1 : regexIndex-1]
+		rexpat := pattern[regexIndex:closeIndex]
 
 		if len(rexpat) > 0 {
+			nt = ntRegexp
+
 			if rexpat[0] != '^' {
 				rexpat = "^" + rexpat
 			}
@@ -781,102 +654,43 @@ func patNextSegment( //nolint
 			}
 		}
 
-		return nt, key, rexpat, tail, ps, pe, nil
+		return nt, param, rexpat, remain, nil
 	}
 
-	// Wildcard pattern as finale
-	if ws < len(pattern)-1 {
-		return ntStatic, "", "", 0, 0, 0, ErrWildcardMustBeLast
-	}
+	param := pattern[1:closeIndex]
 
-	return ntCatchAll, "*", "", 0, ws, len(pattern), nil
-}
-
-func patParamKeys(pattern string) ([]string, error) {
-	pat := pattern
-	paramKeys := []string{}
-
-	for {
-		ptyp, paramKey, _, _, _, e, err := patNextSegment(pat)
-		if err != nil {
-			return nil, err
-		}
-
-		if ptyp == ntStatic {
-			return paramKeys, nil
-		}
-
-		if slices.Contains(paramKeys, paramKey) {
-			return nil, fmt.Errorf(
-				"%s: %w, '%s'",
-				pattern,
-				ErrDuplicatedParamKey,
-				paramKey,
-			)
-		}
-
-		paramKeys = append(paramKeys, paramKey)
-		pat = pat[e:]
-	}
-}
-
-// longestPrefix finds the length of the shared prefix
-// of two strings.
-func longestPrefix(k1, k2 string) int {
-	maxLength := min(len(k1), len(k2))
-
-	var i int
-
-	for ; i < maxLength; i++ {
-		if k1[i] != k2[i] {
-			break
-		}
-	}
-
-	return i
+	return nt, param, "", remain, nil
 }
 
 type nodes []*Node
 
 // Sort the list of nodes by label.
-func (ns nodes) Sort()              { sort.Sort(ns); ns.tailSort() }
-func (ns nodes) Len() int           { return len(ns) }
-func (ns nodes) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
-func (ns nodes) Less(i, j int) bool { return ns[i].label < ns[j].label }
+func (ns nodes) Sort() {
+	sort.Sort(ns)
+}
+func (ns nodes) Len() int      { return len(ns) }
+func (ns nodes) Swap(i, j int) { ns[i], ns[j] = ns[j], ns[i] }
 
-// tailSort pushes nodes with '/' as the tail to the end of the list for param nodes.
-// The list order determines the traversal order.
-func (ns nodes) tailSort() {
-	for i := len(ns) - 1; i >= 0; i-- {
-		if ns[i].typ > ntStatic && ns[i].tail == '/' {
-			ns.Swap(i, len(ns)-1)
-
-			return
-		}
+func (ns nodes) Less(i, j int) bool {
+	switch ns[i].typ {
+	case ntStatic:
+		return strings.Compare(ns[i].key, ns[j].key) < 0
+	case ntParam, ntRegexp:
+		return strings.Compare(ns[i].paramName, ns[j].paramName) < 0
+	default:
+		return false
 	}
 }
 
-func (ns nodes) findEdge(label byte) *Node {
-	num := len(ns)
-	idx := 0
-	i, j := 0, num-1
-
-	for i <= j {
-		idx = i + (j-i)/2
-
-		switch {
-		case label > ns[idx].label:
-			i = idx + 1
-		case label < ns[idx].label:
-			j = idx - 1
-		default:
-			i = num // breaks cond
-		}
-	}
-
-	if ns[idx].label != label {
+func (n *Node) findMethod(name string) *MethodHandler {
+	if len(n.handlers) == 0 {
 		return nil
 	}
 
-	return ns[idx]
+	h, ok := n.handlers[name]
+	if !ok {
+		return nil
+	}
+
+	return &h
 }

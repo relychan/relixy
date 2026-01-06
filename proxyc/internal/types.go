@@ -12,7 +12,9 @@ var (
 		"wildcard '*' must be the last value in a route. trim trailing text or use a '{param}' instead",
 	)
 	ErrMissingClosingBracket            = errors.New("route param closing delimiter '}' is missing")
+	ErrParamKeyRequired                 = errors.New("param key must not be empty")
 	ErrDuplicatedParamKey               = errors.New("routing pattern contains duplicate param key")
+	ErrDuplicatedRoutingPattern         = errors.New("routing pattern is duplicated")
 	ErrInvalidRegexpPatternParamInRoute = errors.New("invalid regexp pattern in route param")
 	ErrReplaceMissingChildNode          = errors.New("replacing missing child node")
 )

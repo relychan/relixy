@@ -61,7 +61,7 @@ func NewOpenAPIv3Authenticator(
 }
 
 // GetAuthenticator finds a suitable authenticator by security requirements.
-func (oaa *OpenAPIAuthenticator) GetAuthenticator( //nolint:ireturn
+func (oaa *OpenAPIAuthenticator) GetAuthenticator(
 	security []*base.SecurityRequirement,
 ) authscheme.HTTPClientAuthenticator {
 	if len(oaa.securitySchemes) == 0 {
@@ -108,7 +108,7 @@ func (oaa *OpenAPIAuthenticator) GetAuthenticator( //nolint:ireturn
 	return authenticator
 }
 
-func (oaa *OpenAPIAuthenticator) createAuthenticatorFromSecurityScheme( //nolint:ireturn
+func (oaa *OpenAPIAuthenticator) createAuthenticatorFromSecurityScheme(
 	key string,
 	security *highv3.SecurityScheme,
 	getEnv goenvconf.GetEnvFunc,
@@ -184,7 +184,7 @@ func (oaa *OpenAPIAuthenticator) createAuthenticatorFromSecurityScheme( //nolint
 	}
 }
 
-func newStaticAuthenticator( //nolint:ireturn
+func newStaticAuthenticator(
 	security *highv3.SecurityScheme,
 	inLocation authscheme.AuthLocation,
 	rawCredentials *yaml.Node,
@@ -218,7 +218,7 @@ func newStaticAuthenticator( //nolint:ireturn
 	}, authOptions)
 }
 
-func (oaa *OpenAPIAuthenticator) createOAuthAuthenticator( //nolint:ireturn,cyclop,funlen
+func (oaa *OpenAPIAuthenticator) createOAuthAuthenticator( //nolint:cyclop,funlen
 	key string,
 	security *highv3.SecurityScheme,
 	authOptions *authscheme.HTTPClientAuthenticatorOptions,

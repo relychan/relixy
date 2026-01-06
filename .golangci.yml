@@ -13,6 +13,7 @@ linters:
     - contextcheck
     - tagalign
     - tagliatelle
+    - ireturn
   settings:
     depguard:
       rules:

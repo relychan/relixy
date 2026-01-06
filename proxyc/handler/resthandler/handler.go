@@ -19,7 +19,7 @@ type RESTHandler struct {
 }
 
 // NewRESTHandler creates a RESTHandler from operation.
-func NewRESTHandler( //nolint:ireturn
+func NewRESTHandler(
 	operation *highv3.Operation,
 	proxyAction *base_schema.RelixyAction,
 	options *proxyhandler.NewRelixyHandlerOptions,
