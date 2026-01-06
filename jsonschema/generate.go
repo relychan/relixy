@@ -15,23 +15,23 @@ import (
 )
 
 func main() {
-	err := jsonSchemaConfiguration()
+	err := genConfigurationSchema()
 	if err != nil {
 		panic(fmt.Errorf("failed to write jsonschema for RelixyAPIDocument: %w", err))
 	}
 
-	err = jsonRelixyAction()
+	err = genRelixyActionSchema()
 	if err != nil {
 		panic(fmt.Errorf("failed to write jsonschema for RelixyAction: %w", err))
 	}
 
-	err = jsonSchemaServerConfiguration()
+	err = genServerConfigurationSchema()
 	if err != nil {
 		panic(fmt.Errorf("failed to write jsonschema for RelixyServerConfig: %w", err))
 	}
 }
 
-func jsonSchemaConfiguration() error {
+func genConfigurationSchema() error {
 	r := new(jsonschema.Reflector)
 
 	for _, name := range []string{"/schema/openapi", "/schema/base_schema"} {
@@ -46,31 +46,6 @@ func jsonSchemaConfiguration() error {
 	}
 
 	reflectSchema := r.Reflect(openapi.RelixyOpenAPIv3Resource{})
-
-	// for _, externalType := range []any{
-	// 	openapi.RelixyOpenAPIv3PathItem{},
-	// 	openapi.RelixyMediaType{},
-	// 	openapi.RelixyEncoding{},
-	// 	openapi.RelixyHeader{},
-	// 	base_schema.GraphQLVariableDefinition{},
-	// 	base_schema.RelixyGraphQLRequestConfig{},
-	// 	base_schema.RelixyGraphQLResponseConfig{},
-	// 	openapi.RelixyAPIKeyAuthConfig{},
-	// 	openapi.RelixyHTTPAuthConfig{},
-	// 	openapi.RelixyBasicAuthConfig{},
-	// 	openapi.RelixyOAuth2Config{},
-	// 	openapi.RelixyOpenIDConnectConfig{},
-	// 	openapi.RelixyCookieAuthConfig{},
-	// 	openapi.RelixyMutualTLSAuthConfig{},
-	// } {
-	// 	externalSchema := r.Reflect(externalType)
-
-	// 	for key, def := range externalSchema.Definitions {
-	// 		if _, ok := reflectSchema.Definitions[key]; !ok {
-	// 			reflectSchema.Definitions[key] = def
-	// 		}
-	// 	}
-	// }
 
 	// custom schema types
 	reflectSchema.Definitions["HTTPClientConfig"] = &jsonschema.Schema{
@@ -118,7 +93,7 @@ func jsonSchemaConfiguration() error {
 	)
 }
 
-func jsonRelixyAction() error {
+func genRelixyActionSchema() error {
 	r := new(jsonschema.Reflector)
 
 	for _, name := range []string{"/schema/base_schema"} {
@@ -168,7 +143,7 @@ func jsonRelixyAction() error {
 	)
 }
 
-func jsonSchemaServerConfiguration() error {
+func genServerConfigurationSchema() error {
 	r := new(jsonschema.Reflector)
 
 	err := r.AddGoComments(
