@@ -175,4 +175,3 @@ func TestParseStringFromExtensions(t *testing.T) {
 		})
 	}
 }
-

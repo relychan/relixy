@@ -137,4 +137,3 @@ func TestOAuth2CredentialsErrors(t *testing.T) {
 		assert.ErrorContains(t, err, "tokenUrl")
 	})
 }
-

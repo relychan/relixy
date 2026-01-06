@@ -150,4 +150,3 @@ func createOperationWithProxyAction(t *testing.T, action base_schema.RelixyActio
 		Extensions:  extensions,
 	}
 }
-

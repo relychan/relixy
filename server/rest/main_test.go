@@ -243,7 +243,7 @@ func runSuccessRequest[T any](t *testing.T, r ddn.PreRoutePluginRequestBody, sta
 	})
 }
 
-func runUnauthorizedRequest[T any](t *testing.T, r ddn.PreRoutePluginRequestBody, statusCode int, responseBody T) {
+func runUnauthorizedRequest[T any](t *testing.T, r ddn.PreRoutePluginRequestBody, _ int, _ T) {
 	t.Helper()
 	// expected unauthorized status
 	t.Run("unauthorized", func(t *testing.T) {
@@ -264,6 +264,113 @@ func runUnauthorizedRequest[T any](t *testing.T, r ddn.PreRoutePluginRequestBody
 			t.FailNow()
 		}
 	})
+}
+
+func TestSetupRouter_InvalidConfig(t *testing.T) {
+	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/invalid-config.yaml")
+
+	envVars, err := config.LoadServerConfig()
+	assert.NilError(t, err)
+
+	otelExporters := &gotel.OTelExporters{
+		Tracer: gotel.NewTracer("test"),
+		Meter:  otel.Meter("test"),
+		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		})),
+	}
+
+	_, _, err = setupRouter(context.TODO(), envVars, otelExporters)
+	assert.ErrorContains(t, err, "")
+}
+
+func TestSetupRouter_ValidConfig(t *testing.T) {
+	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/jsonplaceholder.yaml")
+
+	envVars, err := config.LoadServerConfig()
+	assert.NilError(t, err)
+
+	otelExporters := &gotel.OTelExporters{
+		Tracer: gotel.NewTracer("test"),
+		Meter:  otel.Meter("test"),
+		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		})),
+	}
+
+	router, shutdown, err := setupRouter(context.TODO(), envVars, otelExporters)
+	assert.NilError(t, err)
+	assert.Assert(t, router != nil)
+	assert.Assert(t, shutdown != nil)
+
+	shutdown()
+}
+
+func TestRESTHandler_NotFoundPath(t *testing.T) {
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	defer func() {
+		server.Close()
+		shutdown()
+	}()
+
+	req, err := http.NewRequest(http.MethodGet, server.URL+"/api/v1/nonexistent", nil)
+	assert.NilError(t, err)
+
+	req.Header.Set(httpheader.Authorization, "test-secret")
+
+	resp, err := http.DefaultClient.Do(req)
+	assert.NilError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+}
+
+func TestRESTHandler_WithPathParams(t *testing.T) {
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	defer func() {
+		server.Close()
+		shutdown()
+	}()
+
+	req, err := http.NewRequest(http.MethodGet, server.URL+"/api/v1/posts/1", nil)
+	assert.NilError(t, err)
+
+	req.Header.Set(httpheader.Authorization, "test-secret")
+
+	resp, err := http.DefaultClient.Do(req)
+	assert.NilError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var result map[string]any
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	assert.NilError(t, err)
+	assert.Equal(t, float64(1), result["id"])
+}
+
+func TestRESTHandler_GetAlbums(t *testing.T) {
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	defer func() {
+		server.Close()
+		shutdown()
+	}()
+
+	req, err := http.NewRequest(http.MethodGet, server.URL+"/api/v1/albums", nil)
+	assert.NilError(t, err)
+
+	req.Header.Set(httpheader.Authorization, "test-secret")
+
+	resp, err := http.DefaultClient.Do(req)
+	assert.NilError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var result []map[string]any
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	assert.NilError(t, err)
+	assert.Assert(t, len(result) > 0)
 }
 
 func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {

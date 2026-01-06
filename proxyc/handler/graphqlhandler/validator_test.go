@@ -188,4 +188,3 @@ func TestValidateGraphQLVariables(t *testing.T) {
 		})
 	}
 }
-

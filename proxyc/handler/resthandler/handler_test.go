@@ -41,8 +41,8 @@ func TestNewRESTHandler(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:      "REST handler with nil proxy action",
-			operation: &highv3.Operation{},
+			name:        "REST handler with nil proxy action",
+			operation:   &highv3.Operation{},
 			proxyAction: nil,
 			options: &proxyhandler.NewRelixyHandlerOptions{
 				Method: "GET",
@@ -73,11 +73,11 @@ func TestRESTHandler_Type(t *testing.T) {
 
 func TestRESTHandler_Properties(t *testing.T) {
 	testCases := []struct {
-		name            string
-		handler         *RESTHandler
-		expectedMethod  string
-		expectedPath    string
-		hasCustomPath   bool
+		name           string
+		handler        *RESTHandler
+		expectedMethod string
+		expectedPath   string
+		hasCustomPath  bool
 	}{
 		{
 			name: "handler with GET method",
@@ -119,4 +119,3 @@ func TestRESTHandler_Properties(t *testing.T) {
 		})
 	}
 }
-
