@@ -1,0 +1,275 @@
+package base_schema
+
+import (
+	"encoding/json"
+	"testing"
+
+	"go.yaml.in/yaml/v4"
+	"gotest.tools/v3/assert"
+)
+
+func TestRelixyResourceKind_Constants(t *testing.T) {
+	assert.Equal(t, RelixyResourceKind("OpenAPI3"), OpenAPI3Kind)
+}
+
+func TestRelixyResourceMetadata_JSONMarshal(t *testing.T) {
+	metadata := RelixyResourceMetadata{
+		Name:        "test-resource",
+		Description: "Test description",
+		Instruction: "Test instruction",
+	}
+
+	data, err := json.Marshal(metadata)
+	assert.NilError(t, err)
+
+	var result RelixyResourceMetadata
+	err = json.Unmarshal(data, &result)
+	assert.NilError(t, err)
+	assert.Equal(t, metadata.Name, result.Name)
+	assert.Equal(t, metadata.Description, result.Description)
+	assert.Equal(t, metadata.Instruction, result.Instruction)
+}
+
+func TestRelixyResourceMetadata_YAMLMarshal(t *testing.T) {
+	metadata := RelixyResourceMetadata{
+		Name:        "test-resource",
+		Description: "Test description",
+		Instruction: "Test instruction",
+	}
+
+	data, err := yaml.Marshal(metadata)
+	assert.NilError(t, err)
+
+	var result RelixyResourceMetadata
+	err = yaml.Unmarshal(data, &result)
+	assert.NilError(t, err)
+	assert.Equal(t, metadata.Name, result.Name)
+	assert.Equal(t, metadata.Description, result.Description)
+	assert.Equal(t, metadata.Instruction, result.Instruction)
+}
+
+func TestRelixyResourceMetadata_JSONUnmarshal(t *testing.T) {
+	testCases := []struct {
+		name        string
+		jsonData    string
+		expectError bool
+		checkFunc   func(*testing.T, *RelixyResourceMetadata)
+	}{
+		{
+			name: "complete metadata",
+			jsonData: `{
+				"name": "test-api",
+				"description": "Test API description",
+				"instruction": "Test instruction"
+			}`,
+			expectError: false,
+			checkFunc: func(t *testing.T, meta *RelixyResourceMetadata) {
+				assert.Equal(t, "test-api", meta.Name)
+				assert.Equal(t, "Test API description", meta.Description)
+				assert.Equal(t, "Test instruction", meta.Instruction)
+			},
+		},
+		{
+			name: "minimal metadata",
+			jsonData: `{
+				"name": "test-api"
+			}`,
+			expectError: false,
+			checkFunc: func(t *testing.T, meta *RelixyResourceMetadata) {
+				assert.Equal(t, "test-api", meta.Name)
+				assert.Equal(t, "", meta.Description)
+				assert.Equal(t, "", meta.Instruction)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var meta RelixyResourceMetadata
+			err := json.Unmarshal([]byte(tc.jsonData), &meta)
+
+			if tc.expectError {
+				assert.Assert(t, err != nil)
+			} else {
+				assert.NilError(t, err)
+				if tc.checkFunc != nil {
+					tc.checkFunc(t, &meta)
+				}
+			}
+		})
+	}
+}
+
+func TestBaseResourceModel_GetBaseResource(t *testing.T) {
+	model := BaseResourceModel{
+		Version: "v1",
+		Kind:    "OpenAPI3",
+		Metadata: RelixyResourceMetadata{
+			Name:        "test-resource",
+			Description: "Test description",
+		},
+	}
+
+	result := model.GetBaseResource()
+	assert.Equal(t, model.Version, result.Version)
+	assert.Equal(t, model.Kind, result.Kind)
+	assert.Equal(t, model.Metadata.Name, result.Metadata.Name)
+	assert.Equal(t, model.Metadata.Description, result.Metadata.Description)
+}
+
+func TestBaseResourceModel_JSONMarshal(t *testing.T) {
+	model := BaseResourceModel{
+		Version: "v1",
+		Kind:    "OpenAPI3",
+		Metadata: RelixyResourceMetadata{
+			Name:        "test-resource",
+			Description: "Test description",
+		},
+	}
+
+	data, err := json.Marshal(model)
+	assert.NilError(t, err)
+
+	var result BaseResourceModel
+	err = json.Unmarshal(data, &result)
+	assert.NilError(t, err)
+	assert.Equal(t, model.Version, result.Version)
+	assert.Equal(t, model.Kind, result.Kind)
+	assert.Equal(t, model.Metadata.Name, result.Metadata.Name)
+}
+
+func TestBaseResourceModel_YAMLMarshal(t *testing.T) {
+	model := BaseResourceModel{
+		Version: "v1",
+		Kind:    "OpenAPI3",
+		Metadata: RelixyResourceMetadata{
+			Name:        "test-resource",
+			Description: "Test description",
+		},
+	}
+
+	data, err := yaml.Marshal(model)
+	assert.NilError(t, err)
+
+	var result BaseResourceModel
+	err = yaml.Unmarshal(data, &result)
+	assert.NilError(t, err)
+	assert.Equal(t, model.Version, result.Version)
+	assert.Equal(t, model.Kind, result.Kind)
+	assert.Equal(t, model.Metadata.Name, result.Metadata.Name)
+}
+
+func TestBaseResourceModel_JSONUnmarshal(t *testing.T) {
+	testCases := []struct {
+		name        string
+		jsonData    string
+		expectError bool
+		checkFunc   func(*testing.T, *BaseResourceModel)
+	}{
+		{
+			name: "complete resource model",
+			jsonData: `{
+				"version": "v1",
+				"kind": "OpenAPI3",
+				"metadata": {
+					"name": "test-api",
+					"description": "Test description"
+				}
+			}`,
+			expectError: false,
+			checkFunc: func(t *testing.T, model *BaseResourceModel) {
+				assert.Equal(t, "v1", model.Version)
+				assert.Equal(t, "OpenAPI3", model.Kind)
+				assert.Equal(t, "test-api", model.Metadata.Name)
+				assert.Equal(t, "Test description", model.Metadata.Description)
+			},
+		},
+		{
+			name: "minimal resource model",
+			jsonData: `{
+				"version": "v1",
+				"kind": "OpenAPI3",
+				"metadata": {
+					"name": "test-api"
+				}
+			}`,
+			expectError: false,
+			checkFunc: func(t *testing.T, model *BaseResourceModel) {
+				assert.Equal(t, "v1", model.Version)
+				assert.Equal(t, "OpenAPI3", model.Kind)
+				assert.Equal(t, "test-api", model.Metadata.Name)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var model BaseResourceModel
+			err := json.Unmarshal([]byte(tc.jsonData), &model)
+
+			if tc.expectError {
+				assert.Assert(t, err != nil)
+			} else {
+				assert.NilError(t, err)
+				if tc.checkFunc != nil {
+					tc.checkFunc(t, &model)
+				}
+			}
+		})
+	}
+}
+
+func TestBaseResourceModel_YAMLUnmarshal(t *testing.T) {
+	testCases := []struct {
+		name        string
+		yamlData    string
+		expectError bool
+		checkFunc   func(*testing.T, *BaseResourceModel)
+	}{
+		{
+			name: "complete resource model",
+			yamlData: `version: v1
+kind: OpenAPI3
+metadata:
+  name: test-api
+  description: Test description`,
+			expectError: false,
+			checkFunc: func(t *testing.T, model *BaseResourceModel) {
+				assert.Equal(t, "v1", model.Version)
+				assert.Equal(t, "OpenAPI3", model.Kind)
+				assert.Equal(t, "test-api", model.Metadata.Name)
+				assert.Equal(t, "Test description", model.Metadata.Description)
+			},
+		},
+		{
+			name: "minimal resource model",
+			yamlData: `version: v1
+kind: OpenAPI3
+metadata:
+  name: test-api`,
+			expectError: false,
+			checkFunc: func(t *testing.T, model *BaseResourceModel) {
+				assert.Equal(t, "v1", model.Version)
+				assert.Equal(t, "OpenAPI3", model.Kind)
+				assert.Equal(t, "test-api", model.Metadata.Name)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var model BaseResourceModel
+			err := yaml.Unmarshal([]byte(tc.yamlData), &model)
+
+			if tc.expectError {
+				assert.Assert(t, err != nil)
+			} else {
+				assert.NilError(t, err)
+				if tc.checkFunc != nil {
+					tc.checkFunc(t, &model)
+				}
+			}
+		})
+	}
+}
+
