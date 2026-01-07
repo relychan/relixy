@@ -49,8 +49,8 @@ type Node struct { //nolint:recvcheck
 	// key represents the static key
 	key string
 
-	// parameter name if the node is param.
-	paramName string
+	// pattern is the full pattern of the leaf
+	pattern string
 
 	// child nodes should be stored in-order for iteration,
 	// in groups of the node type.
@@ -66,7 +66,16 @@ func (n *Node) InsertRoute(
 	operations *highv3.PathItem,
 	options *proxyhandler.InsertRouteOptions,
 ) (*Node, error) {
-	return n.insertChildNode(pattern, operations, nil, options)
+	node, err := n.insertChildNode(pattern, operations, nil, options)
+	if err != nil {
+		return nil, err
+	}
+
+	if node != nil && node.pattern == "" {
+		node.pattern = pattern
+	}
+
+	return node, err
 }
 
 func (n *Node) FindRoute(path string, method string) *Route {
@@ -75,17 +84,13 @@ func (n *Node) FindRoute(path string, method string) *Route {
 	}
 
 	// Find the routing handlers for the path
-	m, pattern := route.findRouteRecursive(strings.TrimLeft(path, "/"), method, n, "")
+	m, pattern := route.findRouteRecursive(strings.TrimLeft(path, "/"), method, n)
 	if m == nil {
 		return nil
 	}
 
 	route.Method = m
 	route.Pattern = pattern
-
-	if pattern == "" {
-		route.Pattern = "/"
-	}
 
 	return route
 }
@@ -98,9 +103,9 @@ func (n Node) String() string {
 	case ntStatic:
 		return n.key
 	case ntParam:
-		return "{" + n.paramName + "}"
+		return "{" + n.key + "}"
 	case ntRegexp:
-		return "{" + n.paramName + ":" + n.rex.String() + "}"
+		return "{" + n.key + ":" + n.rex.String() + "}"
 	default:
 		return ""
 	}
@@ -257,7 +262,7 @@ func (n *Node) insertChildParamNode(
 
 	if segment.NodeType == ntParam {
 		childIndex := slices.IndexFunc(n.children[ntParam], func(child *Node) bool {
-			return child.paramName == segment.ParamName
+			return child.key == segment.ParamName
 		})
 
 		var child *Node
@@ -266,8 +271,8 @@ func (n *Node) insertChildParamNode(
 			child = n.children[ntParam][childIndex]
 		} else {
 			child = &Node{
-				typ:       ntParam,
-				paramName: segment.ParamName,
+				typ: ntParam,
+				key: segment.ParamName,
 			}
 
 			n.children[ntParam] = append(n.children[ntParam], child)
@@ -278,7 +283,7 @@ func (n *Node) insertChildParamNode(
 	}
 
 	childIndex := slices.IndexFunc(n.children[ntRegexp], func(child *Node) bool {
-		return child.paramName == segment.ParamName && child.rex.String() == segment.Regexp
+		return child.key == segment.ParamName && child.rex.String() == segment.Regexp
 	})
 
 	var child *Node
@@ -292,9 +297,9 @@ func (n *Node) insertChildParamNode(
 		}
 
 		child = &Node{
-			typ:       ntRegexp,
-			paramName: segment.ParamName,
-			rex:       rex,
+			typ: ntRegexp,
+			key: segment.ParamName,
+			rex: rex,
 		}
 
 		n.children[ntRegexp] = append(n.children[ntRegexp], child)
@@ -310,7 +315,6 @@ func (r *Route) findRouteRecursive( //nolint:gocognit
 	search string,
 	method string,
 	node *Node,
-	parentPattern string,
 ) (*MethodHandler, string) {
 	left, remain, _ := strings.Cut(search, "/")
 
@@ -331,14 +335,10 @@ func (r *Route) findRouteRecursive( //nolint:gocognit
 				if remain == "" {
 					method := nd.findMethod(method)
 					if method != nil {
-						if left != "" {
-							parentPattern += "/" + nd.String()
-						}
-
-						return method, parentPattern
+						return method, nd.pattern
 					}
 				} else {
-					method, pattern := r.findRouteRecursive(remain, method, nd, parentPattern+"/"+nd.String())
+					method, pattern := r.findRouteRecursive(remain, method, nd)
 					if method != nil {
 						return method, pattern
 					}
@@ -360,21 +360,51 @@ func (r *Route) findRouteRecursive( //nolint:gocognit
 					remain,
 					method,
 					nd,
-					parentPattern+"/"+nd.String(),
 				)
 				if method != nil {
-					r.ParamValues[nd.paramName] = left
+					r.ParamValues[nd.key] = left
 
 					return method, pattern
 				}
 			}
 		default:
 			// catch-all nodes
-			return nds[0].findMethod(method), parentPattern + "/*"
+			return nds[0].findMethod(method), nds[0].pattern
 		}
 	}
 
-	return nil, parentPattern
+	return nil, ""
+}
+
+func (n *Node) findMethod(name string) *MethodHandler {
+	if len(n.handlers) == 0 {
+		return nil
+	}
+
+	h, ok := n.handlers[name]
+	if !ok {
+		return nil
+	}
+
+	return &h
+}
+
+type nodes []*Node
+
+// Sort the list of nodes by label.
+func (ns nodes) Sort() {
+	sort.Sort(ns)
+}
+func (ns nodes) Len() int      { return len(ns) }
+func (ns nodes) Swap(i, j int) { ns[i], ns[j] = ns[j], ns[i] }
+
+func (ns nodes) Less(i, j int) bool {
+	switch ns[i].typ {
+	case ntStatic, ntParam, ntRegexp:
+		return strings.Compare(ns[i].key, ns[j].key) < 0
+	default:
+		return false
+	}
 }
 
 type patNextSegmentResult struct {
@@ -417,39 +447,6 @@ func patNextSegment(pattern string) (*patNextSegmentResult, error) {
 		ParamName: paramName,
 		Regexp:    rePattern,
 	}, nil
-}
-
-type nodes []*Node
-
-// Sort the list of nodes by label.
-func (ns nodes) Sort() {
-	sort.Sort(ns)
-}
-func (ns nodes) Len() int      { return len(ns) }
-func (ns nodes) Swap(i, j int) { ns[i], ns[j] = ns[j], ns[i] }
-
-func (ns nodes) Less(i, j int) bool {
-	switch ns[i].typ {
-	case ntStatic:
-		return strings.Compare(ns[i].key, ns[j].key) < 0
-	case ntParam, ntRegexp:
-		return strings.Compare(ns[i].paramName, ns[j].paramName) < 0
-	default:
-		return false
-	}
-}
-
-func (n *Node) findMethod(name string) *MethodHandler {
-	if len(n.handlers) == 0 {
-		return nil
-	}
-
-	h, ok := n.handlers[name]
-	if !ok {
-		return nil
-	}
-
-	return &h
 }
 
 func createMethods( //nolint:cyclop,funlen
