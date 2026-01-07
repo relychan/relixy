@@ -60,6 +60,7 @@ type Node struct { //nolint:recvcheck
 	typ nodeType
 }
 
+// InsertRoute parses the route pattern into tree nodes and creates handlers.
 func (n *Node) InsertRoute(
 	pattern string,
 	operations *highv3.PathItem,
@@ -105,7 +106,7 @@ func (n Node) String() string {
 	}
 }
 
-func (n *Node) insertChildNode( //nolint:gocognit,cyclop,funlen
+func (n *Node) insertChildNode(
 	pattern string,
 	operations *highv3.PathItem,
 	paramKeys []string,
@@ -186,70 +187,24 @@ func (n *Node) insertChildNode( //nolint:gocognit,cyclop,funlen
 	// We're going to be searching for a wild node next,
 	// in this case, we need to get the tail
 	if search[0] == '{' {
-		segTyp, paramName, segRexpat, remain, err := patNextSegment(search)
-		if err != nil {
-			return nil, err
-		}
-
-		if segTyp == ntParam {
-			childIndex := slices.IndexFunc(n.children[ntParam], func(child *Node) bool {
-				return child.paramName == paramName
-			})
-
-			var child *Node
-
-			if childIndex >= 0 {
-				child = n.children[ntParam][childIndex]
-			} else {
-				child = &Node{
-					typ:       ntParam,
-					paramName: paramName,
-				}
-
-				n.children[ntParam] = append(n.children[ntParam], child)
-				n.children[ntParam].Sort()
-			}
-
-			paramKeys = append(paramKeys, paramName)
-
-			return child.insertChildNode(remain, operations, paramKeys, options)
-		}
-
-		childIndex := slices.IndexFunc(n.children[ntRegexp], func(child *Node) bool {
-			return child.paramName == paramName && child.rex.String() == segRexpat
-		})
-
-		var child *Node
-
-		if childIndex >= 0 {
-			child = n.children[ntRegexp][childIndex]
-		} else {
-			rex, err := regexp.Compile(segRexpat)
-			if err != nil {
-				return nil, err
-			}
-
-			child = &Node{
-				typ:       ntRegexp,
-				paramName: paramName,
-				rex:       rex,
-			}
-
-			n.children[ntRegexp] = append(n.children[ntRegexp], child)
-			n.children[ntRegexp].Sort()
-		}
-
-		paramKeys = append(paramKeys, paramName)
-
-		return child.insertChildNode(remain, operations, paramKeys, options)
+		return n.insertChildParamNode(search, operations, paramKeys, options)
 	}
 
 	// Static nodes fall below here.
 	// Determine longest prefix of the search key on match.
-	staticKey, remain, _ := strings.Cut(search, "/")
+	return n.insertChildStaticNode(search, operations, paramKeys, options)
+}
+
+func (n *Node) insertChildStaticNode(
+	search string,
+	operations *highv3.PathItem,
+	paramKeys []string,
+	options *proxyhandler.InsertRouteOptions,
+) (*Node, error) {
+	rawSegment, remain, _ := strings.Cut(search, "/")
 
 	childIndex := slices.IndexFunc(n.children[ntStatic], func(child *Node) bool {
-		return child.key == staticKey
+		return child.key == rawSegment
 	})
 
 	var child *Node
@@ -259,7 +214,7 @@ func (n *Node) insertChildNode( //nolint:gocognit,cyclop,funlen
 	} else {
 		child = &Node{
 			typ: ntStatic,
-			key: staticKey,
+			key: rawSegment,
 		}
 
 		n.children[ntStatic] = append(n.children[ntStatic], child)
@@ -271,7 +226,7 @@ func (n *Node) insertChildNode( //nolint:gocognit,cyclop,funlen
 	}
 
 	// Insert or update the node's leaf handler
-	handlers, err := createMethods(pattern, operations, paramKeys, options)
+	handlers, err := createMethods(search, operations, paramKeys, options)
 	if err != nil || len(handlers) == 0 {
 		return nil, err
 	}
@@ -285,243 +240,68 @@ func (n *Node) insertChildNode( //nolint:gocognit,cyclop,funlen
 	return nil, nil
 }
 
-func createMethods( //nolint:gocognit,cyclop,funlen,maintidx
-	pattern string,
+func (n *Node) insertChildParamNode(
+	search string,
 	operations *highv3.PathItem,
 	paramKeys []string,
 	options *proxyhandler.InsertRouteOptions,
-) (map[string]MethodHandler, error) {
-	params := operations.Parameters
+) (*Node, error) {
+	rawSegment, remain, _ := strings.Cut(search, "/")
 
-	params = openapi.ExtractCommonParametersOfOperation(params, operations.Get)
-	params = openapi.ExtractCommonParametersOfOperation(params, operations.Post)
-	params = openapi.ExtractCommonParametersOfOperation(params, operations.Put)
-	params = openapi.ExtractCommonParametersOfOperation(params, operations.Patch)
-	params = openapi.ExtractCommonParametersOfOperation(params, operations.Delete)
-	params = openapi.ExtractCommonParametersOfOperation(params, operations.Head)
-	params = openapi.ExtractCommonParametersOfOperation(params, operations.Options)
-	params = openapi.ExtractCommonParametersOfOperation(params, operations.Query)
-	params = openapi.ExtractCommonParametersOfOperation(params, operations.Trace)
-
-	if operations.AdditionalOperations != nil {
-		for iter := operations.AdditionalOperations.First(); iter != nil; iter = iter.Next() {
-			params = openapi.ExtractCommonParametersOfOperation(params, iter.Value())
-		}
+	segment, err := patNextSegment(rawSegment)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", rawSegment, err)
 	}
 
-	// validates and add unknown parameters from the request pattern
-	for _, key := range paramKeys {
-		if slices.ContainsFunc(params, func(param *highv3.Parameter) bool {
-			return param.In == string(openapi.InPath) && param.Name == key
-		}) {
-			continue
-		}
+	paramKeys = append(paramKeys, segment.ParamName)
 
-		params = append(params, &highv3.Parameter{
-			Name:     key,
-			In:       openapi.InPath,
-			Required: goutils.ToPtr(true),
-			Schema: base.CreateSchemaProxy(&base.Schema{
-				Type: []string{"string"},
-			}),
+	if segment.NodeType == ntParam {
+		childIndex := slices.IndexFunc(n.children[ntParam], func(child *Node) bool {
+			return child.paramName == segment.ParamName
 		})
-	}
 
-	operations.Parameters = params
+		var child *Node
 
-	handlers := map[string]MethodHandler{}
-
-	if operations.Get != nil {
-		method := http.MethodGet
-
-		h, err := handler.NewProxyHandler(operations.Get, &proxyhandler.NewRelixyHandlerOptions{
-			Method:     method,
-			Parameters: operations.Parameters,
-			GetEnv:     options.GetEnv,
-		})
-		if err != nil {
-			return nil, newInvalidOperationMetadataError(method, pattern, err)
-		}
-
-		handlers[method] = MethodHandler{
-			Handler:  h,
-			Security: operations.Get.Security,
-		}
-	}
-
-	if operations.Post != nil {
-		method := http.MethodPost
-
-		h, err := handler.NewProxyHandler(operations.Post, &proxyhandler.NewRelixyHandlerOptions{
-			Method:     method,
-			Parameters: operations.Parameters,
-			GetEnv:     options.GetEnv,
-		})
-		if err != nil {
-			return nil, newInvalidOperationMetadataError(method, pattern, err)
-		}
-
-		handlers[http.MethodPost] = MethodHandler{
-			Handler:  h,
-			Security: operations.Post.Security,
-		}
-	}
-
-	if operations.Put != nil {
-		method := http.MethodPut
-
-		h, err := handler.NewProxyHandler(operations.Put, &proxyhandler.NewRelixyHandlerOptions{
-			Method:     method,
-			Parameters: operations.Parameters,
-			GetEnv:     options.GetEnv,
-		})
-		if err != nil {
-			return nil, newInvalidOperationMetadataError(method, pattern, err)
-		}
-
-		handlers[method] = MethodHandler{
-			Handler:  h,
-			Security: operations.Put.Security,
-		}
-	}
-
-	if operations.Patch != nil {
-		method := http.MethodPatch
-
-		h, err := handler.NewProxyHandler(operations.Patch, &proxyhandler.NewRelixyHandlerOptions{
-			Method:     method,
-			Parameters: operations.Parameters,
-			GetEnv:     options.GetEnv,
-		})
-		if err != nil {
-			return handlers, newInvalidOperationMetadataError(method, pattern, err)
-		}
-
-		handlers[method] = MethodHandler{
-			Handler:  h,
-			Security: operations.Patch.Security,
-		}
-	}
-
-	if operations.Delete != nil {
-		method := http.MethodDelete
-
-		h, err := handler.NewProxyHandler(operations.Delete, &proxyhandler.NewRelixyHandlerOptions{
-			Method:     method,
-			Parameters: operations.Parameters,
-			GetEnv:     options.GetEnv,
-		})
-		if err != nil {
-			return handlers, newInvalidOperationMetadataError(method, pattern, err)
-		}
-
-		handlers[method] = MethodHandler{
-			Handler:  h,
-			Security: operations.Delete.Security,
-		}
-	}
-
-	if operations.Head != nil {
-		method := http.MethodHead
-
-		h, err := handler.NewProxyHandler(operations.Head, &proxyhandler.NewRelixyHandlerOptions{
-			Method:     method,
-			Parameters: operations.Parameters,
-			GetEnv:     options.GetEnv,
-		})
-		if err != nil {
-			return handlers, newInvalidOperationMetadataError(method, pattern, err)
-		}
-
-		handlers[method] = MethodHandler{
-			Handler:  h,
-			Security: operations.Head.Security,
-		}
-	}
-
-	if operations.Options != nil {
-		method := http.MethodOptions
-
-		h, err := handler.NewProxyHandler(
-			operations.Options,
-			&proxyhandler.NewRelixyHandlerOptions{
-				Method:     method,
-				Parameters: operations.Parameters,
-				GetEnv:     options.GetEnv,
-			},
-		)
-		if err != nil {
-			return handlers, newInvalidOperationMetadataError(method, pattern, err)
-		}
-
-		handlers[method] = MethodHandler{
-			Handler:  h,
-			Security: operations.Options.Security,
-		}
-	}
-
-	if operations.Query != nil {
-		method := "QUERY"
-
-		h, err := handler.NewProxyHandler(operations.Query, &proxyhandler.NewRelixyHandlerOptions{
-			Method:     method,
-			Parameters: operations.Parameters,
-			GetEnv:     options.GetEnv,
-		})
-		if err != nil {
-			return handlers, newInvalidOperationMetadataError(method, pattern, err)
-		}
-
-		handlers[method] = MethodHandler{
-			Handler:  h,
-			Security: operations.Query.Security,
-		}
-	}
-
-	if operations.Trace != nil {
-		method := http.MethodTrace
-
-		h, err := handler.NewProxyHandler(operations.Trace, &proxyhandler.NewRelixyHandlerOptions{
-			Method:     method,
-			Parameters: operations.Parameters,
-			GetEnv:     options.GetEnv,
-		})
-		if err != nil {
-			return handlers, newInvalidOperationMetadataError(method, pattern, err)
-		}
-
-		handlers[method] = MethodHandler{
-			Handler:  h,
-			Security: operations.Trace.Security,
-		}
-	}
-
-	if operations.AdditionalOperations != nil {
-		for iter := operations.AdditionalOperations.First(); iter != nil; iter = iter.Next() {
-			method := iter.Key()
-			op := iter.Value()
-
-			if op == nil {
-				continue
+		if childIndex >= 0 {
+			child = n.children[ntParam][childIndex]
+		} else {
+			child = &Node{
+				typ:       ntParam,
+				paramName: segment.ParamName,
 			}
 
-			h, err := handler.NewProxyHandler(op, &proxyhandler.NewRelixyHandlerOptions{
-				Method:     method,
-				Parameters: operations.Parameters,
-				GetEnv:     options.GetEnv,
-			})
-			if err != nil {
-				return handlers, newInvalidOperationMetadataError(method, pattern, err)
-			}
-
-			handlers[method] = MethodHandler{
-				Handler:  h,
-				Security: op.Security,
-			}
+			n.children[ntParam] = append(n.children[ntParam], child)
+			n.children[ntParam].Sort()
 		}
+
+		return child.insertChildNode(remain, operations, paramKeys, options)
 	}
 
-	return handlers, nil
+	childIndex := slices.IndexFunc(n.children[ntRegexp], func(child *Node) bool {
+		return child.paramName == segment.ParamName && child.rex.String() == segment.Regexp
+	})
+
+	var child *Node
+
+	if childIndex >= 0 {
+		child = n.children[ntRegexp][childIndex]
+	} else {
+		rex, err := regexp.Compile(segment.Regexp)
+		if err != nil {
+			return nil, err
+		}
+
+		child = &Node{
+			typ:       ntRegexp,
+			paramName: segment.ParamName,
+			rex:       rex,
+		}
+
+		n.children[ntRegexp] = append(n.children[ntRegexp], child)
+		n.children[ntRegexp].Sort()
+	}
+
+	return child.insertChildNode(remain, operations, paramKeys, options)
 }
 
 // Recursive edge traversal by checking all nodeTyp groups along the way.
@@ -597,69 +377,46 @@ func (r *Route) findRouteRecursive( //nolint:gocognit
 	return nil, parentPattern
 }
 
-// patNextSegment returns the next segment details from a pattern:
-// node type, param key, regexp string, param tail byte, param starting index, param ending index.
-func patNextSegment(
-	pattern string,
-) (nodeType, string, string, string, error) {
+type patNextSegmentResult struct {
+	NodeType  nodeType
+	ParamName string
+	Regexp    string
+}
+
+// patNextSegment returns the next segment details from a pattern.
+func patNextSegment(pattern string) (*patNextSegmentResult, error) {
+	endIndex := len(pattern) - 1
+
+	if pattern[endIndex] != '}' {
+		return nil, ErrMissingClosingBracket
+	}
+
 	// Param/Regexp pattern is next
 	nt := ntParam
 
-	var closeIndex, regexIndex int
+	paramName, rePattern, _ := strings.Cut(pattern[1:endIndex], ":")
 
-L:
-	for i := 1; i < len(pattern); i++ {
-		c := pattern[i]
+	if paramName == "" {
+		return nil, ErrParamKeyRequired
+	}
 
-		switch c {
-		case '/':
-			return 0, "", "", "", fmt.Errorf("%s: %w", pattern, ErrMissingClosingBracket)
-		case '}':
-			if i < len(pattern)-1 && pattern[i+1] != '/' {
-				return 0, "", "", "", fmt.Errorf("%s: %w", pattern, ErrMissingClosingBracket)
-			}
+	if len(rePattern) > 0 {
+		nt = ntRegexp
+		// make sure that the regular expression evaluates the exact match.
+		if rePattern[0] != '^' {
+			rePattern = "^" + rePattern
+		}
 
-			closeIndex = i
-
-			break L
-		case ':':
-			regexIndex = i + 1
-		default:
+		if rePattern[len(rePattern)-1] != '$' {
+			rePattern += "$"
 		}
 	}
 
-	if closeIndex <= 1 {
-		return 0, "", "", "", fmt.Errorf("%s: %w", pattern, ErrParamKeyRequired)
-	}
-
-	if closeIndex < regexIndex {
-		return 0, "", "", "", fmt.Errorf("%s: %w", pattern, ErrInvalidRegexpPatternParamInRoute)
-	}
-
-	remain := pattern[closeIndex+1:]
-
-	if regexIndex > 0 {
-		param := pattern[1 : regexIndex-1]
-		rexpat := pattern[regexIndex:closeIndex]
-
-		if len(rexpat) > 0 {
-			nt = ntRegexp
-
-			if rexpat[0] != '^' {
-				rexpat = "^" + rexpat
-			}
-
-			if rexpat[len(rexpat)-1] != '$' {
-				rexpat += "$"
-			}
-		}
-
-		return nt, param, rexpat, remain, nil
-	}
-
-	param := pattern[1:closeIndex]
-
-	return nt, param, "", remain, nil
+	return &patNextSegmentResult{
+		NodeType:  nt,
+		ParamName: paramName,
+		Regexp:    rePattern,
+	}, nil
 }
 
 type nodes []*Node
@@ -693,4 +450,249 @@ func (n *Node) findMethod(name string) *MethodHandler {
 	}
 
 	return &h
+}
+
+func createMethods( //nolint:cyclop,funlen
+	pattern string,
+	operations *highv3.PathItem,
+	paramKeys []string,
+	options *proxyhandler.InsertRouteOptions,
+) (map[string]MethodHandler, error) {
+	params := extractParametersFromOperationV3(operations, paramKeys)
+
+	handlers := map[string]MethodHandler{}
+
+	if operations.Get != nil {
+		method := http.MethodGet
+
+		h, err := handler.NewProxyHandler(operations.Get, &proxyhandler.NewRelixyHandlerOptions{
+			Method:     method,
+			Parameters: params,
+			GetEnv:     options.GetEnv,
+		})
+		if err != nil {
+			return nil, newInvalidOperationMetadataError(method, pattern, err)
+		}
+
+		handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Get.Security,
+		}
+	}
+
+	if operations.Post != nil {
+		method := http.MethodPost
+
+		h, err := handler.NewProxyHandler(operations.Post, &proxyhandler.NewRelixyHandlerOptions{
+			Method:     method,
+			Parameters: params,
+			GetEnv:     options.GetEnv,
+		})
+		if err != nil {
+			return nil, newInvalidOperationMetadataError(method, pattern, err)
+		}
+
+		handlers[http.MethodPost] = MethodHandler{
+			Handler:  h,
+			Security: operations.Post.Security,
+		}
+	}
+
+	if operations.Put != nil {
+		method := http.MethodPut
+
+		h, err := handler.NewProxyHandler(operations.Put, &proxyhandler.NewRelixyHandlerOptions{
+			Method:     method,
+			Parameters: params,
+			GetEnv:     options.GetEnv,
+		})
+		if err != nil {
+			return nil, newInvalidOperationMetadataError(method, pattern, err)
+		}
+
+		handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Put.Security,
+		}
+	}
+
+	if operations.Patch != nil {
+		method := http.MethodPatch
+
+		h, err := handler.NewProxyHandler(operations.Patch, &proxyhandler.NewRelixyHandlerOptions{
+			Method:     method,
+			Parameters: params,
+			GetEnv:     options.GetEnv,
+		})
+		if err != nil {
+			return handlers, newInvalidOperationMetadataError(method, pattern, err)
+		}
+
+		handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Patch.Security,
+		}
+	}
+
+	if operations.Delete != nil {
+		method := http.MethodDelete
+
+		h, err := handler.NewProxyHandler(operations.Delete, &proxyhandler.NewRelixyHandlerOptions{
+			Method:     method,
+			Parameters: params,
+			GetEnv:     options.GetEnv,
+		})
+		if err != nil {
+			return handlers, newInvalidOperationMetadataError(method, pattern, err)
+		}
+
+		handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Delete.Security,
+		}
+	}
+
+	if operations.Head != nil {
+		method := http.MethodHead
+
+		h, err := handler.NewProxyHandler(operations.Head, &proxyhandler.NewRelixyHandlerOptions{
+			Method:     method,
+			Parameters: params,
+			GetEnv:     options.GetEnv,
+		})
+		if err != nil {
+			return handlers, newInvalidOperationMetadataError(method, pattern, err)
+		}
+
+		handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Head.Security,
+		}
+	}
+
+	if operations.Options != nil {
+		method := http.MethodOptions
+
+		h, err := handler.NewProxyHandler(
+			operations.Options,
+			&proxyhandler.NewRelixyHandlerOptions{
+				Method:     method,
+				Parameters: params,
+				GetEnv:     options.GetEnv,
+			},
+		)
+		if err != nil {
+			return handlers, newInvalidOperationMetadataError(method, pattern, err)
+		}
+
+		handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Options.Security,
+		}
+	}
+
+	if operations.Query != nil {
+		method := "QUERY"
+
+		h, err := handler.NewProxyHandler(operations.Query, &proxyhandler.NewRelixyHandlerOptions{
+			Method:     method,
+			Parameters: params,
+			GetEnv:     options.GetEnv,
+		})
+		if err != nil {
+			return handlers, newInvalidOperationMetadataError(method, pattern, err)
+		}
+
+		handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Query.Security,
+		}
+	}
+
+	if operations.Trace != nil {
+		method := http.MethodTrace
+
+		h, err := handler.NewProxyHandler(operations.Trace, &proxyhandler.NewRelixyHandlerOptions{
+			Method:     method,
+			Parameters: params,
+			GetEnv:     options.GetEnv,
+		})
+		if err != nil {
+			return handlers, newInvalidOperationMetadataError(method, pattern, err)
+		}
+
+		handlers[method] = MethodHandler{
+			Handler:  h,
+			Security: operations.Trace.Security,
+		}
+	}
+
+	if operations.AdditionalOperations != nil {
+		for iter := operations.AdditionalOperations.First(); iter != nil; iter = iter.Next() {
+			method := iter.Key()
+			op := iter.Value()
+
+			if op == nil {
+				continue
+			}
+
+			h, err := handler.NewProxyHandler(op, &proxyhandler.NewRelixyHandlerOptions{
+				Method:     method,
+				Parameters: params,
+				GetEnv:     options.GetEnv,
+			})
+			if err != nil {
+				return handlers, newInvalidOperationMetadataError(method, pattern, err)
+			}
+
+			handlers[method] = MethodHandler{
+				Handler:  h,
+				Security: op.Security,
+			}
+		}
+	}
+
+	return handlers, nil
+}
+
+func extractParametersFromOperationV3(
+	operations *highv3.PathItem,
+	paramKeys []string,
+) []*highv3.Parameter {
+	params := operations.Parameters
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Get)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Post)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Put)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Patch)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Delete)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Head)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Options)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Query)
+	params = openapi.ExtractCommonParametersOfOperation(params, operations.Trace)
+
+	if operations.AdditionalOperations != nil {
+		for iter := operations.AdditionalOperations.First(); iter != nil; iter = iter.Next() {
+			params = openapi.ExtractCommonParametersOfOperation(params, iter.Value())
+		}
+	}
+
+	// validates and add unknown parameters from the request pattern
+	for _, key := range paramKeys {
+		if slices.ContainsFunc(params, func(param *highv3.Parameter) bool {
+			return param.In == string(openapi.InPath) && param.Name == key
+		}) {
+			continue
+		}
+
+		params = append(params, &highv3.Parameter{
+			Name:     key,
+			In:       openapi.InPath,
+			Required: goutils.ToPtr(true),
+			Schema: base.CreateSchemaProxy(&base.Schema{
+				Type: []string{"string"},
+			}),
+		})
+	}
+
+	return params
 }

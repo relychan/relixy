@@ -374,712 +374,234 @@ func TestRouteFindingEdgeCases(t *testing.T) {
 	}
 }
 
-// TestPatNextSegment tests the pattern segment parsing with various edge cases
-// func TestPatNextSegment(t *testing.T) {
-// 	testCases := []struct {
-// 		name          string
-// 		pattern       string
-// 		expectedTyp   nodeTyp
-// 		expectedKey   string
-// 		expectedRegex string
-// 		expectedTail  byte
-// 		expectedStart int
-// 		expectedEnd   int
-// 		expectError   bool
-// 		errorType     error
-// 	}{
-// 		{
-// 			name:          "static_path",
-// 			pattern:       "/posts",
-// 			expectedTyp:   ntStatic,
-// 			expectedKey:   "",
-// 			expectedRegex: "",
-// 			expectedTail:  0,
-// 			expectedStart: 0,
-// 			expectedEnd:   6,
-// 			expectError:   false,
-// 		},
-// 		{
-// 			name:          "param_simple",
-// 			pattern:       "{id}",
-// 			expectedTyp:   ntParam,
-// 			expectedKey:   "id",
-// 			expectedRegex: "",
-// 			expectedTail:  '/', // default tail is '/'
-// 			expectedStart: 0,
-// 			expectedEnd:   4,
-// 			expectError:   false,
-// 		},
-// 		{
-// 			name:          "param_with_tail",
-// 			pattern:       "{id}/comments",
-// 			expectedTyp:   ntParam,
-// 			expectedKey:   "id",
-// 			expectedRegex: "",
-// 			expectedTail:  '/',
-// 			expectedStart: 0,
-// 			expectedEnd:   4,
-// 			expectError:   false,
-// 		},
-// 		{
-// 			name:          "regexp_param",
-// 			pattern:       "{id:[0-9]+}",
-// 			expectedTyp:   ntRegexp,
-// 			expectedKey:   "id",
-// 			expectedRegex: "^[0-9]+$",
-// 			expectedTail:  '/', // default tail is '/'
-// 			expectedStart: 0,
-// 			expectedEnd:   11,
-// 			expectError:   false,
-// 		},
-// 		{
-// 			name:          "regexp_with_anchors",
-// 			pattern:       "{id:^[a-z]+$}",
-// 			expectedTyp:   ntRegexp,
-// 			expectedKey:   "id",
-// 			expectedRegex: "^[a-z]+$",
-// 			expectedTail:  '/', // default tail is '/'
-// 			expectedStart: 0,
-// 			expectedEnd:   13,
-// 			expectError:   false,
-// 		},
-// 		{
-// 			name:          "catchall",
-// 			pattern:       "*",
-// 			expectedTyp:   ntCatchAll,
-// 			expectedKey:   "*",
-// 			expectedRegex: "",
-// 			expectedTail:  0,
-// 			expectedStart: 0,
-// 			expectedEnd:   1,
-// 			expectError:   false,
-// 		},
-// 		{
-// 			name:        "wildcard_not_last",
-// 			pattern:     "*/something",
-// 			expectError: true,
-// 			errorType:   ErrWildcardMustBeLast,
-// 		},
-// 		{
-// 			name:        "missing_closing_bracket",
-// 			pattern:     "{id",
-// 			expectError: true,
-// 			errorType:   ErrMissingClosingBracket,
-// 		},
-// 		{
-// 			name:          "nested_braces",
-// 			pattern:       "{id:{nested}}",
-// 			expectedTyp:   ntRegexp,
-// 			expectedKey:   "id",
-// 			expectedRegex: "^{nested}$",
-// 			expectedTail:  '/', // default tail is '/'
-// 			expectedStart: 0,
-// 			expectedEnd:   13,
-// 			expectError:   false,
-// 		},
-// 	}
+// TestComplexRoutingScenarios tests complex real-world routing scenarios
+func TestComplexRoutingScenarios(t *testing.T) {
+	t.Run("RESTful_API_with_versioning", func(t *testing.T) {
+		node := new(Node)
 
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			typ, key, regex, tail, start, end, err := patNextSegment(tc.pattern)
+		routes := []string{
+			"/api/v1/users",
+			"/api/v1/users/{id}",
+			"/api/v1/users/{id}/posts",
+			"/api/v1/users/{id}/posts/{postId}",
+			"/api/v2/users",
+			"/api/v2/users/{id}",
+		}
 
-// 			if tc.expectError {
-// 				assert.Assert(t, err != nil, "expected error but got nil")
-// 				if tc.errorType != nil {
-// 					assert.ErrorIs(t, err, tc.errorType)
-// 				}
-// 			} else {
-// 				assert.NilError(t, err)
-// 				assert.Equal(t, tc.expectedTyp, typ, "node type mismatch")
-// 				assert.Equal(t, tc.expectedKey, key, "param key mismatch")
-// 				assert.Equal(t, tc.expectedRegex, regex, "regex pattern mismatch")
-// 				assert.Equal(t, tc.expectedTail, tail, "tail byte mismatch")
-// 				assert.Equal(t, tc.expectedStart, start, "start index mismatch")
-// 				assert.Equal(t, tc.expectedEnd, end, "end index mismatch")
-// 			}
-// 		})
-// 	}
-// }
+		for _, route := range routes {
+			_, err := node.InsertRoute(route, &highv3.PathItem{
+				Get: &highv3.Operation{},
+			}, &proxyhandler.InsertRouteOptions{})
+			assert.NilError(t, err)
+		}
 
-// TestPatParamKeys tests parameter key extraction from patterns
-// func TestPatParamKeys(t *testing.T) {
-// 	testCases := []struct {
-// 		name         string
-// 		pattern      string
-// 		expectedKeys []string
-// 		expectError  bool
-// 		errorType    error
-// 	}{
-// 		{
-// 			name:         "no_params",
-// 			pattern:      "/posts",
-// 			expectedKeys: []string{},
-// 			expectError:  false,
-// 		},
-// 		{
-// 			name:         "single_param",
-// 			pattern:      "/posts/{id}",
-// 			expectedKeys: []string{"id"},
-// 			expectError:  false,
-// 		},
-// 		{
-// 			name:         "multiple_params",
-// 			pattern:      "/posts/{id}/comments/{commentId}",
-// 			expectedKeys: []string{"id", "commentId"},
-// 			expectError:  false,
-// 		},
-// 		{
-// 			name:         "regexp_param",
-// 			pattern:      "/posts/{id:[0-9]+}",
-// 			expectedKeys: []string{"id"},
-// 			expectError:  false,
-// 		},
-// 		{
-// 			name:        "duplicate_params",
-// 			pattern:     "/posts/{id}/comments/{id}",
-// 			expectError: true,
-// 			errorType:   ErrDuplicatedParamKey,
-// 		},
-// 		{
-// 			name:         "catchall",
-// 			pattern:      "/api/*",
-// 			expectedKeys: []string{"*"},
-// 			expectError:  false,
-// 		},
-// 	}
+		// Test v1 routes
+		r := node.FindRoute("/api/v1/users", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "/api/v1/users", r.Pattern)
 
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			keys, err := patParamKeys(tc.pattern)
+		r = node.FindRoute("/api/v1/users/123", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "123", r.ParamValues["id"])
 
-// 			if tc.expectError {
-// 				assert.Assert(t, err != nil, "expected error but got nil")
-// 				if tc.errorType != nil {
-// 					assert.ErrorIs(t, err, tc.errorType)
-// 				}
-// 			} else {
-// 				assert.NilError(t, err)
-// 				assert.DeepEqual(t, tc.expectedKeys, keys)
-// 			}
-// 		})
-// 	}
-// }
+		r = node.FindRoute("/api/v1/users/123/posts/456", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "123", r.ParamValues["id"])
+		assert.Equal(t, "456", r.ParamValues["postId"])
 
-// // TestLongestPrefix tests the longest common prefix function
-// func TestLongestPrefix(t *testing.T) {
-// 	testCases := []struct {
-// 		name     string
-// 		k1       string
-// 		k2       string
-// 		expected int
-// 	}{
-// 		{
-// 			name:     "identical_strings",
-// 			k1:       "/posts",
-// 			k2:       "/posts",
-// 			expected: 6,
-// 		},
-// 		{
-// 			name:     "common_prefix",
-// 			k1:       "/posts/123",
-// 			k2:       "/posts/456",
-// 			expected: 7,
-// 		},
-// 		{
-// 			name:     "no_common_prefix",
-// 			k1:       "/posts",
-// 			k2:       "/users",
-// 			expected: 1,
-// 		},
-// 		{
-// 			name:     "empty_strings",
-// 			k1:       "",
-// 			k2:       "",
-// 			expected: 0,
-// 		},
-// 		{
-// 			name:     "one_empty",
-// 			k1:       "/posts",
-// 			k2:       "",
-// 			expected: 0,
-// 		},
-// 		{
-// 			name:     "substring",
-// 			k1:       "/posts",
-// 			k2:       "/posts/123",
-// 			expected: 6,
-// 		},
-// 	}
+		// Test v2 routes
+		r = node.FindRoute("/api/v2/users/789", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "/api/v2/users/{id}", r.Pattern)
+	})
 
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			result := longestPrefix(tc.k1, tc.k2)
-// 			assert.Equal(t, tc.expected, result)
-// 		})
-// 	}
-// }
+	t.Run("mixed_static_and_dynamic_routes", func(t *testing.T) {
+		node := new(Node)
 
-// // TestNodesSorting tests the nodes sorting functionality
-// func TestNodesSorting(t *testing.T) {
-// 	testCases := []struct {
-// 		name     string
-// 		nodes    nodes
-// 		expected []byte // expected labels after sorting
-// 	}{
-// 		{
-// 			name: "already_sorted",
-// 			nodes: nodes{
-// 				{label: 'a'},
-// 				{label: 'b'},
-// 				{label: 'c'},
-// 			},
-// 			expected: []byte{'a', 'b', 'c'},
-// 		},
-// 		{
-// 			name: "reverse_order",
-// 			nodes: nodes{
-// 				{label: 'c'},
-// 				{label: 'b'},
-// 				{label: 'a'},
-// 			},
-// 			expected: []byte{'a', 'b', 'c'},
-// 		},
-// 		{
-// 			name: "random_order",
-// 			nodes: nodes{
-// 				{label: 'm'},
-// 				{label: 'a'},
-// 				{label: 'z'},
-// 				{label: 'b'},
-// 			},
-// 			expected: []byte{'a', 'b', 'm', 'z'},
-// 		},
-// 		{
-// 			name: "tail_sort_param_nodes",
-// 			nodes: nodes{
-// 				{label: 'a', typ: ntParam, tail: '/'},
-// 				{label: 'b', typ: ntParam, tail: '-'},
-// 			},
-// 			expected: []byte{'b', 'a'}, // '/' tail should be last
-// 		},
-// 	}
+		routes := map[string]*highv3.PathItem{
+			"/posts":           {Get: &highv3.Operation{}},
+			"/posts/new":       {Get: &highv3.Operation{}},
+			"/posts/popular":   {Get: &highv3.Operation{}},
+			"/posts/{id}":      {Get: &highv3.Operation{}},
+			"/posts/{id}/edit": {Get: &highv3.Operation{}},
+		}
 
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			tc.nodes.Sort()
-// 			for i, node := range tc.nodes {
-// 				assert.Equal(t, tc.expected[i], node.label)
-// 			}
-// 		})
-// 	}
-// }
+		for pattern, handlers := range routes {
+			_, err := node.InsertRoute(pattern, handlers, &proxyhandler.InsertRouteOptions{})
+			assert.NilError(t, err)
+		}
 
-// // TestNodesFindEdge tests binary search for finding edges
-// func TestNodesFindEdge(t *testing.T) {
-// 	nodes := nodes{
-// 		{label: 'a'},
-// 		{label: 'c'},
-// 		{label: 'e'},
-// 		{label: 'g'},
-// 		{label: 'z'},
-// 	}
+		// Static routes should take precedence
+		r := node.FindRoute("/posts/new", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "/posts/new", r.Pattern)
 
-// 	testCases := []struct {
-// 		name      string
-// 		label     byte
-// 		expectNil bool
-// 	}{
-// 		{name: "find_first", label: 'a', expectNil: false},
-// 		{name: "find_middle", label: 'e', expectNil: false},
-// 		{name: "find_last", label: 'z', expectNil: false},
-// 		{name: "not_found_before", label: 'A', expectNil: true},
-// 		{name: "not_found_between", label: 'd', expectNil: true},
-// 		{name: "not_found_after", label: '~', expectNil: true},
-// 	}
+		r = node.FindRoute("/posts/popular", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "/posts/popular", r.Pattern)
 
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			result := nodes.findEdge(tc.label)
-// 			if tc.expectNil {
-// 				assert.Assert(t, result == nil)
-// 			} else {
-// 				assert.Assert(t, result != nil)
-// 				assert.Equal(t, tc.label, result.label)
-// 			}
-// 		})
-// 	}
-// }
+		// Dynamic route should match other IDs
+		r = node.FindRoute("/posts/123", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "/posts/{id}", r.Pattern)
+		assert.Equal(t, "123", r.ParamValues["id"])
 
-// // TestComplexRoutingScenarios tests complex real-world routing scenarios
-// func TestComplexRoutingScenarios(t *testing.T) {
-// 	t.Run("RESTful_API_with_versioning", func(t *testing.T) {
-// 		node := new(Node)
+		r = node.FindRoute("/posts/456/edit", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "/posts/{id}/edit", r.Pattern)
+		assert.Equal(t, "456", r.ParamValues["id"])
+	})
 
-// 		routes := []string{
-// 			"/api/v1/users",
-// 			"/api/v1/users/{id}",
-// 			"/api/v1/users/{id}/posts",
-// 			"/api/v1/users/{id}/posts/{postId}",
-// 			"/api/v2/users",
-// 			"/api/v2/users/{id}",
-// 		}
+	t.Run("regexp_validation_routes", func(t *testing.T) {
+		node := new(Node)
 
-// 		for _, route := range routes {
-// 			_, err := node.InsertRoute(route, &highv3.PathItem{
-// 				Get: &highv3.Operation{},
-// 			}, &proxyhandler.InsertRouteOptions{})
-// 			assert.NilError(t, err)
-// 		}
+		routes := map[string]*highv3.PathItem{
+			"/users/{id:[0-9]+}":                       {Get: &highv3.Operation{}},
+			"/users/{username:[a-z]+}":                 {Post: &highv3.Operation{}},
+			"/posts/{slug:[a-z0-9-]+}":                 {Get: &highv3.Operation{}},
+			"/files/{filename:[a-zA-Z0-9._-]+}":        {Get: &highv3.Operation{}},
+			"/dates/{date:[0-9]{4}-[0-9]{2}-[0-9]{2}}": {Get: &highv3.Operation{}},
+		}
 
-// 		// Test v1 routes
-// 		r := node.FindRoute("/api/v1/users", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "/api/v1/users", r.Node.pattern)
+		for pattern, handlers := range routes {
+			_, err := node.InsertRoute(pattern, handlers, &proxyhandler.InsertRouteOptions{})
+			assert.NilError(t, err)
+		}
 
-// 		r = node.FindRoute("/api/v1/users/123", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "123", r.ParamValues["id"])
+		// Numeric ID should match
+		r := node.FindRoute("/users/12345", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "12345", r.ParamValues["id"])
 
-// 		r = node.FindRoute("/api/v1/users/123/posts/456", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "123", r.ParamValues["id"])
-// 		assert.Equal(t, "456", r.ParamValues["postId"])
+		// Alphabetic username should match
+		r = node.FindRoute("/users/john", http.MethodPost)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "john", r.ParamValues["username"])
 
-// 		// Test v2 routes
-// 		r = node.FindRoute("/api/v2/users/789", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "/api/v2/users/{id}", r.Node.pattern)
-// 	})
+		// Slug with hyphens should match
+		r = node.FindRoute("/posts/my-blog-post-123", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "my-blog-post-123", r.ParamValues["slug"])
 
-// 	t.Run("mixed_static_and_dynamic_routes", func(t *testing.T) {
-// 		node := new(Node)
+		// Filename with dots and underscores should match
+		r = node.FindRoute("/files/my_file.txt", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "my_file.txt", r.ParamValues["filename"])
 
-// 		routes := map[string]*highv3.PathItem{
-// 			"/posts":           {Get: &highv3.Operation{}},
-// 			"/posts/new":       {Get: &highv3.Operation{}},
-// 			"/posts/popular":   {Get: &highv3.Operation{}},
-// 			"/posts/{id}":      {Get: &highv3.Operation{}},
-// 			"/posts/{id}/edit": {Get: &highv3.Operation{}},
-// 		}
+		// Date format should match
+		r = node.FindRoute("/dates/2024-01-15", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "2024-01-15", r.ParamValues["date"])
 
-// 		for pattern, handlers := range routes {
-// 			_, err := node.InsertRoute(pattern, handlers, &proxyhandler.InsertRouteOptions{})
-// 			assert.NilError(t, err)
-// 		}
+		// Invalid date format should not match
+		r = node.FindRoute("/dates/2024-1-5", http.MethodGet)
+		assert.Assert(t, r == nil)
+	})
 
-// 		// Static routes should take precedence
-// 		r := node.FindRoute("/posts/new", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "/posts/new", r.Node.pattern)
+	t.Run("catchall_with_specific_routes", func(t *testing.T) {
+		node := new(Node)
 
-// 		r = node.FindRoute("/posts/popular", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "/posts/popular", r.Node.pattern)
+		routes := map[string]*highv3.PathItem{
+			"/api/v1/users": {Get: &highv3.Operation{}},
+			"/api/v1/posts": {Get: &highv3.Operation{}},
+			"/api/v1/*":     {Get: &highv3.Operation{}},
+			"/static/css/*": {Get: &highv3.Operation{}},
+			"/static/js/*":  {Get: &highv3.Operation{}},
+		}
 
-// 		// Dynamic route should match other IDs
-// 		r = node.FindRoute("/posts/123", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "/posts/{id}", r.Node.pattern)
-// 		assert.Equal(t, "123", r.ParamValues["id"])
+		for pattern, handlers := range routes {
+			_, err := node.InsertRoute(pattern, handlers, &proxyhandler.InsertRouteOptions{})
+			assert.NilError(t, err)
+		}
 
-// 		r = node.FindRoute("/posts/456/edit", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "/posts/{id}/edit", r.Node.pattern)
-// 		assert.Equal(t, "456", r.ParamValues["id"])
-// 	})
+		// Specific routes should match first
+		r := node.FindRoute("/api/v1/users", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "/api/v1/users", r.Pattern)
 
-// 	t.Run("regexp_validation_routes", func(t *testing.T) {
-// 		node := new(Node)
+		// Catchall should match unspecified routes
+		r = node.FindRoute("/api/v1/anything/else", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "/api/v1/*", r.Pattern)
 
-// 		routes := map[string]*highv3.PathItem{
-// 			"/users/{id:[0-9]+}":                       {Get: &highv3.Operation{}},
-// 			"/users/{username:[a-z]+}":                 {Post: &highv3.Operation{}},
-// 			"/posts/{slug:[a-z0-9-]+}":                 {Get: &highv3.Operation{}},
-// 			"/files/{filename:[a-zA-Z0-9._-]+}":        {Get: &highv3.Operation{}},
-// 			"/dates/{date:[0-9]{4}-[0-9]{2}-[0-9]{2}}": {Get: &highv3.Operation{}},
-// 		}
+		r = node.FindRoute("/static/css/main.css", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "/static/css/*", r.Pattern)
+	})
 
-// 		for pattern, handlers := range routes {
-// 			_, err := node.InsertRoute(pattern, handlers, &proxyhandler.InsertRouteOptions{})
-// 			assert.NilError(t, err)
-// 		}
+	t.Run("multiple_HTTP_methods", func(t *testing.T) {
+		node := new(Node)
 
-// 		// Numeric ID should match
-// 		r := node.FindRoute("/users/12345", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "12345", r.ParamValues["id"])
+		_, err := node.InsertRoute("/posts/{id}", &highv3.PathItem{
+			Get:    &highv3.Operation{},
+			Post:   &highv3.Operation{},
+			Put:    &highv3.Operation{},
+			Patch:  &highv3.Operation{},
+			Delete: &highv3.Operation{},
+		}, &proxyhandler.InsertRouteOptions{})
+		assert.NilError(t, err)
 
-// 		// Alphabetic username should match
-// 		r = node.FindRoute("/users/john", http.MethodPost)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "john", r.ParamValues["username"])
+		methods := []string{
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodPatch,
+			http.MethodDelete,
+		}
 
-// 		// Slug with hyphens should match
-// 		r = node.FindRoute("/posts/my-blog-post-123", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "my-blog-post-123", r.ParamValues["slug"])
+		for _, method := range methods {
+			r := node.FindRoute("/posts/123", method)
+			assert.Assert(t, r != nil, "method %s should be found", method)
+			assert.Equal(t, "123", r.ParamValues["id"])
+		}
 
-// 		// Filename with dots and underscores should match
-// 		r = node.FindRoute("/files/my_file.txt", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "my_file.txt", r.ParamValues["filename"])
+		// Method not defined should not be found
+		r := node.FindRoute("/posts/123", http.MethodHead)
+		assert.Assert(t, r == nil)
+	})
 
-// 		// Date format should match
-// 		r = node.FindRoute("/dates/2024-01-15", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "2024-01-15", r.ParamValues["date"])
+	t.Run("deeply_nested_resources", func(t *testing.T) {
+		node := new(Node)
 
-// 		// Invalid date format should not match
-// 		r = node.FindRoute("/dates/2024-1-5", http.MethodGet)
-// 		assert.Assert(t, r == nil)
-// 	})
+		pattern := "/orgs/{orgId}/teams/{teamId}/projects/{projectId}/tasks/{taskId}/comments/{commentId}"
+		_, err := node.InsertRoute(pattern, &highv3.PathItem{
+			Get: &highv3.Operation{},
+		}, &proxyhandler.InsertRouteOptions{})
+		assert.NilError(t, err)
 
-// 	t.Run("catchall_with_specific_routes", func(t *testing.T) {
-// 		node := new(Node)
+		r := node.FindRoute("/orgs/org1/teams/team2/projects/proj3/tasks/task4/comments/comment5", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "org1", r.ParamValues["orgId"])
+		assert.Equal(t, "team2", r.ParamValues["teamId"])
+		assert.Equal(t, "proj3", r.ParamValues["projectId"])
+		assert.Equal(t, "task4", r.ParamValues["taskId"])
+		assert.Equal(t, "comment5", r.ParamValues["commentId"])
+	})
 
-// 		routes := map[string]*highv3.PathItem{
-// 			"/api/v1/users": {Get: &highv3.Operation{}},
-// 			"/api/v1/posts": {Get: &highv3.Operation{}},
-// 			"/api/v1/*":     {Get: &highv3.Operation{}},
-// 			"/static/css/*": {Get: &highv3.Operation{}},
-// 			"/static/js/*":  {Get: &highv3.Operation{}},
-// 		}
+	t.Run("special_characters_in_params", func(t *testing.T) {
+		node := new(Node)
 
-// 		for pattern, handlers := range routes {
-// 			_, err := node.InsertRoute(pattern, handlers, &proxyhandler.InsertRouteOptions{})
-// 			assert.NilError(t, err)
-// 		}
+		routes := map[string]*highv3.PathItem{
+			"/search/{query}":          {Get: &highv3.Operation{}},
+			"/users/{email:[-.@\\w]+}": {Get: &highv3.Operation{}},
+		}
 
-// 		// Specific routes should match first
-// 		r := node.FindRoute("/api/v1/users", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "/api/v1/users", r.Node.pattern)
+		for pattern, handlers := range routes {
+			_, err := node.InsertRoute(pattern, handlers, &proxyhandler.InsertRouteOptions{})
+			assert.NilError(t, err)
+		}
 
-// 		// Catchall should match unspecified routes
-// 		r = node.FindRoute("/api/v1/anything/else", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "/api/v1/*", r.Node.pattern)
+		// Query with special characters
+		r := node.FindRoute("/search/hello-world", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "hello-world", r.ParamValues["query"])
 
-// 		r = node.FindRoute("/static/css/main.css", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "/static/css/*", r.Node.pattern)
-// 	})
-
-// 	t.Run("multiple_HTTP_methods", func(t *testing.T) {
-// 		node := new(Node)
-
-// 		_, err := node.InsertRoute("/posts/{id}", &highv3.PathItem{
-// 			Get:    &highv3.Operation{},
-// 			Post:   &highv3.Operation{},
-// 			Put:    &highv3.Operation{},
-// 			Patch:  &highv3.Operation{},
-// 			Delete: &highv3.Operation{},
-// 		}, &proxyhandler.InsertRouteOptions{})
-// 		assert.NilError(t, err)
-
-// 		methods := []string{
-// 			http.MethodGet,
-// 			http.MethodPost,
-// 			http.MethodPut,
-// 			http.MethodPatch,
-// 			http.MethodDelete,
-// 		}
-
-// 		for _, method := range methods {
-// 			r := node.FindRoute("/posts/123", method)
-// 			assert.Assert(t, r != nil, "method %s should be found", method)
-// 			assert.Equal(t, "123", r.ParamValues["id"])
-// 		}
-
-// 		// Method not defined should not be found
-// 		r := node.FindRoute("/posts/123", http.MethodHead)
-// 		assert.Assert(t, r == nil)
-// 	})
-
-// 	t.Run("deeply_nested_resources", func(t *testing.T) {
-// 		node := new(Node)
-
-// 		pattern := "/orgs/{orgId}/teams/{teamId}/projects/{projectId}/tasks/{taskId}/comments/{commentId}"
-// 		_, err := node.InsertRoute(pattern, &highv3.PathItem{
-// 			Get: &highv3.Operation{},
-// 		}, &proxyhandler.InsertRouteOptions{})
-// 		assert.NilError(t, err)
-
-// 		r := node.FindRoute("/orgs/org1/teams/team2/projects/proj3/tasks/task4/comments/comment5", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "org1", r.ParamValues["orgId"])
-// 		assert.Equal(t, "team2", r.ParamValues["teamId"])
-// 		assert.Equal(t, "proj3", r.ParamValues["projectId"])
-// 		assert.Equal(t, "task4", r.ParamValues["taskId"])
-// 		assert.Equal(t, "comment5", r.ParamValues["commentId"])
-// 	})
-
-// 	t.Run("special_characters_in_params", func(t *testing.T) {
-// 		node := new(Node)
-
-// 		routes := map[string]*highv3.PathItem{
-// 			"/search/{query}":      {Get: &highv3.Operation{}},
-// 			"/users/{email:[^/]+}": {Get: &highv3.Operation{}},
-// 		}
-
-// 		for pattern, handlers := range routes {
-// 			_, err := node.InsertRoute(pattern, handlers, &proxyhandler.InsertRouteOptions{})
-// 			assert.NilError(t, err)
-// 		}
-
-// 		// Query with special characters
-// 		r := node.FindRoute("/search/hello-world", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "hello-world", r.ParamValues["query"])
-
-// 		// Email-like parameter
-// 		r = node.FindRoute("/users/user@example.com", http.MethodGet)
-// 		assert.Assert(t, r != nil)
-// 		assert.Equal(t, "user@example.com", r.ParamValues["email"])
-// 	})
-// }
-
-// // TestNodeIsLeaf tests the isLeaf method
-// func TestNodeIsLeaf(t *testing.T) {
-// 	testCases := []struct {
-// 		name     string
-// 		node     *Node
-// 		expected bool
-// 	}{
-// 		{
-// 			name: "leaf_node_with_handlers",
-// 			node: &Node{
-// 				handlers: map[string]MethodHandler{
-// 					http.MethodGet: {},
-// 				},
-// 			},
-// 			expected: true,
-// 		},
-// 		{
-// 			name: "non_leaf_node",
-// 			node: &Node{
-// 				handlers: nil,
-// 			},
-// 			expected: false,
-// 		},
-// 		{
-// 			name: "empty_handlers_map",
-// 			node: &Node{
-// 				handlers: map[string]MethodHandler{},
-// 			},
-// 			expected: true,
-// 		},
-// 	}
-
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			result := tc.node.isLeaf()
-// 			assert.Equal(t, tc.expected, result)
-// 		})
-// 	}
-// }
-
-// // TestNodeGetEdge tests the getEdge method
-// func TestNodeGetEdge(t *testing.T) {
-// 	node := &Node{
-// 		children: [ntCatchAll + 1]nodes{
-// 			ntStatic: {
-// 				{label: 'a', tail: 0},
-// 				{label: 'b', tail: 0},
-// 			},
-// 			ntParam: {
-// 				{label: '{', tail: '/', paramName: "id"},
-// 			},
-// 			ntRegexp: {
-// 				{label: '{', tail: '/', prefix: "^[0-9]+$"},
-// 				{label: '{', tail: '/', prefix: "^[a-z]+$"},
-// 			},
-// 		},
-// 	}
-
-// 	testCases := []struct {
-// 		name      string
-// 		ntyp      nodeTyp
-// 		label     byte
-// 		tail      byte
-// 		prefix    string
-// 		expectNil bool
-// 		checkFunc func(t *testing.T, n *Node)
-// 	}{
-// 		{
-// 			name:      "find_static_node",
-// 			ntyp:      ntStatic,
-// 			label:     'a',
-// 			tail:      0,
-// 			expectNil: false,
-// 			checkFunc: func(t *testing.T, n *Node) {
-// 				assert.Equal(t, byte('a'), n.label)
-// 			},
-// 		},
-// 		{
-// 			name:      "find_param_node",
-// 			ntyp:      ntParam,
-// 			label:     '{',
-// 			tail:      '/',
-// 			expectNil: false,
-// 			checkFunc: func(t *testing.T, n *Node) {
-// 				assert.Equal(t, "id", n.paramName)
-// 			},
-// 		},
-// 		{
-// 			name:      "find_regexp_node_first",
-// 			ntyp:      ntRegexp,
-// 			label:     '{',
-// 			tail:      '/',
-// 			prefix:    "^[0-9]+$",
-// 			expectNil: false,
-// 			checkFunc: func(t *testing.T, n *Node) {
-// 				assert.Equal(t, "^[0-9]+$", n.prefix)
-// 			},
-// 		},
-// 		{
-// 			name:      "find_regexp_node_second",
-// 			ntyp:      ntRegexp,
-// 			label:     '{',
-// 			tail:      '/',
-// 			prefix:    "^[a-z]+$",
-// 			expectNil: false,
-// 			checkFunc: func(t *testing.T, n *Node) {
-// 				assert.Equal(t, "^[a-z]+$", n.prefix)
-// 			},
-// 		},
-// 		{
-// 			name:      "not_found_wrong_label",
-// 			ntyp:      ntStatic,
-// 			label:     'z',
-// 			tail:      0,
-// 			expectNil: true,
-// 		},
-// 		{
-// 			name:      "not_found_wrong_prefix",
-// 			ntyp:      ntRegexp,
-// 			label:     '{',
-// 			tail:      '/',
-// 			prefix:    "^[0-9a-z]+$",
-// 			expectNil: true,
-// 		},
-// 	}
-
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			result := node.getEdge(tc.ntyp, tc.label, tc.tail, tc.prefix)
-
-// 			if tc.expectNil {
-// 				assert.Assert(t, result == nil)
-// 			} else {
-// 				assert.Assert(t, result != nil)
-// 				if tc.checkFunc != nil {
-// 					tc.checkFunc(t, result)
-// 				}
-// 			}
-// 		})
-// 	}
-// }
+		// Email-like parameter
+		r = node.FindRoute("/users/user@example.com", http.MethodGet)
+		assert.Assert(t, r != nil)
+		assert.Equal(t, "user@example.com", r.ParamValues["email"])
+	})
+}
 
 func (n Node) printDebug(indent int) string {
 	var sb strings.Builder
@@ -1102,4 +624,43 @@ func (n Node) printDebug(indent int) string {
 	}
 
 	return sb.String()
+}
+
+// BenchmarkTree/insert_routes-11         	  234687	      5104 ns/op	   16232 B/op	     167 allocs/op
+// BenchmarkTree/find_route-11            	 4148186	       288.3 ns/op	     456 B/op	       6 allocs/op
+func BenchmarkTree(b *testing.B) {
+	routes := map[string]*highv3.PathItem{
+		"/posts":                   {Get: &highv3.Operation{}},
+		"/posts/new":               {Get: &highv3.Operation{}},
+		"/posts/popular":           {Get: &highv3.Operation{}},
+		"/posts/{id}":              {Get: &highv3.Operation{}},
+		"/posts/{id}/edit":         {Get: &highv3.Operation{}},
+		"/users/{id:[0-9]+}":       {Get: &highv3.Operation{}},
+		"/posts/{slug:[a-z0-9-]+}": {Get: &highv3.Operation{}},
+	}
+
+	b.Run("insert_routes", func(b *testing.B) {
+		for b.Loop() {
+			node := new(Node)
+
+			for pattern, handlers := range routes {
+				node.InsertRoute(pattern, handlers, &proxyhandler.InsertRouteOptions{})
+			}
+		}
+	})
+
+	b.Run("find_route", func(b *testing.B) {
+		node := new(Node)
+
+		for pattern, handlers := range routes {
+			_, err := node.InsertRoute(pattern, handlers, &proxyhandler.InsertRouteOptions{})
+			if err != nil {
+				b.Fatal(err)
+			}
+		}
+
+		for b.Loop() {
+			node.FindRoute("/posts/hello", http.MethodGet)
+		}
+	})
 }
