@@ -626,7 +626,9 @@ func (n Node) printDebug(indent int) string {
 	return sb.String()
 }
 
+// BenchmarkTree/insert_routes-old-11         162159	      6242 ns/op	   15077 B/op	     182 allocs/op
 // BenchmarkTree/insert_routes-11         	  234687	      5104 ns/op	   16232 B/op	     167 allocs/op
+// BenchmarkTree/find_route-old-11           4510472	       225.3 ns/op	     400 B/op	       3 allocs/op
 // BenchmarkTree/find_route-11            	 4148186	       288.3 ns/op	     456 B/op	       6 allocs/op
 func BenchmarkTree(b *testing.B) {
 	routes := map[string]*highv3.PathItem{
