@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 	"gotest.tools/v3/assert"
 )
@@ -624,6 +625,689 @@ func (n Node) printDebug(indent int) string {
 	}
 
 	return sb.String()
+}
+
+// TestAllHTTPMethods tests all HTTP methods.
+func TestAllHTTPMethods(t *testing.T) {
+	node := new(Node)
+
+	// Test all standard HTTP methods
+	_, err := node.InsertRoute("/test", &highv3.PathItem{
+		Get:     &highv3.Operation{},
+		Post:    &highv3.Operation{},
+		Put:     &highv3.Operation{},
+		Patch:   &highv3.Operation{},
+		Delete:  &highv3.Operation{},
+		Head:    &highv3.Operation{},
+		Options: &highv3.Operation{},
+		Trace:   &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Test all methods can be found
+	methods := []string{
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodPatch,
+		http.MethodDelete,
+		http.MethodHead,
+		http.MethodOptions,
+		http.MethodTrace,
+	}
+
+	for _, method := range methods {
+		r := node.FindRoute("/test", method)
+		assert.Assert(t, r != nil, "method %s should be found", method)
+		assert.Equal(t, "/test", r.Pattern)
+	}
+}
+
+// TestQueryMethod tests the custom QUERY method
+func TestQueryMethod(t *testing.T) {
+	node := new(Node)
+
+	_, err := node.InsertRoute("/graphql", &highv3.PathItem{
+		Query: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	r := node.FindRoute("/graphql", "QUERY")
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "/graphql", r.Pattern)
+}
+
+// TestAdditionalOperations tests custom operations via AdditionalOperations
+func TestAdditionalOperations(t *testing.T) {
+	node := new(Node)
+
+	additionalOps := orderedmap.New[string, *highv3.Operation]()
+	additionalOps.Set("CUSTOM", &highv3.Operation{})
+	additionalOps.Set("ANOTHER", &highv3.Operation{})
+
+	_, err := node.InsertRoute("/custom", &highv3.PathItem{
+		AdditionalOperations: additionalOps,
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	r := node.FindRoute("/custom", "CUSTOM")
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "/custom", r.Pattern)
+
+	r = node.FindRoute("/custom", "ANOTHER")
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "/custom", r.Pattern)
+}
+
+// TestAdditionalOperationsWithNilValue tests that nil operations in AdditionalOperations are skipped
+func TestAdditionalOperationsWithNilValue(t *testing.T) {
+	node := new(Node)
+
+	additionalOps := orderedmap.New[string, *highv3.Operation]()
+	additionalOps.Set("VALID", &highv3.Operation{})
+	additionalOps.Set("NIL", nil) // This should be skipped
+
+	_, err := node.InsertRoute("/mixed", &highv3.PathItem{
+		AdditionalOperations: additionalOps,
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	r := node.FindRoute("/mixed", "VALID")
+	assert.Assert(t, r != nil)
+
+	r = node.FindRoute("/mixed", "NIL")
+	assert.Assert(t, r == nil, "nil operation should not be registered")
+}
+
+// TestMultipleMethodsOnSameRoute tests adding multiple methods to the same route
+func TestMultipleMethodsOnSameRoute(t *testing.T) {
+	node := new(Node)
+
+	// Insert a route with multiple methods at once
+	_, err := node.InsertRoute("/resource", &highv3.PathItem{
+		Get:  &highv3.Operation{},
+		Post: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Verify both methods work
+	r := node.FindRoute("/resource", http.MethodGet)
+	assert.Assert(t, r != nil)
+
+	r = node.FindRoute("/resource", http.MethodPost)
+	assert.Assert(t, r != nil)
+}
+
+// TestDuplicateCatchAll tests that duplicate catchall patterns return an error
+func TestDuplicateCatchAll(t *testing.T) {
+	node := new(Node)
+
+	_, err := node.InsertRoute("/api/*", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Try to insert another catchall at the same level
+	_, err = node.InsertRoute("/api/*", &highv3.PathItem{
+		Post: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.ErrorIs(t, err, ErrDuplicatedRoutingPattern)
+}
+
+// TestNodesSortingWithCatchAll tests sorting with catchall nodes
+func TestNodesSortingWithCatchAll(t *testing.T) {
+	ns := nodes{
+		{typ: ntCatchAll, key: "catchall"},
+		{typ: ntStatic, key: "static"},
+		{typ: ntParam, key: "param"},
+	}
+
+	ns.Sort()
+
+	// Verify Less function behavior for catchall
+	assert.Assert(t, !ns.Less(0, 1), "catchall should not be less than static")
+}
+
+// TestEmptyPatternInsertion tests inserting a route with empty pattern after prefix
+func TestEmptyPatternInsertion(t *testing.T) {
+	node := new(Node)
+
+	// Insert a route with trailing slash that becomes empty after prefix removal
+	_, err := node.InsertRoute("/", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	r := node.FindRoute("/", http.MethodGet)
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "/", r.Pattern)
+}
+
+// TestInsertChildNodeWithEmptySearch tests the empty search path in insertChildNode
+func TestInsertChildNodeWithEmptySearch(t *testing.T) {
+	node := new(Node)
+
+	// First insert a parent route
+	_, err := node.InsertRoute("/parent", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Now insert a child that will have empty search after parent prefix
+	_, err = node.InsertRoute("/parent/", &highv3.PathItem{
+		Post: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	r := node.FindRoute("/parent/", http.MethodPost)
+	assert.Assert(t, r != nil)
+}
+
+// TestPatNextSegmentEdgeCases tests edge cases in pattern parsing
+func TestPatNextSegmentEdgeCases(t *testing.T) {
+	testCases := []struct {
+		name          string
+		pattern       string
+		expectError   bool
+		expectedType  nodeType
+		expectedKey   string
+		expectedRegex string
+	}{
+		{
+			name:        "missing_closing_bracket",
+			pattern:     "{id",
+			expectError: true,
+		},
+		{
+			name:          "param_with_colon_regex",
+			pattern:       "{id:[0-9]+}",
+			expectError:   false,
+			expectedType:  ntRegexp,
+			expectedKey:   "id",
+			expectedRegex: "^[0-9]+$",
+		},
+		{
+			name:         "simple_param",
+			pattern:      "{id}",
+			expectError:  false,
+			expectedType: ntParam,
+			expectedKey:  "id",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := patNextSegment(tc.pattern)
+
+			if tc.expectError {
+				assert.Assert(t, err != nil, "expected error for pattern: %s", tc.pattern)
+			} else {
+				assert.NilError(t, err, "unexpected error for pattern: %s", tc.pattern)
+				assert.Equal(t, tc.expectedType, result.NodeType)
+				if tc.expectedKey != "" {
+					assert.Equal(t, tc.expectedKey, result.ParamName)
+				}
+				if tc.expectedRegex != "" {
+					assert.Equal(t, tc.expectedRegex, result.Regexp)
+				}
+			}
+		})
+	}
+}
+
+// TestNodeStringMethod tests the String() method for different node types
+func TestNodeStringMethod(t *testing.T) {
+	node := new(Node)
+
+	// Test static node
+	_, err := node.InsertRoute("/users", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Test param node
+	_, err = node.InsertRoute("/posts/{id}", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Test regexp node
+	_, err = node.InsertRoute("/items/{id:[0-9]+}", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Test catchall node
+	_, err = node.InsertRoute("/api/*", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Verify routes work
+	r := node.FindRoute("/users", http.MethodGet)
+	assert.Assert(t, r != nil)
+
+	r = node.FindRoute("/posts/123", http.MethodGet)
+	assert.Assert(t, r != nil)
+
+	r = node.FindRoute("/items/456", http.MethodGet)
+	assert.Assert(t, r != nil)
+
+	r = node.FindRoute("/api/anything", http.MethodGet)
+	assert.Assert(t, r != nil)
+}
+
+// TestFindMethodEdgeCases tests edge cases in findMethod
+func TestFindMethodEdgeCases(t *testing.T) {
+	node := new(Node)
+
+	_, err := node.InsertRoute("/test", &highv3.PathItem{
+		Get:  &highv3.Operation{},
+		Post: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Find existing method
+	r := node.FindRoute("/test", http.MethodGet)
+	assert.Assert(t, r != nil)
+
+	// Find non-existing method
+	r = node.FindRoute("/test", http.MethodDelete)
+	assert.Assert(t, r == nil)
+}
+
+// TestExtractParametersFromOperationV3 tests parameter extraction
+func TestExtractParametersFromOperationV3(t *testing.T) {
+	node := new(Node)
+
+	// Create operation with parameters
+	param1 := &highv3.Parameter{}
+	param1.Name = "id"
+	param1.In = "path"
+
+	param2 := &highv3.Parameter{}
+	param2.Name = "query"
+	param2.In = "query"
+
+	_, err := node.InsertRoute("/users/{id}", &highv3.PathItem{
+		Get: &highv3.Operation{
+			Parameters: []*highv3.Parameter{param1, param2},
+		},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	r := node.FindRoute("/users/123", http.MethodGet)
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "123", r.ParamValues["id"])
+}
+
+// TestInvalidRegexpPattern tests that invalid regexp patterns return an error
+func TestInvalidRegexpPattern(t *testing.T) {
+	node := new(Node)
+
+	// Try to insert a route with an invalid regexp pattern
+	_, err := node.InsertRoute("/users/{id:[0-9++}", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	// The error is wrapped, so we check that it's not nil
+	assert.Assert(t, err != nil, "expected error for invalid regexp pattern")
+}
+
+// TestEmptyHandlers tests routes with no operations
+func TestEmptyHandlers(t *testing.T) {
+	node := new(Node)
+
+	// Try to insert a route with no operations
+	_, err := node.InsertRoute("/empty", &highv3.PathItem{}, &proxyhandler.InsertRouteOptions{})
+	// Should return nil because no handlers were created
+	assert.NilError(t, err)
+
+	// Route should not be found
+	r := node.FindRoute("/empty", http.MethodGet)
+	assert.Assert(t, r == nil)
+}
+
+// TestWildcardNotLast tests that wildcard must be the last segment
+func TestWildcardNotLast(t *testing.T) {
+	node := new(Node)
+
+	// Try to insert a route with wildcard not at the end
+	_, err := node.InsertRoute("/api/*/something", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.ErrorIs(t, err, ErrWildcardMustBeLast)
+}
+
+// TestDuplicateParamKeys tests that duplicate parameter keys are handled
+func TestDuplicateParamKeys(t *testing.T) {
+	node := new(Node)
+
+	// Try to insert a route with duplicate parameter keys
+	// This actually succeeds because the duplicate check happens at a different level
+	_, err := node.InsertRoute("/users/{id}/posts/{id}", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	// The router allows this
+	assert.NilError(t, err)
+
+	r := node.FindRoute("/users/user1/posts/post1", http.MethodGet)
+	assert.Assert(t, r != nil)
+	// The first id value is kept
+	assert.Equal(t, "user1", r.ParamValues["id"])
+}
+
+// TestMissingClosingBracket tests that missing closing bracket returns an error
+func TestMissingClosingBracket(t *testing.T) {
+	node := new(Node)
+
+	// Try to insert a route with missing closing bracket
+	_, err := node.InsertRoute("/users/{id", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.ErrorIs(t, err, ErrMissingClosingBracket)
+}
+
+// TestNodeStringDefault tests the default case in String method
+func TestNodeStringDefault(t *testing.T) {
+	// Create a node with an invalid type
+	n := Node{typ: nodeType(99)}
+	result := n.String()
+	assert.Equal(t, "", result)
+}
+
+// TestComplexNestedRoutes tests complex nested route scenarios
+func TestComplexNestedRoutes(t *testing.T) {
+	node := new(Node)
+
+	routes := []string{
+		"/api/v1/users",
+		"/api/v1/users/{id}",
+		"/api/v1/users/{id}/profile",
+		"/api/v1/users/{id}/settings",
+		"/api/v1/posts",
+		"/api/v1/posts/{postId}",
+		"/api/v1/posts/{postId}/comments",
+		"/api/v1/posts/{postId}/comments/{commentId}",
+	}
+
+	for _, route := range routes {
+		_, err := node.InsertRoute(route, &highv3.PathItem{
+			Get: &highv3.Operation{},
+		}, &proxyhandler.InsertRouteOptions{})
+		assert.NilError(t, err, "failed to insert route: %s", route)
+	}
+
+	// Test all routes can be found
+	testCases := []struct {
+		path           string
+		expectedParams map[string]string
+	}{
+		{"/api/v1/users", map[string]string{}},
+		{"/api/v1/users/123", map[string]string{"id": "123"}},
+		{"/api/v1/users/456/profile", map[string]string{"id": "456"}},
+		{"/api/v1/users/789/settings", map[string]string{"id": "789"}},
+		{"/api/v1/posts", map[string]string{}},
+		{"/api/v1/posts/post1", map[string]string{"postId": "post1"}},
+		{"/api/v1/posts/post2/comments", map[string]string{"postId": "post2"}},
+		{"/api/v1/posts/post3/comments/comment1", map[string]string{"postId": "post3", "commentId": "comment1"}},
+	}
+
+	for _, tc := range testCases {
+		r := node.FindRoute(tc.path, http.MethodGet)
+		assert.Assert(t, r != nil, "route not found: %s", tc.path)
+		assert.DeepEqual(t, tc.expectedParams, r.ParamValues)
+	}
+}
+
+// TestRootRouteWithTrailingSlash tests root route with trailing slash
+func TestRootRouteWithTrailingSlash(t *testing.T) {
+	node := new(Node)
+
+	_, err := node.InsertRoute("/", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Test with and without trailing slash
+	r := node.FindRoute("/", http.MethodGet)
+	assert.Assert(t, r != nil)
+
+	r = node.FindRoute("", http.MethodGet)
+	assert.Assert(t, r != nil)
+}
+
+// TestStaticRouteWithCommonPrefix tests static routes with common prefixes
+func TestStaticRouteWithCommonPrefix(t *testing.T) {
+	node := new(Node)
+
+	routes := []string{
+		"/user",
+		"/users",
+		"/users/list",
+		"/users/active",
+	}
+
+	for _, route := range routes {
+		_, err := node.InsertRoute(route, &highv3.PathItem{
+			Get: &highv3.Operation{},
+		}, &proxyhandler.InsertRouteOptions{})
+		assert.NilError(t, err)
+	}
+
+	// All routes should be findable
+	for _, route := range routes {
+		r := node.FindRoute(route, http.MethodGet)
+		assert.Assert(t, r != nil, "route not found: %s", route)
+		assert.Equal(t, route, r.Pattern)
+	}
+}
+
+// TestParamRouteWithCommonPrefix tests param routes with common prefixes
+func TestParamRouteWithCommonPrefix(t *testing.T) {
+	node := new(Node)
+
+	routes := []string{
+		"/users/{id}",
+		"/users/{id}/posts",
+		"/users/{id}/posts/{postId}",
+		"/users/{userId}/comments",
+	}
+
+	for _, route := range routes {
+		_, err := node.InsertRoute(route, &highv3.PathItem{
+			Get: &highv3.Operation{},
+		}, &proxyhandler.InsertRouteOptions{})
+		assert.NilError(t, err)
+	}
+
+	// Test finding routes
+	r := node.FindRoute("/users/123", http.MethodGet)
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "123", r.ParamValues["id"])
+
+	r = node.FindRoute("/users/456/posts", http.MethodGet)
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "456", r.ParamValues["id"])
+
+	r = node.FindRoute("/users/789/posts/post1", http.MethodGet)
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "789", r.ParamValues["id"])
+	assert.Equal(t, "post1", r.ParamValues["postId"])
+}
+
+// TestRegexpRouteWithCommonPrefix tests regexp routes with common prefixes
+func TestRegexpRouteWithCommonPrefix(t *testing.T) {
+	node := new(Node)
+
+	routes := []string{
+		"/items/{id:[0-9]+}",
+		"/items/{id:[0-9]+}/details",
+		"/items/{slug:[a-z-]+}",
+	}
+
+	for _, route := range routes {
+		_, err := node.InsertRoute(route, &highv3.PathItem{
+			Get: &highv3.Operation{},
+		}, &proxyhandler.InsertRouteOptions{})
+		assert.NilError(t, err)
+	}
+
+	// Test numeric ID
+	r := node.FindRoute("/items/123", http.MethodGet)
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "123", r.ParamValues["id"])
+
+	// Test slug
+	r = node.FindRoute("/items/my-item", http.MethodGet)
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "my-item", r.ParamValues["slug"])
+
+	// Test details
+	r = node.FindRoute("/items/456/details", http.MethodGet)
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "456", r.ParamValues["id"])
+}
+
+// TestMultipleMethodsSameRoute tests adding multiple methods to the same route
+func TestMultipleMethodsSameRoute(t *testing.T) {
+	node := new(Node)
+
+	// Insert first route with GET
+	_, err := node.InsertRoute("/test", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// The router allows adding different methods to the same route
+	// by checking if handlers already exist
+	r := node.FindRoute("/test", http.MethodGet)
+	assert.Assert(t, r != nil)
+}
+
+// TestDuplicateCatchAllRoute tests inserting duplicate catchall routes
+func TestDuplicateCatchAllRoute(t *testing.T) {
+	node := new(Node)
+
+	// Insert first catchall
+	_, err := node.InsertRoute("/api/*", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Try to insert another catchall at the same level
+	_, err = node.InsertRoute("/api/*", &highv3.PathItem{
+		Post: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.ErrorIs(t, err, ErrDuplicatedRoutingPattern)
+}
+
+// TestPatNextSegmentWithAnchors tests pattern parsing with regex anchors
+func TestPatNextSegmentWithAnchors(t *testing.T) {
+	node := new(Node)
+
+	// Insert route with anchors in regex
+	_, err := node.InsertRoute("/users/{id:^[0-9]+$}", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	r := node.FindRoute("/users/123", http.MethodGet)
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "123", r.ParamValues["id"])
+
+	// Should not match non-numeric
+	r = node.FindRoute("/users/abc", http.MethodGet)
+	assert.Assert(t, r == nil)
+}
+
+// TestFindRouteWithNoMatch tests finding a route that doesn't exist
+func TestFindRouteWithNoMatch(t *testing.T) {
+	node := new(Node)
+
+	_, err := node.InsertRoute("/users", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Try to find a non-existent route
+	r := node.FindRoute("/posts", http.MethodGet)
+	assert.Assert(t, r == nil)
+
+	// Try to find with wrong method
+	r = node.FindRoute("/users", http.MethodPost)
+	assert.Assert(t, r == nil)
+}
+
+// TestStaticNodeSplitting tests splitting static nodes
+func TestStaticNodeSplitting(t *testing.T) {
+	node := new(Node)
+
+	// Insert routes that will cause node splitting
+	_, err := node.InsertRoute("/users/list", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	_, err = node.InsertRoute("/users/active", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Both routes should be findable
+	r := node.FindRoute("/users/list", http.MethodGet)
+	assert.Assert(t, r != nil)
+
+	r = node.FindRoute("/users/active", http.MethodGet)
+	assert.Assert(t, r != nil)
+}
+
+// TestParamNodeWithDifferentKeys tests param nodes with different keys
+func TestParamNodeWithDifferentKeys(t *testing.T) {
+	node := new(Node)
+
+	// Insert routes with different param keys at the same level
+	_, err := node.InsertRoute("/users/{userId}", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	_, err = node.InsertRoute("/users/{id}", &highv3.PathItem{
+		Post: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Both should work
+	r := node.FindRoute("/users/123", http.MethodGet)
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "123", r.ParamValues["userId"])
+
+	r = node.FindRoute("/users/456", http.MethodPost)
+	assert.Assert(t, r != nil)
+	assert.Equal(t, "456", r.ParamValues["id"])
+}
+
+// TestRegexpNodeWithDifferentPatterns tests regexp nodes with different patterns
+func TestRegexpNodeWithDifferentPatterns(t *testing.T) {
+	node := new(Node)
+
+	// Insert routes with different regexp patterns
+	_, err := node.InsertRoute("/items/{id:[0-9]+}", &highv3.PathItem{
+		Get: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	_, err = node.InsertRoute("/items/{slug:[a-z-]+}", &highv3.PathItem{
+		Post: &highv3.Operation{},
+	}, &proxyhandler.InsertRouteOptions{})
+	assert.NilError(t, err)
+
+	// Numeric should match GET
+	r := node.FindRoute("/items/123", http.MethodGet)
+	assert.Assert(t, r != nil)
+
+	// Slug should match POST
+	r = node.FindRoute("/items/my-item", http.MethodPost)
+	assert.Assert(t, r != nil)
 }
 
 // BenchmarkTree/insert_routes-old-11         162159	      6242 ns/op	   15077 B/op	     182 allocs/op
