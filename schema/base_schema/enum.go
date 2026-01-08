@@ -5,12 +5,12 @@ import (
 	"github.com/relychan/goutils"
 )
 
-// RelixyType represents enums of proxy types.
-type RelixyType string
+// RelixyActionType represents enums of proxy types.
+type RelixyActionType string
 
 const (
-	ProxyTypeGraphQL RelixyType = "graphql"
-	ProxyTypeREST    RelixyType = "rest"
+	ProxyTypeGraphQL RelixyActionType = "graphql"
+	ProxyTypeREST    RelixyActionType = "rest"
 )
 
 // PrimitiveType represents primitive data types.

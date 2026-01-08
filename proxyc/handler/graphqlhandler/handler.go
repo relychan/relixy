@@ -90,7 +90,7 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 }
 
 // Type returns type of the current handler.
-func (*GraphQLHandler) Type() base_schema.RelixyType {
+func (*GraphQLHandler) Type() base_schema.RelixyActionType {
 	return base_schema.ProxyTypeGraphQL
 }
 

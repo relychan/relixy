@@ -17,7 +17,7 @@ func TestNewProxyHandler(t *testing.T) {
 		name          string
 		operation     *highv3.Operation
 		options       *proxyhandler.NewRelixyHandlerOptions
-		expectedType  base_schema.RelixyType
+		expectedType  base_schema.RelixyActionType
 		expectError   bool
 		errorContains string
 	}{
@@ -105,7 +105,7 @@ func TestNewProxyHandler(t *testing.T) {
 
 func TestRegisterProxyHandler(t *testing.T) {
 	// Save original constructors
-	originalConstructors := make(map[base_schema.RelixyType]proxyhandler.NewRelixyHandlerFunc)
+	originalConstructors := make(map[base_schema.RelixyActionType]proxyhandler.NewRelixyHandlerFunc)
 	for k, v := range proxyHandlerConstructors {
 		originalConstructors[k] = v
 	}
@@ -115,7 +115,7 @@ func TestRegisterProxyHandler(t *testing.T) {
 		proxyHandlerConstructors = originalConstructors
 	}()
 
-	customType := base_schema.RelixyType("custom")
+	customType := base_schema.RelixyActionType("custom")
 	customConstructor := func(
 		operation *highv3.Operation,
 		proxyAction *base_schema.RelixyAction,

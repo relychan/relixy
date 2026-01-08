@@ -11,7 +11,7 @@ import (
 // RelixyAction represents a proxy action.
 type RelixyAction struct {
 	// Type of the proxy action.
-	Type RelixyType `json:"type" yaml:"type"`
+	Type RelixyActionType `json:"type" yaml:"type"`
 	// Overrides the request path. Use the original request path if empty.
 	Path string `json:"path,omitempty" yaml:"path,omitempty"`
 	// Configurations for the proxy request.

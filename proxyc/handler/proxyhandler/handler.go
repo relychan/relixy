@@ -23,7 +23,7 @@ type RelixyHandleOptions struct {
 // RelixyHandler abstracts the executor to proxy HTTP requests.
 type RelixyHandler interface {
 	// Type returns type of the current handler.
-	Type() base_schema.RelixyType
+	Type() base_schema.RelixyActionType
 	// Handle resolves the HTTP request and proxies that request to the remote server.
 	Handle(
 		ctx context.Context,

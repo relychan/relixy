@@ -63,7 +63,7 @@ func NewRESTHandler(
 }
 
 // Type returns type of the current handler.
-func (*RESTHandler) Type() base_schema.RelixyType {
+func (*RESTHandler) Type() base_schema.RelixyActionType {
 	return base_schema.ProxyTypeREST
 }
 

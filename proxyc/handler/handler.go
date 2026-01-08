@@ -15,7 +15,7 @@ import (
 
 var ErrUnsupportedProxyType = errors.New("unsupported proxy type")
 
-var proxyHandlerConstructors = map[base_schema.RelixyType]proxyhandler.NewRelixyHandlerFunc{
+var proxyHandlerConstructors = map[base_schema.RelixyActionType]proxyhandler.NewRelixyHandlerFunc{
 	base_schema.ProxyTypeREST:    resthandler.NewRESTHandler,
 	base_schema.ProxyTypeGraphQL: graphqlhandler.NewGraphQLHandler,
 }
@@ -58,7 +58,7 @@ func NewProxyHandler( //nolint:ireturn,nolintlint
 
 // RegisterProxyHandler registers the handler to the global registry.
 func RegisterProxyHandler(
-	proxyType base_schema.RelixyType,
+	proxyType base_schema.RelixyActionType,
 	constructor proxyhandler.NewRelixyHandlerFunc,
 ) {
 	proxyHandlerConstructors[proxyType] = constructor

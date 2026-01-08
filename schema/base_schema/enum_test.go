@@ -7,15 +7,15 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestRelixyType_Constants(t *testing.T) {
-	assert.Equal(t, RelixyType("graphql"), ProxyTypeGraphQL)
-	assert.Equal(t, RelixyType("rest"), ProxyTypeREST)
+func TestRelixyActionType_Constants(t *testing.T) {
+	assert.Equal(t, RelixyActionType("graphql"), ProxyTypeGraphQL)
+	assert.Equal(t, RelixyActionType("rest"), ProxyTypeREST)
 }
 
-func TestRelixyType_JSONMarshal(t *testing.T) {
+func TestRelixyActionType_JSONMarshal(t *testing.T) {
 	testCases := []struct {
 		name     string
-		value    RelixyType
+		value    RelixyActionType
 		expected string
 	}{
 		{
@@ -39,11 +39,11 @@ func TestRelixyType_JSONMarshal(t *testing.T) {
 	}
 }
 
-func TestRelixyType_JSONUnmarshal(t *testing.T) {
+func TestRelixyActionType_JSONUnmarshal(t *testing.T) {
 	testCases := []struct {
 		name     string
 		jsonData string
-		expected RelixyType
+		expected RelixyActionType
 	}{
 		{
 			name:     "graphql type",
@@ -59,7 +59,7 @@ func TestRelixyType_JSONUnmarshal(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var result RelixyType
+			var result RelixyActionType
 			err := json.Unmarshal([]byte(tc.jsonData), &result)
 			assert.NilError(t, err)
 			assert.Equal(t, tc.expected, result)
