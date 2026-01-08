@@ -299,7 +299,7 @@ func (ge *GraphQLHandler) transformResponse( //nolint:revive
 		slog.Int("status_code_final", resp.StatusCode),
 	)
 
-	if ge.responseConfig.Transform != nil && !ge.responseConfig.Transform.IsZero() {
+	if ge.responseConfig.Transform == nil || ge.responseConfig.Transform.IsZero() {
 		return resp, responseBody, responseLogAttrs, nil
 	}
 

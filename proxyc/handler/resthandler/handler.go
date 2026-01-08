@@ -39,7 +39,11 @@ func NewRESTHandler(
 		parameters: openapi.MergeParameters(options.Parameters, operation.Parameters),
 	}
 
-	if proxyAction != nil && proxyAction.Path != "" {
+	if proxyAction == nil {
+		return handler, nil
+	}
+
+	if proxyAction.Path != "" {
 		handler.requestPath = proxyAction.Path
 	}
 
@@ -139,11 +143,11 @@ func (re *RESTHandler) Handle(
 func (re *RESTHandler) transformResponse( //nolint:revive
 	resp *http.Response,
 ) (*http.Response, io.ReadCloser, []slog.Attr, error) {
-	defer goutils.CatchWarnErrorFunc(resp.Body.Close)
-
-	if re.responseConfig.Transform != nil && !re.responseConfig.Transform.IsZero() {
+	if re.responseConfig.Transform == nil || re.responseConfig.Transform.IsZero() {
 		return resp, resp.Body, nil, nil
 	}
+
+	defer goutils.CatchWarnErrorFunc(resp.Body.Close)
 
 	var responseBody any
 
