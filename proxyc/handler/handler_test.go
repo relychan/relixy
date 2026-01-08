@@ -8,7 +8,6 @@ import (
 	"github.com/relychan/relixy/proxyc/handler/graphqlhandler"
 	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 	"github.com/relychan/relixy/proxyc/handler/resthandler"
-	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
 	"go.yaml.in/yaml/v4"
 	"gotest.tools/v3/assert"
@@ -19,7 +18,7 @@ func TestNewProxyHandler(t *testing.T) {
 		name          string
 		operation     *highv3.Operation
 		options       *proxyhandler.NewRelixyHandlerOptions
-		expectedType  base_schema.RelixyActionType
+		expectedType  proxyhandler.ProxyActionType
 		expectError   bool
 		errorContains string
 	}{
@@ -31,13 +30,13 @@ func TestNewProxyHandler(t *testing.T) {
 			options: &proxyhandler.NewRelixyHandlerOptions{
 				Method: "GET",
 			},
-			expectedType: base_schema.ProxyTypeREST,
+			expectedType: resthandler.ProxyActionTypeREST,
 			expectError:  false,
 		},
 		{
 			name: "REST handler with explicit proxy action",
 			operation: createOperationWithProxyAction(t, resthandler.RelixyRESTActionConfig{
-				Type: base_schema.ProxyTypeREST,
+				Type: resthandler.ProxyActionTypeREST,
 				Request: &resthandler.RelixyRESTRequestConfig{
 					Path: "/test",
 				},
@@ -45,13 +44,13 @@ func TestNewProxyHandler(t *testing.T) {
 			options: &proxyhandler.NewRelixyHandlerOptions{
 				Method: "POST",
 			},
-			expectedType: base_schema.ProxyTypeREST,
+			expectedType: resthandler.ProxyActionTypeREST,
 			expectError:  false,
 		},
 		{
 			name: "GraphQL handler with valid query",
 			operation: createOperationWithProxyAction(t, graphqlhandler.RelixyGraphQLActionConfig{
-				Type: base_schema.ProxyTypeGraphQL,
+				Type: graphqlhandler.ProxyTypeGraphQL,
 				Request: &graphqlhandler.RelixyGraphQLRequestConfig{
 					Query: "query { users { id name } }",
 				},
@@ -59,13 +58,13 @@ func TestNewProxyHandler(t *testing.T) {
 			options: &proxyhandler.NewRelixyHandlerOptions{
 				Method: "POST",
 			},
-			expectedType: base_schema.ProxyTypeGraphQL,
+			expectedType: graphqlhandler.ProxyTypeGraphQL,
 			expectError:  false,
 		},
 		{
 			name: "GraphQL handler with invalid query",
 			operation: createOperationWithProxyAction(t, graphqlhandler.RelixyGraphQLActionConfig{
-				Type: base_schema.ProxyTypeGraphQL,
+				Type: graphqlhandler.ProxyTypeGraphQL,
 				Request: &graphqlhandler.RelixyGraphQLRequestConfig{
 					Query: "invalid query {",
 				},
@@ -109,7 +108,7 @@ func TestNewProxyHandler(t *testing.T) {
 
 func TestRegisterProxyHandler(t *testing.T) {
 	// Save original constructors
-	originalConstructors := make(map[base_schema.RelixyActionType]proxyhandler.NewRelixyHandlerFunc)
+	originalConstructors := make(map[proxyhandler.ProxyActionType]proxyhandler.NewRelixyHandlerFunc)
 	for k, v := range proxyHandlerConstructors {
 		originalConstructors[k] = v
 	}
@@ -119,7 +118,7 @@ func TestRegisterProxyHandler(t *testing.T) {
 		proxyHandlerConstructors = originalConstructors
 	}()
 
-	customType := base_schema.RelixyActionType("custom")
+	customType := proxyhandler.ProxyActionType("custom")
 	customConstructor := func(
 		operation *highv3.Operation,
 		proxyAction *yaml.Node,

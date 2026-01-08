@@ -16,7 +16,6 @@ import (
 	"github.com/relychan/goutils"
 	"github.com/relychan/goutils/httpheader"
 	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
-	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
 	"go.yaml.in/yaml/v4"
 )
@@ -73,8 +72,8 @@ func NewRESTHandler(
 }
 
 // Type returns type of the current handler.
-func (*RESTHandler) Type() base_schema.RelixyActionType {
-	return base_schema.ProxyTypeREST
+func (*RESTHandler) Type() proxyhandler.ProxyActionType {
+	return ProxyActionTypeREST
 }
 
 // Handle resolves the HTTP request and proxies that request to the remote server.
@@ -203,7 +202,7 @@ func printDebugLog(
 	attrs = append(
 		attrs,
 		slog.String("type", "proxy-handler"),
-		slog.String("handler_type", string(base_schema.ProxyTypeREST)),
+		slog.String("handler_type", "rest"),
 		slog.String("request_url", request.URL.String()),
 		otelutils.NewHeaderLogGroupAttrs(
 			"request_headers",

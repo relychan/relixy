@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"strings"
 
 	"github.com/invopop/jsonschema"
 	"github.com/relychan/relixy/proxyc/handler/graphqlhandler"
+	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 	"github.com/relychan/relixy/proxyc/handler/resthandler"
-	"github.com/relychan/relixy/schema/base_schema"
 )
 
 type RelixyActionConfig struct{}
@@ -32,10 +33,14 @@ func (RelixyActionConfig) JSONSchema() *jsonschema.Schema {
 func genRelixyActionSchema() error {
 	r := new(jsonschema.Reflector)
 
-	for _, name := range []string{"/schema/base_schema"} {
+	for _, name := range []string{
+		"proxyc/handler/graphqlhandler",
+		"proxyc/handler/proxyhandler",
+		"proxyc/handler/resthandler",
+	} {
 		err := r.AddGoComments(
-			"github.com/relychan/relixy"+name,
-			".."+name,
+			"github.com/relychan/relixy/"+name,
+			"../"+name,
 			jsonschema.WithFullComment(),
 		)
 		if err != nil {
@@ -48,7 +53,8 @@ func genRelixyActionSchema() error {
 	for _, externalType := range []any{
 		graphqlhandler.RelixyGraphQLActionConfig{},
 		resthandler.RelixyRESTActionConfig{},
-		base_schema.RelixyResponseConfig{},
+		proxyhandler.RelixyResponseConfig{},
+		graphqlhandler.GraphQLVariableDefinition{},
 	} {
 		externalSchema := r.Reflect(externalType)
 
@@ -61,6 +67,12 @@ func genRelixyActionSchema() error {
 
 	reflectSchema.Definitions["TemplateTransformerConfig"] = &jsonschema.Schema{
 		Ref: "https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json",
+	}
+
+	for key := range reflectSchema.Definitions {
+		if strings.HasPrefix(key, "OrderedMap[") {
+			delete(reflectSchema.Definitions, key)
+		}
 	}
 
 	buffer := new(bytes.Buffer)

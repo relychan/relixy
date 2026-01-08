@@ -18,7 +18,6 @@ import (
 	"github.com/relychan/goutils"
 	"github.com/relychan/goutils/httpheader"
 	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
-	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
 	"github.com/vektah/gqlparser/ast"
 	"go.opentelemetry.io/otel/attribute"
@@ -55,7 +54,7 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 		return nil, err
 	}
 
-	if proxyAction.Type != base_schema.ProxyTypeGraphQL {
+	if proxyAction.Type != ProxyTypeGraphQL {
 		return nil, ErrProxyActionInvalid
 	}
 
@@ -99,8 +98,8 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 }
 
 // Type returns type of the current handler.
-func (*GraphQLHandler) Type() base_schema.RelixyActionType {
-	return base_schema.ProxyTypeGraphQL
+func (*GraphQLHandler) Type() proxyhandler.ProxyActionType {
+	return ProxyTypeGraphQL
 }
 
 // Handle resolves the HTTP request and proxies that request to the remote server.
@@ -451,7 +450,7 @@ func (ge *GraphQLHandler) printLog(
 	attrs = append(
 		attrs,
 		slog.String("type", "proxy-handler"),
-		slog.String("handler_type", string(base_schema.ProxyTypeGraphQL)),
+		slog.String("handler_type", "graphql"),
 		slog.String("operation_name", ge.operationName),
 		slog.String("operation_type", string(ge.operation)),
 		slog.String("request_url", request.URL.String()),

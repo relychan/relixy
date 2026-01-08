@@ -3,17 +3,20 @@ package resthandler
 import (
 	"github.com/hasura/goenvconf"
 	"github.com/relychan/gotransform"
-	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 )
+
+// ProxyActionTypeREST represents a constant value for REST proxy action.
+const ProxyActionTypeREST proxyhandler.ProxyActionType = "rest"
 
 // RelixyRESTActionConfig represents a proxy action config for REST operation.
 type RelixyRESTActionConfig struct {
 	// Type of the proxy action which is always graphql
-	Type base_schema.RelixyActionType `json:"type" yaml:"type" jsonschema:"enum=rest"`
+	Type proxyhandler.ProxyActionType `json:"type" yaml:"type" jsonschema:"enum=rest"`
 	// Configurations for the GraphQL proxy request.
 	Request *RelixyRESTRequestConfig `json:"request" yaml:"request"`
 	// Configurations for evaluating graphql responses.
-	Response *base_schema.RelixyResponseConfig `json:"response" yaml:"response"`
+	Response *proxyhandler.RelixyResponseRawConfig `json:"response" yaml:"response"`
 }
 
 // GraphQLVariableDefinition defines information of the GraphQL variable.

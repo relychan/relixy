@@ -3,13 +3,12 @@ package resthandler
 import (
 	"testing"
 
-	"github.com/relychan/relixy/schema/base_schema"
 	"gotest.tools/v3/assert"
 )
 
 func TestRESTHandler_Type(t *testing.T) {
 	handler := &RESTHandler{}
-	assert.Equal(t, base_schema.ProxyTypeREST, handler.Type())
+	assert.Equal(t, ProxyActionTypeREST, handler.Type())
 }
 
 func TestRESTHandler_Properties(t *testing.T) {
@@ -56,7 +55,7 @@ func TestRESTHandler_Properties(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expectedMethod, tc.handler.method)
 			assert.Equal(t, tc.expectedPath, tc.handler.requestPath)
-			assert.Equal(t, base_schema.ProxyTypeREST, tc.handler.Type())
+			assert.Equal(t, ProxyActionTypeREST, tc.handler.Type())
 		})
 	}
 }

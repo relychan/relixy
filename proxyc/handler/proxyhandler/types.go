@@ -5,7 +5,6 @@ import (
 
 	"github.com/hasura/goenvconf"
 	"github.com/relychan/gotransform"
-	"github.com/relychan/relixy/schema/base_schema"
 )
 
 var (
@@ -14,6 +13,9 @@ var (
 		"tokenUrl is required in the OAuth2 Client Credentials flow",
 	)
 )
+
+// ProxyActionType represents enums of proxy types.
+type ProxyActionType string
 
 // InsertRouteOptions represents options for inserting routes.
 type InsertRouteOptions struct {
@@ -39,6 +41,21 @@ type OAuth2Credentials struct {
 	EndpointParams map[string]goenvconf.EnvString `json:"endpointParams,omitempty" yaml:"endpointParams,omitempty"`
 }
 
+// RelixyResponseRawConfig represents configurations for the proxy response.
+type RelixyResponseRawConfig struct {
+	// HTTP error code will be used if the response body has errors.
+	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
+	HTTPErrorCode *int `json:"httpErrorCode,omitempty" yaml:"httpErrorCode,omitempty" jsonschema:"minimum=400,maximum=599,default=400"`
+	// Configurations for transforming response data.
+	Transform *gotransform.TemplateTransformerConfig `json:"transform,omitempty" yaml:"transform,omitempty"`
+}
+
+// IsZero checks if the configuration is empty.
+func (conf RelixyResponseRawConfig) IsZero() bool {
+	return conf.HTTPErrorCode == nil &&
+		(conf.Transform == nil || conf.Transform.IsZero())
+}
+
 // RelixyResponseConfig represents configurations for the proxy response.
 type RelixyResponseConfig struct {
 	// HTTP error code will be used if the response body has errors.
@@ -50,7 +67,7 @@ type RelixyResponseConfig struct {
 
 // NewRelixyResponseConfig creates a [RelixyResponseConfig] from raw configurations.
 func NewRelixyResponseConfig(
-	config *base_schema.RelixyResponseConfig,
+	config *RelixyResponseRawConfig,
 	getEnv goenvconf.GetEnvFunc,
 ) (RelixyResponseConfig, error) {
 	result := RelixyResponseConfig{}

@@ -1,7 +1,6 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
- "$id": "https://github.com/relychan/relixy/schema/base_schema/relixy-action",
- "$ref": "#/$defs/RelixyAction",
+ "$ref": "#/$defs/RelixyActionConfig",
  "$defs": {
   "EnvAny": {
    "anyOf": [
@@ -42,84 +41,114 @@
    "additionalProperties": false,
    "type": "object"
   },
-  "RelixyAction": {
+  "RelixyActionConfig": {
    "oneOf": [
     {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "rest"
-       ],
-       "description": "Type of the proxy action"
-      },
-      "path": {
-       "type": "string",
-       "description": "Overrides the request path. Use the original request path if empty"
-      }
-     },
-     "type": "object",
-     "required": [
-      "type"
-     ],
-     "title": "RelixyActionREST",
+     "$ref": "#/$defs/RelixyRESTActionConfig",
      "description": "Proxy configuration to the remote REST service"
     },
     {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "graphql"
-       ],
-       "description": "Type of the proxy action"
-      },
-      "request": {
-       "$ref": "#/$defs/RelixyGraphQLRequestConfig",
-       "description": "Configuration for the GraphQL request"
-      },
-      "response": {
-       "$ref": "#/$defs/RelixyResponseConfig",
-       "description": "Configuration for the GraphQL response"
-      }
-     },
-     "type": "object",
-     "required": [
-      "type",
-      "request"
-     ],
-     "title": "RelixyActionGraphQL",
+     "$ref": "#/$defs/RelixyGraphQLActionConfig",
      "description": "Configurations for proxying request to the remote GraphQL server"
     }
+   ]
+  },
+  "RelixyGraphQLActionConfig": {
+   "properties": {
+    "type": {
+     "type": "string",
+     "enum": [
+      "graphql"
+     ]
+    },
+    "request": {
+     "$ref": "#/$defs/RelixyGraphQLRequestConfig"
+    },
+    "response": {
+     "$ref": "#/$defs/RelixyResponseRawConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "type",
+    "request",
+    "response"
    ]
   },
   "RelixyGraphQLRequestConfig": {
    "properties": {
     "query": {
-     "type": "string",
-     "description": "GraphQL query string to send"
+     "type": "string"
     },
     "variables": {
      "additionalProperties": {
       "$ref": "#/$defs/GraphQLVariableDefinition"
      },
      "type": "object",
-     "description": "Definition of GraphQL variables"
+     "description": "Definition of GraphQL variables."
     },
     "extensions": {
      "additionalProperties": {
       "$ref": "#/$defs/GraphQLVariableDefinition"
      },
      "type": "object",
-     "description": "Definition of GraphQL extensions"
+     "description": "Definition of GraphQL extensions."
     }
    },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelixyRESTActionConfig": {
+   "properties": {
+    "type": {
+     "type": "string",
+     "enum": [
+      "rest"
+     ]
+    },
+    "request": {
+     "$ref": "#/$defs/RelixyRESTRequestConfig"
+    },
+    "response": {
+     "$ref": "#/$defs/RelixyResponseRawConfig"
+    }
+   },
+   "additionalProperties": false,
    "type": "object",
    "required": [
-    "query"
+    "type",
+    "request",
+    "response"
    ]
   },
+  "RelixyRESTRequestConfig": {
+   "properties": {
+    "path": {
+     "type": "string"
+    },
+    "transform": {
+     "$ref": "#/$defs/TemplateTransformerConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
   "RelixyResponseConfig": {
+   "properties": {
+    "HTTPErrorCode": {
+     "type": "integer"
+    },
+    "Transform": true
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "HTTPErrorCode",
+    "Transform"
+   ]
+  },
+  "RelixyResponseRawConfig": {
    "properties": {
     "httpErrorCode": {
      "type": "integer",
