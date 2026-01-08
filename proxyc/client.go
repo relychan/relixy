@@ -2,37 +2,32 @@
 package proxyc
 
 import (
-	"context"
 	"fmt"
 
+	"github.com/hasura/goenvconf"
+	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/gohttpc"
 	"github.com/relychan/gohttpc/loadbalancer"
 	"github.com/relychan/gohttpc/loadbalancer/roundrobin"
+	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 	"github.com/relychan/relixy/proxyc/internal"
-	"github.com/relychan/relixy/schema"
+	"github.com/relychan/relixy/schema/openapi"
 )
 
 // ProxyClient helps manage and execute REST and GraphQL APIs from the API document.
 type ProxyClient struct {
-	clientOptions  *ProxyClientOptions
+	clientOptions  *gohttpc.ClientOptions
 	lbClient       *loadbalancer.LoadBalancerClient
-	metadata       *schema.RelyProxyAPIDocument
+	metadata       *openapi.RelixyOpenAPIv3ResourceDefinition
 	node           *internal.Node
 	defaultHeaders map[string]string
-}
-
-// ProxyClientOptions holds optional options to create a proxy client.
-type ProxyClientOptions struct {
-	*gohttpc.ClientOptions
-
-	BasePath string
+	authenticators *proxyhandler.OpenAPIAuthenticator
 }
 
 // NewProxyClient creates a proxy client from the API document.
 func NewProxyClient(
-	ctx context.Context,
-	metadata *schema.RelyProxyAPIDocument,
-	clientOptions *ProxyClientOptions,
+	metadata *openapi.RelixyOpenAPIv3ResourceDefinition,
+	clientOptions *gohttpc.ClientOptions,
 ) (*ProxyClient, error) {
 	client := &ProxyClient{
 		metadata:       metadata,
@@ -40,7 +35,7 @@ func NewProxyClient(
 		defaultHeaders: map[string]string{},
 	}
 
-	err := client.init(ctx)
+	err := client.init()
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +44,7 @@ func NewProxyClient(
 }
 
 // Metadata returns the metadata of the proxy client.
-func (pc *ProxyClient) Metadata() *schema.RelyProxyAPIDocument {
+func (pc *ProxyClient) Metadata() *openapi.RelixyOpenAPIv3ResourceDefinition {
 	return pc.metadata
 }
 
@@ -66,7 +61,7 @@ func (pc *ProxyClient) Close() error {
 	return nil
 }
 
-func (pc *ProxyClient) init(ctx context.Context) error {
+func (pc *ProxyClient) init() error {
 	err := pc.initServers()
 	if err != nil {
 		return err
@@ -77,7 +72,15 @@ func (pc *ProxyClient) init(ctx context.Context) error {
 		return err
 	}
 
-	node, err := BuildMetadataTree(ctx, pc.metadata, pc.clientOptions)
+	pc.authenticators, err = proxyhandler.NewOpenAPIv3Authenticator(
+		pc.metadata.Spec,
+		pc.clientOptions.GetEnvFunc(),
+	)
+	if err != nil {
+		return err
+	}
+
+	node, err := BuildMetadataTree(pc.metadata.Spec, pc.clientOptions)
 	if err != nil {
 		return err
 	}
@@ -88,8 +91,10 @@ func (pc *ProxyClient) init(ctx context.Context) error {
 }
 
 func (pc *ProxyClient) initDefaultHeaders() error {
+	getEnv := pc.clientOptions.GetEnvFunc()
+
 	for key, envValue := range pc.metadata.Settings.Headers {
-		value, err := envValue.GetOrDefault("")
+		value, err := envValue.GetCustom(getEnv)
 		if err != nil {
 			return fmt.Errorf("failed to load header %s: %w", key, err)
 		}
@@ -103,7 +108,7 @@ func (pc *ProxyClient) initDefaultHeaders() error {
 }
 
 func (pc *ProxyClient) initServers() error {
-	if len(pc.metadata.Servers) == 0 {
+	if len(pc.metadata.Spec.Servers) == 0 {
 		return errServerURLRequired
 	}
 
@@ -120,63 +125,67 @@ func (pc *ProxyClient) initServers() error {
 		healthCheckBuilder = loadbalancer.NewHTTPHealthCheckPolicyBuilder()
 	}
 
-	switch len(pc.metadata.Servers) {
-	case 0:
+	if len(pc.metadata.Spec.Servers) == 0 {
 		return errServerURLRequired
-	case 1:
-		host, err := pc.initServer(&pc.metadata.Servers[0], healthCheckBuilder)
-		if err != nil {
-			return err
-		}
-
-		if host == nil {
-			return ErrNoAvailableServer
-		}
-
-		wrr, err := roundrobin.NewWeightedRoundRobin([]*loadbalancer.Host{host})
-		if err != nil {
-			return err
-		}
-
-		pc.lbClient = loadbalancer.NewLoadBalancerClientWithOptions(wrr, pc.clientOptions)
-
-		return nil
-	default:
-		hosts := make([]*loadbalancer.Host, 0, len(pc.metadata.Servers))
-
-		for _, server := range pc.metadata.Servers {
-			host, err := pc.initServer(&server, healthCheckBuilder)
-			if err != nil {
-				return err
-			}
-
-			if host != nil {
-				hosts = append(hosts, host)
-			}
-		}
-
-		if len(hosts) == 0 {
-			return ErrNoAvailableServer
-		}
-
-		wrr, err := roundrobin.NewWeightedRoundRobin(hosts)
-		if err != nil {
-			return err
-		}
-
-		pc.lbClient = loadbalancer.NewLoadBalancerClientWithOptions(wrr, pc.clientOptions)
 	}
+
+	hosts := make([]*loadbalancer.Host, 0, len(pc.metadata.Spec.Servers))
+
+	for _, server := range pc.metadata.Spec.Servers {
+		host, err := pc.initServer(server, healthCheckBuilder)
+		if err != nil {
+			return err
+		}
+
+		if host != nil {
+			hosts = append(hosts, host)
+		}
+	}
+
+	if len(hosts) == 0 {
+		return ErrNoAvailableServer
+	}
+
+	wrr, err := roundrobin.NewWeightedRoundRobin(hosts)
+	if err != nil {
+		return err
+	}
+
+	pc.lbClient = loadbalancer.NewLoadBalancerClientWithOptions(wrr, pc.clientOptions)
 
 	return nil
 }
 
-func (pc *ProxyClient) initServer(
-	server *schema.RelyProxyServer,
+func (pc *ProxyClient) initServer( //nolint:cyclop
+	server *highv3.Server,
 	healthCheckBuilder *loadbalancer.HTTPHealthCheckPolicyBuilder,
 ) (*loadbalancer.Host, error) {
-	rawServerURL, err := server.URL.GetOrDefault("")
-	if err != nil {
-		return nil, err
+	getEnv := pc.clientOptions.GetEnvFunc()
+	rawServerURL := server.URL
+
+	rawURLFromEnv, exist := server.Extensions.Get(openapi.XRelyURLEnv)
+	if exist && rawURLFromEnv != nil {
+		var urlFromEnv string
+
+		err := rawURLFromEnv.Decode(&urlFromEnv)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode urlFromEnv from server: %w", err)
+		}
+
+		if urlFromEnv != "" {
+			serverURL, err := getEnv(urlFromEnv)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"failed to decode urlFromEnv %s from server: %w",
+					urlFromEnv,
+					err,
+				)
+			}
+
+			if serverURL != "" {
+				rawServerURL = serverURL
+			}
+		}
 	}
 
 	if rawServerURL == "" {
@@ -196,25 +205,45 @@ func (pc *ProxyClient) initServer(
 		host.SetName(server.Name)
 	}
 
-	if server.Weight != nil && *server.Weight > 1 {
-		host.SetWeight(*server.Weight)
-	}
+	rawWeight, exist := server.Extensions.Get(openapi.XRelyServerWeight)
+	if exist && rawWeight != nil {
+		var weight int
 
-	if len(server.Headers) > 0 {
-		headers := make(map[string]string)
-
-		for key, header := range server.Headers {
-			value, err := header.GetOrDefault("")
-			if err != nil {
-				return nil, fmt.Errorf("failed to get header %s: %w", key, err)
-			}
-
-			if value != "" {
-				headers[key] = value
-			}
+		err := rawWeight.Decode(&weight)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode weight from server: %w", err)
 		}
 
-		host.SetHeaders(headers)
+		if weight > 1 {
+			host.SetWeight(weight)
+		}
+	}
+
+	rawHeaders, exist := server.Extensions.Get(openapi.XRelyServerHeaders)
+	if exist && rawHeaders != nil {
+		headerEnvs := map[string]goenvconf.EnvString{}
+
+		err := rawHeaders.Decode(&headerEnvs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode headers from server: %w", err)
+		}
+
+		if len(headerEnvs) > 0 {
+			headers := make(map[string]string)
+
+			for key, header := range headerEnvs {
+				value, err := header.GetCustom(getEnv)
+				if err != nil {
+					return nil, fmt.Errorf("failed to get header %s: %w", key, err)
+				}
+
+				if value != "" {
+					headers[key] = value
+				}
+			}
+
+			host.SetHeaders(headers)
+		}
 	}
 
 	return host, nil

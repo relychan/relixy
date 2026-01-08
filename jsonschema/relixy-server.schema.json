@@ -155,24 +155,10 @@
    "additionalProperties": false,
    "type": "object"
   },
-  "RelixyRouterConfig": {
-   "properties": {
-    "basePath": {
-     "type": "string",
-     "description": "Set the base path for all API handlers."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyRouterConfig holds configurations of the rest handler."
-  },
   "RelixyServerConfig": {
    "properties": {
     "server": {
      "$ref": "#/$defs/ServerConfig"
-    },
-    "router": {
-     "$ref": "#/$defs/RelixyRouterConfig"
     },
     "telemetry": {
      "$ref": "#/$defs/OTLPConfig"
@@ -196,12 +182,38 @@
   },
   "RelyAuthConfig": {
    "properties": {
+    "version": {
+     "type": "string",
+     "enum": [
+      "v1"
+     ]
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "AuthConfig"
+     ]
+    },
+    "definition": {
+     "$ref": "#/$defs/RelyAuthDefinition"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "version",
+    "kind",
+    "definition"
+   ]
+  },
+  "RelyAuthDefinition": {
+   "properties": {
     "settings": {
      "$ref": "#/$defs/RelyAuthSettings"
     },
-    "definitions": {
+    "modes": {
      "items": {
-      "$ref": "#/$defs/RelyAuthDefinition"
+      "$ref": "#/$defs/RelyAuthMode"
      },
      "type": "array"
     }
@@ -209,30 +221,31 @@
    "additionalProperties": false,
    "type": "object",
    "required": [
-    "definitions"
+    "modes"
    ]
   },
-  "RelyAuthDefinition": {
+  "RelyAuthMode": {
    "oneOf": [
     {
-     "$ref": "#/$defs/RelyAuthAPIKeyConfig"
+     "$ref": "#/$defs/RelyAuthAPIKeyConfig",
+     "description": "Configurations for HTTP authentication with static secrets"
     },
     {
-     "$ref": "#/$defs/RelyAuthJWTConfig"
+     "$ref": "#/$defs/RelyAuthJWTConfig",
+     "description": "Configurations to which the incoming JWT will be verified and decoded to extract the session variable claims"
     },
     {
-     "$ref": "#/$defs/RelyAuthNoAuthConfig"
+     "$ref": "#/$defs/RelyAuthNoAuthConfig",
+     "description": "The session variables configuration for unauthenticated users"
     },
     {
-     "$ref": "#/$defs/RelyAuthWebhookConfig"
+     "$ref": "#/$defs/RelyAuthWebhookConfig",
+     "description": "Configurations for the webhook authentication mode"
     }
    ]
   },
   "RelyAuthSettings": {
    "properties": {
-    "strict": {
-     "type": "boolean"
-    },
     "reloadInterval": {
      "type": "integer",
      "minimum": 0,

@@ -6,106 +6,83 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/invopop/jsonschema"
-	"github.com/relychan/goutils"
 	"github.com/relychan/relixy/config"
-	"github.com/relychan/relixy/schema"
+	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/openapi"
 )
 
 func main() {
-	err := jsonSchemaConfiguration()
+	err := genConfigurationSchema()
 	if err != nil {
-		panic(fmt.Errorf("failed to write jsonschema for RelyProxyAPIDocument: %w", err))
+		panic(fmt.Errorf("failed to write jsonschema for RelixyAPIDocument: %w", err))
 	}
 
-	err = jsonSchemaServerConfiguration()
+	err = genRelixyActionSchema()
+	if err != nil {
+		panic(fmt.Errorf("failed to write jsonschema for RelixyAction: %w", err))
+	}
+
+	err = genServerConfigurationSchema()
 	if err != nil {
 		panic(fmt.Errorf("failed to write jsonschema for RelixyServerConfig: %w", err))
 	}
 }
 
-func jsonSchemaConfiguration() error {
+func genConfigurationSchema() error {
 	r := new(jsonschema.Reflector)
 
-	err := r.AddGoComments(
-		"github.com/relychan/relixy/schema",
-		"../schema",
-		jsonschema.WithFullComment(),
-	)
-	if err != nil {
-		return err
-	}
-
-	reflectSchema := r.Reflect(schema.RelyProxyAPIDocument{})
-
-	for _, externalType := range []any{
-		schema.OAuthFlow{},
-		schema.RelyProxyPathItem{},
-		schema.RelyProxyMediaType{},
-		schema.RelyProxyEncoding{},
-		schema.RelyProxyHeader{},
-		schema.GraphQLVariableDefinition{},
-		schema.RelyProxyGraphQLRequestConfig{},
-		schema.RelyProxyGraphQLResponseConfig{},
-	} {
-		externalSchema := r.Reflect(externalType)
-
-		for key, def := range externalSchema.Definitions {
-			if _, ok := reflectSchema.Definitions[key]; !ok {
-				reflectSchema.Definitions[key] = def
-			}
+	for _, name := range []string{"/schema/openapi", "/schema/base_schema"} {
+		err := r.AddGoComments(
+			"github.com/relychan/relixy"+name,
+			".."+name,
+			jsonschema.WithFullComment(),
+		)
+		if err != nil {
+			return err
 		}
 	}
 
+	reflectSchema := r.Reflect(openapi.RelixyOpenAPIv3Resource{})
+
 	// custom schema types
-	reflectSchema.Definitions["Duration"] = &jsonschema.Schema{
-		Type:        "string",
-		Description: "Duration string",
-		MinLength:   goutils.ToPtr(uint64(2)),
-		Pattern:     `^(\d+(\.\d+)?h)?(\d+(\.\d+)?m)?(\d+(\.\d+)?s)?(\d+(\.\d+)?ms)?$`,
+	reflectSchema.Definitions["HTTPClientConfig"] = &jsonschema.Schema{
+		Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json",
 	}
 
-	// delete unused types
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxyEncoding]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxyPathItem]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.GraphQLVariableDefinition]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxyHeader]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxySchema]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,*github.com/relychan/relixy/schema.RelyProxyMediaType]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,[]string]",
-	)
-	delete(
-		reflectSchema.Definitions,
-		"OrderedMap[string,string]",
-	)
+	// delete unused definitions
+	delete(reflectSchema.Definitions, "HTTPTransportConfig")
+	delete(reflectSchema.Definitions, "HTTPRetryConfig")
+	delete(reflectSchema.Definitions, "HTTPClientAuthConfig")
+	delete(reflectSchema.Definitions, "TLSClientCertificate")
+	delete(reflectSchema.Definitions, "HTTPDialerConfig")
+	delete(reflectSchema.Definitions, "Document")
+	delete(reflectSchema.Definitions, "Contact")
+	delete(reflectSchema.Definitions, "Components")
+	delete(reflectSchema.Definitions, "ExternalDoc")
+	delete(reflectSchema.Definitions, "Tag")
+	delete(reflectSchema.Definitions, "SecurityRequirement")
+	delete(reflectSchema.Definitions, "Server")
+	delete(reflectSchema.Definitions, "Paths")
+	delete(reflectSchema.Definitions, "Info")
+	delete(reflectSchema.Definitions, "License")
+	delete(reflectSchema.Definitions, "EnvInt")
+	delete(reflectSchema.Definitions, "TLSConfig")
+
+	for key := range reflectSchema.Definitions {
+		if strings.HasPrefix(key, "Map[") {
+			delete(reflectSchema.Definitions, key)
+		}
+	}
 
 	buffer := new(bytes.Buffer)
 	enc := json.NewEncoder(buffer)
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", " ")
 
-	err = enc.Encode(reflectSchema)
+	err := enc.Encode(reflectSchema)
 	if err != nil {
 		return err
 	}
@@ -116,7 +93,57 @@ func jsonSchemaConfiguration() error {
 	)
 }
 
-func jsonSchemaServerConfiguration() error {
+func genRelixyActionSchema() error {
+	r := new(jsonschema.Reflector)
+
+	for _, name := range []string{"/schema/base_schema"} {
+		err := r.AddGoComments(
+			"github.com/relychan/relixy"+name,
+			".."+name,
+			jsonschema.WithFullComment(),
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	reflectSchema := r.Reflect(base_schema.RelixyAction{})
+
+	for _, externalType := range []any{
+		base_schema.GraphQLVariableDefinition{},
+		base_schema.RelixyGraphQLRequestConfig{},
+		base_schema.RelixyResponseConfig{},
+	} {
+		externalSchema := r.Reflect(externalType)
+
+		for key, def := range externalSchema.Definitions {
+			if _, ok := reflectSchema.Definitions[key]; !ok {
+				reflectSchema.Definitions[key] = def
+			}
+		}
+	}
+
+	reflectSchema.Definitions["TemplateTransformerConfig"] = &jsonschema.Schema{
+		Ref: "https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json",
+	}
+
+	buffer := new(bytes.Buffer)
+	enc := json.NewEncoder(buffer)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", " ")
+
+	err := enc.Encode(reflectSchema)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile( //nolint:gosec
+		"relixy-action.schema.json",
+		buffer.Bytes(), 0o644,
+	)
+}
+
+func genServerConfigurationSchema() error {
 	r := new(jsonschema.Reflector)
 
 	err := r.AddGoComments(
@@ -141,7 +168,7 @@ func jsonSchemaServerConfiguration() error {
 	}
 
 	return os.WriteFile( //nolint:gosec
-		"server.schema.json",
+		"relixy-server.schema.json",
 		buffer.Bytes(), 0o644,
 	)
 }

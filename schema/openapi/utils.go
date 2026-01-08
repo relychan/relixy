@@ -1,26 +1,30 @@
-package schema
+package openapi
 
-import "slices"
+import (
+	"slices"
+
+	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+)
 
 // ExtractCommonParametersOfOperation extracts common parameters from operation's parameters.
 func ExtractCommonParametersOfOperation(
-	pathParams []Parameter,
-	operation *RelyProxyOperation,
-) []Parameter {
+	pathParams []*highv3.Parameter,
+	operation *highv3.Operation,
+) []*highv3.Parameter {
 	if operation == nil || len(operation.Parameters) == 0 {
 		return pathParams
 	}
 
-	remainParams := make([]Parameter, 0, len(operation.Parameters))
+	remainParams := make([]*highv3.Parameter, 0, len(operation.Parameters))
 
 	for _, param := range operation.Parameters {
-		if slices.ContainsFunc(pathParams, func(originalParam Parameter) bool {
+		if slices.ContainsFunc(pathParams, func(originalParam *highv3.Parameter) bool {
 			return param.Name == originalParam.Name && param.In == originalParam.In
 		}) {
 			continue
 		}
 
-		if param.In == InPath {
+		if param.In == string(InPath) {
 			pathParams = append(pathParams, param)
 		} else {
 			remainParams = append(remainParams, param)
@@ -33,7 +37,7 @@ func ExtractCommonParametersOfOperation(
 }
 
 // MergeParameters merge parameter slices by unique name and location.
-func MergeParameters(dest []Parameter, src []Parameter) []Parameter {
+func MergeParameters(dest []*highv3.Parameter, src []*highv3.Parameter) []*highv3.Parameter {
 L:
 	for _, srcParam := range src {
 		for j, destParam := range dest {

@@ -1,58 +1,8 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
- "$id": "https://github.com/relychan/relixy/schema/rely-proxy-api-document",
- "$ref": "#/$defs/RelyProxyAPIDocument",
+ "$id": "https://github.com/relychan/relixy/schema/openapi/relixy-open-ap-iv3-resource",
+ "$ref": "#/$defs/RelixyOpenAPIv3Resource",
  "$defs": {
-  "Discriminator": {
-   "properties": {
-    "propertyName": {
-     "type": "string"
-    },
-    "mapping": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object"
-    },
-    "defaultMapping": {
-     "type": "string",
-     "description": "OpenAPI 3.2+ defaultMapping for fallback schema"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "Discriminator is only used by OpenAPI 3+ documents, it represents a polymorphic discriminator used for schemas\nWhen request bodies or response payloads may be one of a number of different schemas, a discriminator object can be used to aid in serialization, deserialization, and validation.\nThe discriminator is a specific object in a schema which is used to inform the consumer of the document of an alternative schema based on the value associated with it.\nWhen using the discriminator, inline schemas will not be considered."
-  },
-  "Duration": {
-   "type": "string",
-   "minLength": 2,
-   "pattern": "^(\\d+(\\.\\d+)?h)?(\\d+(\\.\\d+)?m)?(\\d+(\\.\\d+)?s)?(\\d+(\\.\\d+)?ms)?$",
-   "description": "Duration string"
-  },
-  "EnvAny": {
-   "anyOf": [
-    {
-     "required": [
-      "value"
-     ],
-     "title": "value"
-    },
-    {
-     "required": [
-      "env"
-     ],
-     "title": "env"
-    }
-   ],
-   "properties": {
-    "value": true,
-    "env": {
-     "type": "string"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
-  },
   "EnvBool": {
    "anyOf": [
     {
@@ -70,36 +20,12 @@
    ],
    "properties": {
     "value": {
-     "type": "boolean"
+     "type": "boolean",
+     "description": "Default literal value if the env is empty"
     },
     "env": {
-     "type": "string"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
-  },
-  "EnvInt": {
-   "anyOf": [
-    {
-     "required": [
-      "value"
-     ],
-     "title": "value"
-    },
-    {
-     "required": [
-      "env"
-     ],
-     "title": "env"
-    }
-   ],
-   "properties": {
-    "value": {
-     "type": "integer"
-    },
-    "env": {
-     "type": "string"
+     "type": "string",
+     "description": "Environment variable to be evaluated"
     }
    },
    "additionalProperties": false,
@@ -122,124 +48,19 @@
    ],
    "properties": {
     "value": {
-     "type": "string"
+     "type": "string",
+     "description": "Default literal value if the env is empty"
     },
     "env": {
-     "type": "string"
+     "type": "string",
+     "description": "Environment variable to be evaluated"
     }
    },
    "additionalProperties": false,
    "type": "object"
-  },
-  "GraphQLVariableDefinition": {
-   "properties": {
-    "expression": {
-     "type": "string"
-    },
-    "default": {
-     "$ref": "#/$defs/EnvAny"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "GraphQLVariableDefinition defines information of the GraphQL variable."
-  },
-  "HTTPClientAuthConfig": {
-   "properties": {
-    "HTTPClientAuthenticatorConfig": true
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "HTTPClientAuthenticatorConfig"
-   ]
   },
   "HTTPClientConfig": {
-   "properties": {
-    "timeout": {
-     "oneOf": [
-      {
-       "$ref": "#/$defs/Duration"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "transport": {
-     "$ref": "#/$defs/HTTPTransportConfig"
-    },
-    "tls": {
-     "$ref": "#/$defs/TLSConfig"
-    },
-    "retry": {
-     "$ref": "#/$defs/HTTPRetryConfig"
-    },
-    "authentication": {
-     "$ref": "#/$defs/HTTPClientAuthConfig"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
-  },
-  "HTTPDialerConfig": {
-   "properties": {
-    "timeout": {
-     "oneOf": [
-      {
-       "$ref": "#/$defs/Duration"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "keepAliveEnabled": {
-     "type": "boolean"
-    },
-    "keepAliveInterval": {
-     "oneOf": [
-      {
-       "$ref": "#/$defs/Duration"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "keepAliveCount": {
-     "oneOf": [
-      {
-       "type": "integer"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "keepAliveIdle": {
-     "oneOf": [
-      {
-       "$ref": "#/$defs/Duration"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "fallbackDelay": {
-     "oneOf": [
-      {
-       "$ref": "#/$defs/Duration"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
+   "$ref": "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json"
   },
   "HTTPHealthCheckConfig": {
    "properties": {
@@ -293,1281 +114,123 @@
     "path"
    ]
   },
-  "HTTPRetryConfig": {
+  "RelixyHealthCheckConfig": {
    "properties": {
-    "maxAttempts": {
-     "$ref": "#/$defs/EnvInt"
-    },
-    "delay": {
-     "type": "integer"
-    },
-    "maxDelay": {
-     "type": "integer"
-    },
-    "httpStatus": {
+    "http": {
+     "$ref": "#/$defs/HTTPHealthCheckConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelixyOpenAPIForwardHeadersConfig": {
+   "properties": {
+    "request": {
      "items": {
-      "type": "integer"
+      "type": "string"
      },
      "type": "array"
     },
-    "multiplier": {
-     "type": "number"
-    },
-    "jitter": {
-     "type": "integer"
-    },
-    "jitterFactor": {
-     "type": "number"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
-  },
-  "HTTPTransportConfig": {
-   "properties": {
-    "dialer": {
-     "$ref": "#/$defs/HTTPDialerConfig"
-    },
-    "idleConnTimeout": {
-     "oneOf": [
-      {
-       "$ref": "#/$defs/Duration"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "responseHeaderTimeout": {
-     "oneOf": [
-      {
-       "$ref": "#/$defs/Duration"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "tlsHandshakeTimeout": {
-     "oneOf": [
-      {
-       "$ref": "#/$defs/Duration"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "expectContinueTimeout": {
-     "oneOf": [
-      {
-       "$ref": "#/$defs/Duration"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "maxIdleConns": {
-     "oneOf": [
-      {
-       "type": "integer"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "maxIdleConnsPerHost": {
-     "oneOf": [
-      {
-       "type": "integer"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "maxConnsPerHost": {
-     "oneOf": [
-      {
-       "type": "integer"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "maxResponseHeaderBytes": {
-     "oneOf": [
-      {
-       "type": "integer"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "readBufferSize": {
-     "oneOf": [
-      {
-       "type": "integer"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "writeBufferSize": {
-     "oneOf": [
-      {
-       "type": "integer"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "disableKeepAlives": {
-     "type": "boolean"
-    },
-    "forceAttemptHTTP2": {
-     "type": "boolean"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
-  },
-  "OAuthFlow": {
-   "properties": {
-    "authorizationUrl": {
-     "type": "string"
-    },
-    "tokenUrl": {
-     "$ref": "#/$defs/EnvString"
-    },
-    "refreshUrl": {
-     "type": "string"
-    },
-    "scopes": {
-     "additionalProperties": {
+    "response": {
+     "items": {
       "type": "string"
      },
-     "type": "object"
+     "type": "array"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelixyOpenAPISettings": {
+   "properties": {
+    "expose": {
+     "type": "boolean"
     },
-    "clientId": {
-     "$ref": "#/$defs/EnvString"
+    "basePath": {
+     "type": "string"
     },
-    "clientSecret": {
-     "$ref": "#/$defs/EnvString"
+    "http": {
+     "$ref": "#/$defs/HTTPClientConfig"
     },
-    "endpointParams": {
+    "headers": {
      "additionalProperties": {
       "$ref": "#/$defs/EnvString"
      },
      "type": "object"
+    },
+    "forwardHeaders": {
+     "$ref": "#/$defs/RelixyOpenAPIForwardHeadersConfig"
+    },
+    "healthCheck": {
+     "$ref": "#/$defs/RelixyHealthCheckConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelixyOpenAPIv3Resource": {
+   "properties": {
+    "version": {
+     "type": "string",
+     "enum": [
+      "v1"
+     ]
+    },
+    "kind": {
+     "type": "string",
+     "const": "OpenAPI3",
+     "description": "Kind of the resource which is always OpenAPI3."
+    },
+    "metadata": {
+     "$ref": "#/$defs/RelixyResourceMetadata"
+    },
+    "definition": {
+     "$ref": "#/$defs/RelixyOpenAPIv3ResourceDefinition"
     }
    },
    "additionalProperties": false,
    "type": "object",
-   "description": "OAuthFlow contains flow configurations for [OAuth 2.0] API specification\n\n[OAuth 2.0]: https://swagger.io/docs/specification/authentication/oauth2"
+   "required": [
+    "version",
+    "kind",
+    "metadata",
+    "definition"
+   ]
   },
-  "Parameter": {
+  "RelixyOpenAPIv3ResourceDefinition": {
    "properties": {
-    "name": {
-     "type": "string"
-    },
-    "in": {
-     "$ref": "#/$defs/ParameterLocation"
-    },
-    "description": {
-     "type": "string"
-    },
-    "required": {
-     "type": "boolean"
-    },
-    "deprecated": {
-     "type": "boolean"
-    },
-    "allowEmptyValue": {
-     "type": "boolean"
-    },
-    "style": {
-     "type": "string"
-    },
-    "explode": {
-     "type": "boolean"
-    },
-    "allowReserved": {
-     "type": "boolean"
-    },
-    "schema": {
-     "$ref": "#/$defs/RelyProxySchema"
-    },
-    "content": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelyProxyMediaType"
-     },
-     "type": "object"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "Parameter represents a high-level OpenAPI 3+ Parameter object, that is backed by a low-level one.\nA unique parameter is defined by a combination of a name and location.\nhttps://spec.openapis.org/oas/v3.1.0#parameter-object"
-  },
-  "ParameterLocation": {
-   "type": "string",
-   "enum": [
-    "query",
-    "header",
-    "path",
-    "cookie",
-    "body",
-    "formData"
-   ],
-   "description": "Location of the parameter which is defined in OpenAPI specifications"
-  },
-  "RelyProxyAPIDocument": {
-   "properties": {
-    "$schema": {
-     "type": "string"
-    },
     "settings": {
-     "$ref": "#/$defs/RelyProxySettings",
-     "description": "Global settings of the proxy."
+     "$ref": "#/$defs/RelixyOpenAPISettings"
     },
-    "info": {
-     "$ref": "#/$defs/RelyProxyAPIDocumentInfo",
-     "description": "Info represents a specification Info definitions\nProvides metadata about the API. The metadata MAY be used by tooling as required.\n- https://spec.openapis.org/oas/v3.1.0#info-object"
-    },
-    "servers": {
-     "items": {
-      "$ref": "#/$defs/RelyProxyServer"
-     },
-     "type": "array",
-     "description": "Servers is a slice of Server instances which provide connectivity information to a target server."
-    },
-    "security": {
-     "items": {
-      "$ref": "#/$defs/SecurityRequirements"
-     },
-     "type": "array",
-     "description": "Security contains global security requirements/roles for the specification\nA declaration of which security mechanisms can be used across the API. The list of values includes alternative\nsecurity requirement objects that can be used. Only one of the security requirement objects need to be satisfied\nto authorize a request. Individual operations can override this definition. To make security optional,\nan empty security requirement ({}) can be included in the array."
-    },
-    "tags": {
-     "items": {
-      "$ref": "#/$defs/RelyProxyTag"
-     },
-     "type": "array",
-     "description": "Tags is a slice of Tag instances defined by the specification\nA list of tags used by the document with additional metadata. The order of the tags can be used to reflect on\ntheir order by the parsing tools. Not all tags that are used by the Operation Object must be declared.\nThe tags that are not declared MAY be organized randomly or based on the tools’ logic.\nEach tag name in the list MUST be unique."
-    },
-    "paths": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelyProxyPathItem"
-     },
-     "type": "object"
+    "spec": {
+     "$ref": "openapi-3.json",
+     "description": "Specification of the OpenAPI v3 documentation."
     }
    },
    "additionalProperties": false,
    "type": "object",
    "required": [
     "settings",
-    "servers",
-    "paths"
-   ],
-   "description": "RelyProxyAPIDocument represents the structure of an API document."
-  },
-  "RelyProxyAPIDocumentInfo": {
-   "properties": {
-    "summary": {
-     "type": "string"
-    },
-    "title": {
-     "type": "string"
-    },
-    "description": {
-     "type": "string"
-    },
-    "termsOfService": {
-     "type": "string"
-    },
-    "contact": {
-     "$ref": "#/$defs/RelyProxyAPIDocumentInfoContact"
-    },
-    "license": {
-     "$ref": "#/$defs/RelyProxyAPIDocumentInfoLicense"
-    },
-    "version": {
-     "type": "string"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxyAPIDocumentInfo represents a high-level Info object that provides metadata about the API.\nThe metadata MAY be used by the clients if needed, and MAY be presented\nin editing or documentation generation tools for convenience."
-  },
-  "RelyProxyAPIDocumentInfoContact": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "url": {
-     "type": "string"
-    },
-    "email": {
-     "type": "string"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxyAPIDocumentInfoContact represents a high-level representation of the Contact definitions."
-  },
-  "RelyProxyAPIDocumentInfoLicense": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "url": {
-     "type": "string"
-    },
-    "identifier": {
-     "type": "string"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxyAPIDocumentInfoLicense represents a high-level representation of the License definitions."
-  },
-  "RelyProxyAction": {
-   "oneOf": [
-    {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "rest"
-       ],
-       "description": "Type of the proxy action"
-      },
-      "path": {
-       "type": "string",
-       "description": "Overrides the request path. Use the original request path if empty"
-      }
-     },
-     "type": "object",
-     "required": [
-      "type"
-     ],
-     "description": "Proxy configuration to the remote REST service"
-    },
-    {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "graphql"
-       ],
-       "description": "Type of the proxy action"
-      },
-      "request": {
-       "$ref": "#/$defs/RelyProxyGraphQLRequestConfig",
-       "description": "Configuration for the GraphQL request"
-      },
-      "response": {
-       "$ref": "#/$defs/RelyProxyGraphQLResponseConfig",
-       "description": "Configuration for the GraphQL response"
-      }
-     },
-     "type": "object",
-     "required": [
-      "type",
-      "request"
-     ],
-     "description": "Configurations for proxying request to the remote GraphQL server"
-    }
+    "spec"
    ]
   },
-  "RelyProxyEncoding": {
-   "properties": {
-    "contentType": {
-     "type": "string"
-    },
-    "headers": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelyProxyHeader"
-     },
-     "type": "object"
-    },
-    "style": {
-     "type": "string"
-    },
-    "explode": {
-     "type": "boolean"
-    },
-    "allowReserved": {
-     "type": "boolean"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxyEncoding represents an OpenAPI 3+ Encoding object\n  - https://spec.openapis.org/oas/v3.1.0#encoding-object"
-  },
-  "RelyProxyForwardHeadersConfig": {
-   "properties": {
-    "request": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array",
-     "description": "Defines header names to be forwarded from the client request."
-    },
-    "response": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array",
-     "description": "Defines header names to be forwarded from the response."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxyForwardHeadersConfig contains configurations for headers forwarding,."
-  },
-  "RelyProxyGraphQLRequestConfig": {
-   "properties": {
-    "query": {
-     "type": "string",
-     "description": "GraphQL query string to send"
-    },
-    "variables": {
-     "additionalProperties": {
-      "$ref": "#/$defs/GraphQLVariableDefinition"
-     },
-     "type": "object"
-    },
-    "extensions": {
-     "additionalProperties": {
-      "$ref": "#/$defs/GraphQLVariableDefinition"
-     },
-     "type": "object"
-    }
-   },
-   "type": "object",
-   "required": [
-    "query"
-   ]
-  },
-  "RelyProxyGraphQLResponseConfig": {
-   "properties": {
-    "httpErrorCode": {
-     "type": "integer",
-     "description": "HTTP error code will be used if the response body has errors.\nIf not set, forward the HTTP status from the GraphQL response which is usually 200 OK.",
-     "default": 400
-    },
-    "transform": {
-     "oneOf": [
-      {
-       "$ref": "https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxyGraphQLResponseConfig represents configurations for the proxy response."
-  },
-  "RelyProxyHeader": {
-   "properties": {
-    "description": {
-     "type": "string"
-    },
-    "required": {
-     "type": "boolean"
-    },
-    "deprecated": {
-     "type": "boolean"
-    },
-    "allowEmptyValue": {
-     "type": "boolean"
-    },
-    "style": {
-     "type": "string"
-    },
-    "explode": {
-     "type": "boolean"
-    },
-    "allowReserved": {
-     "type": "boolean"
-    },
-    "schema": {
-     "$ref": "#/$defs/RelyProxySchema"
-    },
-    "content": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelyProxyMediaType"
-     },
-     "type": "object"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxyHeader represents a high-level OpenAPI 3+ Header object that is backed by a low-level one.\n  - https://spec.openapis.org/oas/v3.1.0#header-object"
-  },
-  "RelyProxyHealthCheckConfig": {
-   "properties": {
-    "http": {
-     "$ref": "#/$defs/HTTPHealthCheckConfig",
-     "description": "Configurations for health check through HTTP protocol."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxyHealthCheckConfig holds health check configurations for server recovery."
-  },
-  "RelyProxyMediaType": {
-   "properties": {
-    "schema": {
-     "$ref": "#/$defs/RelyProxySchema"
-    },
-    "itemSchema": {
-     "$ref": "#/$defs/RelyProxySchema"
-    },
-    "encoding": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelyProxyEncoding"
-     },
-     "type": "object"
-    },
-    "itemEncoding": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelyProxyEncoding"
-     },
-     "type": "object"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxyMediaType represents a high-level OpenAPI MediaType object that is backed by a low-level one.\n\nEach Media Type Object provides schema and examples for the media type identified by its key.\n  - https://spec.openapis.org/oas/v3.1.0#media-type-object"
-  },
-  "RelyProxyOperation": {
-   "properties": {
-    "tags": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array",
-     "description": "List of tags for this operation."
-    },
-    "summary": {
-     "type": "string",
-     "description": "Summary information of the operation."
-    },
-    "description": {
-     "type": "string",
-     "description": "Description of the operation."
-    },
-    "operationId": {
-     "type": "string",
-     "description": "ID of the operation. It should be unique."
-    },
-    "parameters": {
-     "items": {
-      "$ref": "#/$defs/Parameter"
-     },
-     "type": "array",
-     "description": "Request parameters of the operation."
-    },
-    "requestBody": {
-     "$ref": "#/$defs/RelyProxyRequestBody",
-     "description": "Request body information."
-    },
-    "deprecated": {
-     "type": "boolean",
-     "description": "Responses   *highv3.Responses    `json:\"responses,omitempty\" yaml:\"responses,omitempty\"`\nDefines whether this operation is deprecated."
-    },
-    "security": {
-     "$ref": "#/$defs/SecurityRequirements",
-     "description": "Requires the security for this operation."
-    },
-    "proxy": {
-     "$ref": "#/$defs/RelyProxyAction",
-     "description": "Defines action information to proxy request to the remote server."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "proxy"
-   ],
-   "description": "RelyProxyOperation represents the definition of an API operation."
-  },
-  "RelyProxyPathItem": {
-   "properties": {
-    "description": {
-     "type": "string",
-     "description": "Description of the path item."
-    },
-    "summary": {
-     "type": "string",
-     "description": "Summary of the path item."
-    },
-    "get": {
-     "$ref": "#/$defs/RelyProxyOperation",
-     "description": "Defines the operation information of the GET method."
-    },
-    "put": {
-     "$ref": "#/$defs/RelyProxyOperation",
-     "description": "Defines the operation information of the PUT method."
-    },
-    "post": {
-     "$ref": "#/$defs/RelyProxyOperation",
-     "description": "Defines the operation information of the POST method."
-    },
-    "delete": {
-     "$ref": "#/$defs/RelyProxyOperation",
-     "description": "Defines the operation information of the DELETE method."
-    },
-    "patch": {
-     "$ref": "#/$defs/RelyProxyOperation",
-     "description": "Defines the operation information of the PATCH method."
-    },
-    "parameters": {
-     "items": {
-      "$ref": "#/$defs/Parameter"
-     },
-     "type": "array",
-     "description": "Common parameters of the path item."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxyPathItem represents a definition object of an API path item."
-  },
-  "RelyProxyRequestBody": {
-   "properties": {
-    "description": {
-     "type": "string"
-    },
-    "content": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelyProxyMediaType"
-     },
-     "type": "object"
-    },
-    "required": {
-     "type": "boolean"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxyRequestBody represents a high-level OpenAPI 3+ RequestBody object, backed by a low-level one.\n  - https://spec.openapis.org/oas/v3.1.0#request-body-object"
-  },
-  "RelyProxySchema": {
-   "properties": {
-    "$schema": {
-     "type": "string",
-     "description": "3.1 only, used to define a dialect for this schema, label is '$schema'."
-    },
-    "$ref": {
-     "type": "string",
-     "description": "Used to define a reference for this schema."
-    },
-    "exclusiveMaximum": {
-     "type": "number",
-     "description": "In versions 2 and 3.0, this ExclusiveMaximum can only be a boolean.\nIn version 3.1, ExclusiveMaximum is a number."
-    },
-    "exclusiveMinimum": {
-     "type": "number",
-     "description": "In versions 2 and 3.0, this ExclusiveMinimum can only be a boolean.\nIn version 3.1, ExclusiveMinimum is a number."
-    },
-    "type": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array",
-     "description": "In versions 2 and 3.0, this Type is a single value, so array will only ever have one value\nin version 3.1, Type can be multiple values"
-    },
-    "allOf": {
-     "items": {
-      "$ref": "#/$defs/RelyProxySchema"
-     },
-     "type": "array",
-     "description": "Schemas are resolved on demand using a SchemaProxy"
-    },
-    "oneOf": {
-     "items": {
-      "$ref": "#/$defs/RelyProxySchema"
-     },
-     "type": "array",
-     "description": "Polymorphic Schemas are only available in version 3+"
-    },
-    "anyOf": {
-     "items": {
-      "$ref": "#/$defs/RelyProxySchema"
-     },
-     "type": "array"
-    },
-    "discriminator": {
-     "$ref": "#/$defs/Discriminator"
-    },
-    "prefixItems": {
-     "items": {
-      "$ref": "#/$defs/RelyProxySchema"
-     },
-     "type": "array",
-     "description": "in 3.1 prefixItems provides tuple validation support."
-    },
-    "contains": {
-     "$ref": "#/$defs/RelyProxySchema",
-     "description": "3.1 Specific properties"
-    },
-    "minContains": {
-     "type": "integer"
-    },
-    "maxContains": {
-     "type": "integer"
-    },
-    "if": {
-     "$ref": "#/$defs/RelyProxySchema"
-    },
-    "else": {
-     "$ref": "#/$defs/RelyProxySchema"
-    },
-    "then": {
-     "$ref": "#/$defs/RelyProxySchema"
-    },
-    "dependentSchemas": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelyProxySchema"
-     },
-     "type": "object"
-    },
-    "dependentRequired": {
-     "additionalProperties": {
-      "items": {
-       "type": "string"
-      },
-      "type": "array"
-     },
-     "type": "object"
-    },
-    "patternProperties": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelyProxySchema"
-     },
-     "type": "object"
-    },
-    "propertyNames": {
-     "$ref": "#/$defs/RelyProxySchema"
-    },
-    "unevaluatedItems": {
-     "$ref": "#/$defs/RelyProxySchema"
-    },
-    "items": {
-     "$ref": "#/$defs/RelyProxySchema",
-     "description": "in 3.1 Items can be a Schema or a boolean"
-    },
-    "$anchor": {
-     "type": "string",
-     "description": "3.1 only, part of the JSON Schema spec provides a way to identify a sub-schema"
-    },
-    "not": {
-     "$ref": "#/$defs/RelyProxySchema",
-     "description": "Compatible with all versions"
-    },
-    "properties": {
-     "additionalProperties": {
-      "$ref": "#/$defs/RelyProxySchema"
-     },
-     "type": "object"
-    },
-    "title": {
-     "type": "string"
-    },
-    "multipleOf": {
-     "type": "number"
-    },
-    "maximum": {
-     "type": "number"
-    },
-    "minimum": {
-     "type": "number"
-    },
-    "maxLength": {
-     "type": "integer"
-    },
-    "minLength": {
-     "type": "integer"
-    },
-    "pattern": {
-     "type": "string"
-    },
-    "format": {
-     "type": "string"
-    },
-    "maxItems": {
-     "type": "integer"
-    },
-    "minItems": {
-     "type": "integer"
-    },
-    "uniqueItems": {
-     "type": "boolean"
-    },
-    "maxProperties": {
-     "type": "integer"
-    },
-    "minProperties": {
-     "type": "integer"
-    },
-    "required": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "enum": {
-     "items": true,
-     "type": "array"
-    },
-    "additionalProperties": {
-     "$ref": "#/$defs/RelyProxySchema"
-    },
-    "description": {
-     "type": "string"
-    },
-    "default": true,
-    "const": true,
-    "nullable": {
-     "type": "boolean"
-    },
-    "readOnly": {
-     "type": "boolean"
-    },
-    "writeOnly": {
-     "type": "boolean"
-    },
-    "deprecated": {
-     "type": "boolean",
-     "description": "XML                  *XML                                `json:\"xml,omitempty\" yaml:\"xml,omitempty\"`\nExternalDocs         *ExternalDoc                        `json:\"externalDocs,omitempty\" yaml:\"externalDocs,omitempty\"`\nExample              *yaml.Node                          `json:\"example,omitempty\" yaml:\"example,omitempty\"`"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxySchema represents a JSON Schema that support Swagger, OpenAPI 3 and OpenAPI 3.1\n\nUntil 3.1 OpenAPI had a strange relationship with JSON Schema. It's been a super-set/sub-set\nmix, which has been confusing. So, instead of building a bunch of different models, we have compressed\nall variations into a single model that makes it easy to support multiple spec types.\n\n  - v2 schema: https://swagger.io/specification/v2/#schemaObject\n  - v3 schema: https://swagger.io/specification/#schema-object\n  - v3.1 schema: https://spec.openapis.org/oas/v3.1.0#schema-object"
-  },
-  "RelyProxySecurityScheme": {
-   "oneOf": [
-    {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "apiKey"
-       ]
-      },
-      "value": {
-       "$ref": "#/$defs/EnvString"
-      },
-      "in": {
-       "type": "string",
-       "enum": [
-        "header",
-        "query",
-        "cookie"
-       ]
-      },
-      "name": {
-       "type": "string"
-      }
-     },
-     "type": "object",
-     "required": [
-      "type",
-      "value",
-      "in",
-      "name"
-     ]
-    },
-    {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "basic"
-       ]
-      },
-      "username": {
-       "$ref": "#/$defs/EnvString"
-      },
-      "password": {
-       "$ref": "#/$defs/EnvString"
-      }
-     },
-     "type": "object",
-     "required": [
-      "type",
-      "username",
-      "password"
-     ]
-    },
-    {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "http"
-       ]
-      },
-      "value": {
-       "$ref": "#/$defs/EnvString"
-      },
-      "header": {
-       "oneOf": [
-        {
-         "type": "string"
-        },
-        {
-         "type": "null"
-        }
-       ],
-       "description": "Request contains a header field in the form of Authorization: Basic [credentials]"
-      },
-      "scheme": {
-       "type": "string"
-      }
-     },
-     "type": "object",
-     "required": [
-      "type",
-      "value",
-      "header",
-      "scheme"
-     ]
-    },
-    {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "oauth2"
-       ]
-      },
-      "flows": {
-       "oneOf": [
-        {
-         "properties": {
-          "password": {
-           "$ref": "#/$defs/OAuthFlow"
-          }
-         },
-         "type": "object",
-         "required": [
-          "password"
-         ]
-        },
-        {
-         "properties": {
-          "implicit": {
-           "$ref": "#/$defs/OAuthFlow"
-          }
-         },
-         "type": "object",
-         "required": [
-          "implicit"
-         ]
-        },
-        {
-         "properties": {
-          "clientCredentials": {
-           "$ref": "#/$defs/OAuthFlow"
-          }
-         },
-         "type": "object",
-         "required": [
-          "clientCredentials"
-         ]
-        },
-        {
-         "properties": {
-          "authorizationCode": {
-           "$ref": "#/$defs/OAuthFlow"
-          }
-         },
-         "type": "object",
-         "required": [
-          "authorizationCode"
-         ]
-        }
-       ]
-      }
-     },
-     "type": "object",
-     "required": [
-      "type",
-      "flows"
-     ]
-    },
-    {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "openIdConnect"
-       ]
-      },
-      "openIdConnectUrl": {
-       "type": "string"
-      }
-     },
-     "type": "object",
-     "required": [
-      "type",
-      "openIdConnectUrl"
-     ]
-    },
-    {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "cookie"
-       ]
-      }
-     },
-     "type": "object",
-     "required": [
-      "type"
-     ]
-    },
-    {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "mutualTLS"
-       ]
-      }
-     },
-     "type": "object",
-     "required": [
-      "type"
-     ]
-    }
-   ]
-  },
-  "RelyProxyServer": {
-   "properties": {
-    "url": {
-     "$ref": "#/$defs/EnvString",
-     "description": "Defines the server URL"
-    },
-    "name": {
-     "type": "string",
-     "description": "An optional unique string to refer to the host designated by the URL."
-    },
-    "description": {
-     "type": "string",
-     "description": "Description of the server."
-    },
-    "headers": {
-     "additionalProperties": {
-      "$ref": "#/$defs/EnvString"
-     },
-     "type": "object",
-     "description": "Defines custom headers to be injected to the remote server.\nMerged with the global headers."
-    },
-    "weight": {
-     "type": "integer",
-     "description": "Defines the weight of the server endpoint for load balancing.\nOnly take effect if there are many servers."
-    },
-    "securitySchemes": {
-     "items": {
-      "$ref": "#/$defs/RelyProxySecurityScheme"
-     },
-     "type": "array",
-     "description": "SecuritySchemes define security schemes that can be used by the operations.\nUse global security schemes if empty."
-    },
-    "security": {
-     "$ref": "#/$defs/SecurityRequirements",
-     "description": "Security contains global security requirements/roles for the target.\nUse global securities if empty."
-    },
-    "tls": {
-     "$ref": "#/$defs/TLSConfig",
-     "description": "TLS configuration of the server. Used for mTLS authentication."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "url"
-   ],
-   "description": "RelyProxyServer contains server configurations."
-  },
-  "RelyProxySettings": {
-   "properties": {
-    "http": {
-     "$ref": "#/$defs/HTTPClientConfig",
-     "description": "Global settings for the HTTP client."
-    },
-    "headers": {
-     "additionalProperties": {
-      "$ref": "#/$defs/EnvString"
-     },
-     "type": "object",
-     "description": "Headers define custom headers to be injected to the remote server.\nMerged with the global headers."
-    },
-    "forwardHeaders": {
-     "$ref": "#/$defs/RelyProxyForwardHeadersConfig",
-     "description": "ForwardHeaders define configurations for headers forwarding"
-    },
-    "securitySchemes": {
-     "items": {
-      "$ref": "#/$defs/RelyProxySecurityScheme"
-     },
-     "type": "array",
-     "description": "SecuritySchemes define security schemes that can be used by the operations."
-    },
-    "healthCheck": {
-     "$ref": "#/$defs/RelyProxyHealthCheckConfig",
-     "description": "HealthCheck define the health check policy for load balancer recovery."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxySettings hold settings of the rely proxy."
-  },
-  "RelyProxyTag": {
+  "RelixyResourceMetadata": {
    "properties": {
     "name": {
      "type": "string",
-     "description": "Name of the tag."
-    },
-    "summary": {
-     "type": "string",
-     "description": "Summary of the tag."
+     "default": "default"
     },
     "description": {
-     "type": "string",
-     "description": "Description of the tag."
-    },
-    "parent": {
-     "type": "string",
-     "description": "Parent tag."
-    },
-    "kind": {
-     "type": "string",
-     "description": "Kind of the tag."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelyProxyTag represents a high-level Tag instance for grouping and filtering."
-  },
-  "SecurityRequirement": {
-   "additionalProperties": {
-    "items": {
      "type": "string"
     },
-    "type": "array"
-   },
-   "type": "object",
-   "description": "SecurityRequirement wraps the security requirement specification."
-  },
-  "SecurityRequirements": {
-   "items": {
-    "$ref": "#/$defs/SecurityRequirement"
-   },
-   "type": "array",
-   "description": "SecurityRequirements wraps list of security requirements with helpers."
-  },
-  "TLSClientCertificate": {
-   "properties": {
-    "certFile": {
-     "$ref": "#/$defs/EnvString"
-    },
-    "certPem": {
-     "$ref": "#/$defs/EnvString"
-    },
-    "keyFile": {
-     "$ref": "#/$defs/EnvString"
-    },
-    "keyPem": {
-     "$ref": "#/$defs/EnvString"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
-  },
-  "TLSConfig": {
-   "properties": {
-    "rootCAFile": {
-     "items": {
-      "$ref": "#/$defs/EnvString"
-     },
-     "type": "array"
-    },
-    "rootCAPem": {
-     "items": {
-      "$ref": "#/$defs/EnvString"
-     },
-     "type": "array"
-    },
-    "caFile": {
-     "items": {
-      "$ref": "#/$defs/EnvString"
-     },
-     "type": "array"
-    },
-    "caPem": {
-     "items": {
-      "$ref": "#/$defs/EnvString"
-     },
-     "type": "array"
-    },
-    "certificates": {
-     "items": {
-      "$ref": "#/$defs/TLSClientCertificate"
-     },
-     "type": "array"
-    },
-    "insecureSkipVerify": {
-     "$ref": "#/$defs/EnvBool"
-    },
-    "includeSystemCACertsPool": {
-     "$ref": "#/$defs/EnvBool"
-    },
-    "minVersion": {
+    "instruction": {
      "type": "string"
-    },
-    "maxVersion": {
-     "type": "string"
-    },
-    "cipherSuites": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "serverName": {
-     "$ref": "#/$defs/EnvString"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
-  },
-  "TemplateTransformerConfig": {
-   "properties": {
-    "TemplateTransformerConfig": {
-     "$ref": "#/$defs/TemplateTransformerConfig"
     }
    },
    "additionalProperties": false,
    "type": "object",
    "required": [
-    "TemplateTransformerConfig"
+    "name"
    ]
   }
  }

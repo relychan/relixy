@@ -252,6 +252,160 @@ func TestRestifiedPlugin_DDN(t *testing.T) {
 	}
 }
 
+func TestSetupRouter_InvalidConfig(t *testing.T) {
+	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/invalid-config.yaml")
+
+	envVars, err := config.LoadServerConfig()
+	assert.NilError(t, err)
+
+	otelExporters := &gotel.OTelExporters{
+		Tracer: gotel.NewTracer("test"),
+		Meter:  otel.Meter("test"),
+		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		})),
+	}
+
+	_, _, err = setupRouter(context.TODO(), envVars, otelExporters)
+	assert.ErrorContains(t, err, "")
+}
+
+func TestSetupRouter_ValidConfig(t *testing.T) {
+	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/jsonplaceholder.yaml")
+
+	envVars, err := config.LoadServerConfig()
+	assert.NilError(t, err)
+
+	otelExporters := &gotel.OTelExporters{
+		Tracer: gotel.NewTracer("test"),
+		Meter:  otel.Meter("test"),
+		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		})),
+	}
+
+	router, shutdown, err := setupRouter(context.TODO(), envVars, otelExporters)
+	assert.NilError(t, err)
+	assert.Assert(t, router != nil)
+	assert.Assert(t, shutdown != nil)
+
+	shutdown()
+}
+
+func TestPreRoutePlugin_InvalidJSON(t *testing.T) {
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	defer func() {
+		server.Close()
+		shutdown()
+	}()
+
+	requestURL := server.URL + "/ddn/pre-route"
+
+	req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewBufferString("invalid json"))
+	assert.NilError(t, err)
+
+	req.Header.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
+	req.Header.Set(httpheader.Authorization, "test-secret")
+
+	resp, err := http.DefaultClient.Do(req)
+	assert.NilError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
+func TestPreRoutePlugin_InvalidContentType(t *testing.T) {
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	defer func() {
+		server.Close()
+		shutdown()
+	}()
+
+	requestURL := server.URL + "/ddn/pre-route"
+	body := ddn.PreRoutePluginRequestBody{
+		Path:   "/albums",
+		Method: "GET",
+	}
+
+	bodyBytes, err := json.Marshal(body)
+	assert.NilError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewReader(bodyBytes))
+	assert.NilError(t, err)
+
+	req.Header.Set(httpheader.ContentType, "text/plain")
+	req.Header.Set(httpheader.Authorization, "test-secret")
+
+	resp, err := http.DefaultClient.Do(req)
+	assert.NilError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusUnsupportedMediaType, resp.StatusCode)
+}
+
+func TestPreRoutePlugin_NotFoundPath(t *testing.T) {
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	defer func() {
+		server.Close()
+		shutdown()
+	}()
+
+	requestURL := server.URL + "/ddn/pre-route"
+	body := ddn.PreRoutePluginRequestBody{
+		Path:   "/nonexistent",
+		Method: "GET",
+	}
+
+	bodyBytes, err := json.Marshal(body)
+	assert.NilError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewReader(bodyBytes))
+	assert.NilError(t, err)
+
+	req.Header.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
+	req.Header.Set(httpheader.Authorization, "test-secret")
+
+	resp, err := http.DefaultClient.Do(req)
+	assert.NilError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+}
+
+func TestPreRoutePlugin_GetAlbums(t *testing.T) {
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	defer func() {
+		server.Close()
+		shutdown()
+	}()
+
+	requestURL := server.URL + "/ddn/pre-route"
+	body := ddn.PreRoutePluginRequestBody{
+		Path:   "/albums",
+		Method: "GET",
+	}
+
+	bodyBytes, err := json.Marshal(body)
+	assert.NilError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewReader(bodyBytes))
+	assert.NilError(t, err)
+
+	req.Header.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
+	req.Header.Set(httpheader.Authorization, "test-secret")
+
+	resp, err := http.DefaultClient.Do(req)
+	assert.NilError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var result []map[string]any
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	assert.NilError(t, err)
+	assert.Assert(t, len(result) > 0)
+}
+
 func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {
 	t.Setenv("RELIXY_CONFIG_PATH", configPath)
 
@@ -259,19 +413,19 @@ func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) 
 	assert.NilError(t, err)
 
 	envVars.Auth = auth.RelyAuthConfig{
-		Settings: &authmode.RelyAuthSettings{
-			Strict: true,
-		},
-		Definitions: []auth.RelyAuthDefinition{
-			{
-				RelyAuthDefinitionInterface: apikey.NewRelyAuthAPIKeyConfig(
-					authscheme.TokenLocation{
-						In:   authscheme.InHeader,
-						Name: "Authorization",
-					},
-					goenvconf.NewEnvStringValue("test-secret"),
-					map[string]goenvconf.EnvAny{},
-				),
+		Definition: auth.RelyAuthDefinition{
+			Settings: &authmode.RelyAuthSettings{},
+			Modes: []auth.RelyAuthMode{
+				{
+					RelyAuthModeInterface: apikey.NewRelyAuthAPIKeyConfig(
+						authscheme.TokenLocation{
+							In:   authscheme.InHeader,
+							Name: "Authorization",
+						},
+						goenvconf.NewEnvStringValue("test-secret"),
+						map[string]goenvconf.EnvAny{},
+					),
+				},
 			},
 		},
 	}

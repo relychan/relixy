@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/relychan/gohttpc"
 	"github.com/relychan/goutils"
-	"github.com/relychan/relixy/schema"
+	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
+	"github.com/relychan/relixy/proxyc/internal"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
@@ -28,12 +30,21 @@ func (pc *ProxyClient) Execute(
 
 	requestPath := req.URL.Path
 
-	if pc.clientOptions.BasePath != "" && req.URL.Path != "" {
+	if pc.metadata.Settings.Expose != nil && !*pc.metadata.Settings.Expose {
+		// This API isn't exposed. Returns HTTP 404
+		return nil, nil, goutils.RFC9457Error{
+			Status:   http.StatusNotFound,
+			Title:    "Resource Not Found",
+			Instance: req.URL.Path,
+		}
+	}
+
+	if pc.metadata.Settings.BasePath != "" && req.URL.Path != "" {
 		// The URL path may omit the slash character
 		if req.URL.Path[0] == '/' {
-			requestPath = strings.TrimPrefix(req.URL.Path, pc.clientOptions.BasePath)
+			requestPath = strings.TrimPrefix(req.URL.Path, pc.metadata.Settings.BasePath)
 		} else {
-			requestPath = strings.TrimPrefix(req.URL.Path, pc.clientOptions.BasePath[1:])
+			requestPath = strings.TrimPrefix(req.URL.Path, pc.metadata.Settings.BasePath[1:])
 		}
 	}
 
@@ -50,17 +61,18 @@ func (pc *ProxyClient) Execute(
 		}
 	}
 
-	span.SetAttributes(attribute.String("http.request.proxy.type", string(route.Handler.Type())))
+	span.SetAttributes(
+		attribute.String("http.request.proxy.type", string(route.Method.Handler.Type())),
+	)
 
-	options := &schema.RelyProxyHandleOptions{
-		Settings:       &pc.metadata.Settings,
-		ParamValues:    route.ParamValues,
-		HTTPClient:     pc.lbClient,
-		DefaultHeaders: pc.defaultHeaders,
-		Path:           requestPath,
+	options := &proxyhandler.RelixyHandleOptions{
+		Settings:    &pc.metadata.Settings,
+		ParamValues: route.ParamValues,
+		NewRequest:  pc.newRequestFunc(route),
+		Path:        requestPath,
 	}
 
-	response, responseBody, err := route.Handler.Handle(ctx, req, options)
+	response, responseBody, err := route.Method.Handler.Handle(ctx, req, options)
 	if err != nil {
 		span.SetStatus(codes.Error, "proxy failed")
 		span.RecordError(err)
@@ -84,4 +96,31 @@ func (pc *ProxyClient) Execute(
 	span.SetStatus(codes.Ok, "")
 
 	return response, responseBody, nil
+}
+
+func (pc *ProxyClient) newRequestFunc(route *internal.Route) proxyhandler.NewRequestFunc {
+	return func(method string, url string) *gohttpc.RequestWithClient {
+		req := pc.lbClient.R(method, url)
+		reqHeader := req.Header()
+
+		authenticator := pc.authenticators.GetAuthenticator(route.Method.Security)
+		if authenticator != nil {
+			req.SetAuthenticator(authenticator)
+		}
+
+		for key, value := range pc.defaultHeaders {
+			reqHeader.Set(key, value)
+		}
+
+		if pc.metadata.Settings.ForwardHeaders != nil {
+			for _, key := range pc.metadata.Settings.ForwardHeaders.Request {
+				value := reqHeader.Get(key)
+				if value != "" {
+					reqHeader.Set(key, value)
+				}
+			}
+		}
+
+		return req
+	}
 }

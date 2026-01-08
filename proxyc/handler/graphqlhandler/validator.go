@@ -6,14 +6,16 @@ import (
 
 	"github.com/hasura/goenvconf"
 	orderedmap "github.com/pb33f/ordered-map/v2"
-	"github.com/relychan/relixy/schema"
+	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/vektah/gqlparser/ast"
 	"github.com/vektah/gqlparser/parser"
 )
 
 var (
+	ErrProxyActionInvalid           = errors.New("proxy action must exist with the graphql type")
 	ErrGraphQLQueryEmpty            = errors.New("query is required for graphql proxy")
 	ErrGraphQLUnsupportedQueryBatch = errors.New("graphql query batch is not supported")
+	ErrGraphQLResponseRequired      = errors.New("graphql response must be a valid JSON object")
 )
 
 // ValidateGraphQLString parses and validates the GraphQL query string.
@@ -49,7 +51,7 @@ func ValidateGraphQLString(query string) (*GraphQLHandler, error) {
 }
 
 func validateGraphQLVariables(
-	inputs *orderedmap.OrderedMap[string, *schema.GraphQLVariableDefinition],
+	inputs *orderedmap.OrderedMap[string, *base_schema.GraphQLVariableDefinition],
 	getEnvFunc goenvconf.GetEnvFunc,
 ) (map[string]graphqlVariable, error) {
 	result := make(map[string]graphqlVariable)
@@ -60,7 +62,7 @@ func validateGraphQLVariables(
 
 	for iter := inputs.Oldest(); iter != nil; iter = iter.Next() {
 		variable := graphqlVariable{
-			Expression: iter.Value.Expression,
+			Path: iter.Value.Path,
 		}
 
 		if iter.Value.Default != nil {

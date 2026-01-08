@@ -4,7 +4,6 @@ package main
 import (
 	"context"
 	"log"
-	"net/url"
 	"os"
 	"os/signal"
 
@@ -62,7 +61,7 @@ func setupRouter(
 	conf *config.RelixyServerConfig,
 	ts *gotel.OTelExporters,
 ) (*chi.Mux, func(), error) {
-	state, err := config.NewState(ctx, conf, ts)
+	state, err := config.NewState(conf, ts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -73,13 +72,6 @@ func setupRouter(
 	}
 
 	basePath := "/*"
-
-	if conf.Router.BasePath != "" {
-		basePath = (&url.URL{}).JoinPath(conf.Router.BasePath, "*").Path
-		if basePath[0] != '/' {
-			basePath = "/" + basePath
-		}
-	}
 
 	router := gohttps.NewRouter(&conf.Server, ts.Logger)
 	router.Handle(

@@ -2,13 +2,9 @@ package authn
 
 import (
 	"context"
-	"errors"
 
 	"github.com/relychan/goutils"
 )
-
-// ErrUnauthenticated represents a unauthenticated context error.
-var ErrUnauthenticated = errors.New("unauthenticated")
 
 // contextKey is a value for use with context.WithValue. It's used as
 // a pointer so it fits in an interface{} without allocation.
@@ -32,7 +28,7 @@ func GetAuthContext[T any](ctx context.Context) (T, error) { //nolint:ireturn
 	if rawValue == nil {
 		var zeroValue T
 
-		return zeroValue, ErrUnauthenticated
+		return zeroValue, goutils.NewUnauthorizedError()
 	}
 
 	value, ok := rawValue.(T)

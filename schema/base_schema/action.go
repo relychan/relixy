@@ -1,71 +1,27 @@
-package schema
+package base_schema
 
 import (
-	"context"
-	"net/http"
-
 	"github.com/hasura/goenvconf"
 	"github.com/invopop/jsonschema"
 	orderedmap "github.com/pb33f/ordered-map/v2"
-	"github.com/relychan/gohttpc/loadbalancer"
 	"github.com/relychan/gotransform"
 	wk8orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
-// RelyProxyHandleOptions hold request options for the proxy handler.
-type RelyProxyHandleOptions struct {
-	HTTPClient     *loadbalancer.LoadBalancerClient
-	Settings       *RelyProxySettings
-	Path           string
-	ParamValues    map[string]string
-	DefaultHeaders map[string]string
-}
-
-// RelyProxyHandler abstracts the executor to proxy HTTP requests.
-type RelyProxyHandler interface {
-	// Type returns type of the current handler.
-	Type() RelyProxyType
-	// Handle resolves the HTTP request and proxies that request to the remote server.
-	Handle(
-		ctx context.Context,
-		request *http.Request,
-		options *RelyProxyHandleOptions,
-	) (*http.Response, any, error)
-}
-
-// NewRelyProxyHandlerOptions hold request options for the proxy handler.
-type NewRelyProxyHandlerOptions struct {
-	Method     string
-	Parameters []Parameter
-	GetEnv     goenvconf.GetEnvFunc
-}
-
-// GetEnvFunc returns a function to get environment variables.
-func (nrp NewRelyProxyHandlerOptions) GetEnvFunc() goenvconf.GetEnvFunc {
-	if nrp.GetEnv == nil {
-		return goenvconf.GetOSEnv
-	}
-
-	return nrp.GetEnv
-}
-
-// NewRelyProxyHandlerFunc abstracts a function to create a new proxy handler.
-type NewRelyProxyHandlerFunc func(operation *RelyProxyOperation, options *NewRelyProxyHandlerOptions) (RelyProxyHandler, error)
-
-// RelyProxyAction represents a proxy action.
-type RelyProxyAction struct {
+// RelixyAction represents a proxy action.
+type RelixyAction struct {
 	// Type of the proxy action.
-	Type RelyProxyType `json:"type" yaml:"type"`
+	Type RelixyActionType `json:"type" yaml:"type"`
 	// Overrides the request path. Use the original request path if empty.
 	Path string `json:"path,omitempty" yaml:"path,omitempty"`
 	// Configurations for the proxy request.
-	Request RelyProxyGraphQLRequestConfig `json:"request" yaml:"request"`
+	Request *RelixyGraphQLRequestConfig `json:"request" yaml:"request"`
 	// Configurations for evaluating graphql responses.
-	Response RelyProxyGraphQLResponseConfig `json:"response" yaml:"response"`
+	Response *RelixyResponseConfig `json:"response" yaml:"response"`
 }
 
 // JSONSchema defines a custom definition for JSON schema.
-func (RelyProxyAction) JSONSchema() *jsonschema.Schema {
+func (RelixyAction) JSONSchema() *jsonschema.Schema {
 	restSchema := wk8orderedmap.New[string, *jsonschema.Schema]()
 	restSchema.Set("type", &jsonschema.Schema{
 		Type:        "string",
@@ -85,23 +41,25 @@ func (RelyProxyAction) JSONSchema() *jsonschema.Schema {
 	})
 	graphqlSchema.Set("request", &jsonschema.Schema{
 		Description: "Configuration for the GraphQL request",
-		Ref:         "#/$defs/RelyProxyGraphQLRequestConfig",
+		Ref:         "#/$defs/RelixyGraphQLRequestConfig",
 	})
 	graphqlSchema.Set("response", &jsonschema.Schema{
 		Description: "Configuration for the GraphQL response",
-		Ref:         "#/$defs/RelyProxyGraphQLResponseConfig",
+		Ref:         "#/$defs/RelixyResponseConfig",
 	})
 
 	return &jsonschema.Schema{
 		OneOf: []*jsonschema.Schema{
 			{
 				Type:        "object",
+				Title:       "RelixyActionREST",
 				Description: "Proxy configuration to the remote REST service",
 				Required:    []string{"type"},
 				Properties:  restSchema,
 			},
 			{
 				Type:        "object",
+				Title:       "RelixyActionGraphQL",
 				Description: "Configurations for proxying request to the remote GraphQL server",
 				Properties:  graphqlSchema,
 				Required:    []string{"type", "request"},
@@ -112,12 +70,14 @@ func (RelyProxyAction) JSONSchema() *jsonschema.Schema {
 
 // GraphQLVariableDefinition defines information of the GraphQL variable.
 type GraphQLVariableDefinition struct {
-	Expression string            `json:"expression,omitempty" yaml:"expression,omitempty"`
-	Default    *goenvconf.EnvAny `json:"default,omitempty" yaml:"default,omitempty"`
+	// JMESPath to evaluate the variable from request.
+	Path string `json:"path,omitempty" yaml:"path,omitempty"`
+	// Default value if the path or value is empty.
+	Default *goenvconf.EnvAny `json:"default,omitempty" yaml:"default,omitempty"`
 }
 
-// RelyProxyGraphQLRequestConfig represents configurations for the proxy request.
-type RelyProxyGraphQLRequestConfig struct {
+// RelixyGraphQLRequestConfig represents configurations for the proxy request.
+type RelixyGraphQLRequestConfig struct {
 	// GraphQL query
 	Query string `json:"query,omitempty" yaml:"query,omitempty"`
 	// Definition of GraphQL variables.
@@ -127,7 +87,7 @@ type RelyProxyGraphQLRequestConfig struct {
 }
 
 // JSONSchema defines a custom definition for JSON schema.
-func (RelyProxyGraphQLRequestConfig) JSONSchema() *jsonschema.Schema {
+func (RelixyGraphQLRequestConfig) JSONSchema() *jsonschema.Schema {
 	graphqlProps := wk8orderedmap.New[string, *jsonschema.Schema]()
 
 	graphqlProps.Set("query", &jsonschema.Schema{
@@ -135,13 +95,15 @@ func (RelyProxyGraphQLRequestConfig) JSONSchema() *jsonschema.Schema {
 		Type:        "string",
 	})
 	graphqlProps.Set("variables", &jsonschema.Schema{
-		Type: "object",
+		Type:        "object",
+		Description: "Definition of GraphQL variables",
 		AdditionalProperties: &jsonschema.Schema{
 			Ref: "#/$defs/GraphQLVariableDefinition",
 		},
 	})
 	graphqlProps.Set("extensions", &jsonschema.Schema{
-		Type: "object",
+		Type:        "object",
+		Description: "Definition of GraphQL extensions",
 		AdditionalProperties: &jsonschema.Schema{
 			Ref: "#/$defs/GraphQLVariableDefinition",
 		},
@@ -154,15 +116,17 @@ func (RelyProxyGraphQLRequestConfig) JSONSchema() *jsonschema.Schema {
 	}
 }
 
-// RelyProxyGraphQLResponseConfig represents configurations for the proxy response.
-type RelyProxyGraphQLResponseConfig struct {
+// RelixyResponseConfig represents configurations for the proxy response.
+type RelixyResponseConfig struct {
 	// HTTP error code will be used if the response body has errors.
 	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
-	HTTPErrorCode *int                                   `json:"httpErrorCode,omitempty" yaml:"httpErrorCode,omitempty" jsonschema:"min=400,max=599,default=400"`
-	Transform     *gotransform.TemplateTransformerConfig `json:"transform,omitempty" yaml:"transform,omitempty" jsonschema:"oneof_ref=https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json,oneof_type=null"` //nolint:lll
+	HTTPErrorCode *int `json:"httpErrorCode,omitempty" yaml:"httpErrorCode,omitempty" jsonschema:"minimum=400,maximum=599,default=400"`
+	// Configurations for transforming response data.
+	Transform *gotransform.TemplateTransformerConfig `json:"transform,omitempty" yaml:"transform,omitempty"`
 }
 
 // IsZero checks if the configuration is empty.
-func (conf RelyProxyGraphQLResponseConfig) IsZero() bool {
-	return conf.HTTPErrorCode == nil && conf.Transform == nil
+func (conf RelixyResponseConfig) IsZero() bool {
+	return conf.HTTPErrorCode == nil &&
+		(conf.Transform == nil || conf.Transform.IsZero())
 }
