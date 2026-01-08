@@ -10,6 +10,7 @@ import (
 	"github.com/relychan/gohttpc"
 	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
+	"go.yaml.in/yaml/v4"
 )
 
 // RelixyHandleOptions hold request options for the proxy handler.
@@ -49,7 +50,7 @@ func (nrp NewRelixyHandlerOptions) GetEnvFunc() goenvconf.GetEnvFunc {
 }
 
 // NewRelixyHandlerFunc abstracts a function to create a new proxy handler.
-type NewRelixyHandlerFunc func(operation *highv3.Operation, proxyAction *base_schema.RelixyAction, options *NewRelixyHandlerOptions) (RelixyHandler, error)
+type NewRelixyHandlerFunc func(operation *highv3.Operation, rawProxyAction *yaml.Node, options *NewRelixyHandlerOptions) (RelixyHandler, error)
 
 // NewRequestFunc abstracts a function to create an HTTP request.
 type NewRequestFunc func(method string, url string) *gohttpc.RequestWithClient

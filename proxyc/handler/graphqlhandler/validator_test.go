@@ -5,7 +5,6 @@ import (
 
 	"github.com/hasura/goenvconf"
 	orderedmap "github.com/pb33f/ordered-map/v2"
-	"github.com/relychan/relixy/schema/base_schema"
 	"gotest.tools/v3/assert"
 )
 
@@ -92,7 +91,7 @@ func TestValidateGraphQLString(t *testing.T) {
 func TestValidateGraphQLVariables(t *testing.T) {
 	testCases := []struct {
 		name        string
-		inputs      *orderedmap.OrderedMap[string, *base_schema.GraphQLVariableDefinition]
+		inputs      *orderedmap.OrderedMap[string, *GraphQLVariableDefinition]
 		getEnvFunc  goenvconf.GetEnvFunc
 		expectError bool
 		checkResult func(t *testing.T, result map[string]graphqlVariable)
@@ -108,7 +107,7 @@ func TestValidateGraphQLVariables(t *testing.T) {
 		},
 		{
 			name:        "empty inputs",
-			inputs:      orderedmap.New[string, *base_schema.GraphQLVariableDefinition](),
+			inputs:      orderedmap.New[string, *GraphQLVariableDefinition](),
 			getEnvFunc:  goenvconf.GetOSEnv,
 			expectError: false,
 			checkResult: func(t *testing.T, result map[string]graphqlVariable) {
@@ -117,9 +116,9 @@ func TestValidateGraphQLVariables(t *testing.T) {
 		},
 		{
 			name: "variable with path only",
-			inputs: func() *orderedmap.OrderedMap[string, *base_schema.GraphQLVariableDefinition] {
-				m := orderedmap.New[string, *base_schema.GraphQLVariableDefinition]()
-				m.Set("userId", &base_schema.GraphQLVariableDefinition{
+			inputs: func() *orderedmap.OrderedMap[string, *GraphQLVariableDefinition] {
+				m := orderedmap.New[string, *GraphQLVariableDefinition]()
+				m.Set("userId", &GraphQLVariableDefinition{
 					Path: "param.id",
 				})
 				return m
@@ -134,10 +133,10 @@ func TestValidateGraphQLVariables(t *testing.T) {
 		},
 		{
 			name: "variable with default value",
-			inputs: func() *orderedmap.OrderedMap[string, *base_schema.GraphQLVariableDefinition] {
-				m := orderedmap.New[string, *base_schema.GraphQLVariableDefinition]()
+			inputs: func() *orderedmap.OrderedMap[string, *GraphQLVariableDefinition] {
+				m := orderedmap.New[string, *GraphQLVariableDefinition]()
 				defaultValue := goenvconf.NewEnvAnyValue("default-value")
-				m.Set("status", &base_schema.GraphQLVariableDefinition{
+				m.Set("status", &GraphQLVariableDefinition{
 					Path:    "query.status",
 					Default: &defaultValue,
 				})
@@ -153,12 +152,12 @@ func TestValidateGraphQLVariables(t *testing.T) {
 		},
 		{
 			name: "multiple variables",
-			inputs: func() *orderedmap.OrderedMap[string, *base_schema.GraphQLVariableDefinition] {
-				m := orderedmap.New[string, *base_schema.GraphQLVariableDefinition]()
-				m.Set("id", &base_schema.GraphQLVariableDefinition{
+			inputs: func() *orderedmap.OrderedMap[string, *GraphQLVariableDefinition] {
+				m := orderedmap.New[string, *GraphQLVariableDefinition]()
+				m.Set("id", &GraphQLVariableDefinition{
 					Path: "param.id",
 				})
-				m.Set("name", &base_schema.GraphQLVariableDefinition{
+				m.Set("name", &GraphQLVariableDefinition{
 					Path: "body.name",
 				})
 				return m

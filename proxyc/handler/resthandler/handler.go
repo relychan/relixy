@@ -18,6 +18,7 @@ import (
 	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
+	"go.yaml.in/yaml/v4"
 )
 
 // RESTHandler implements the RelixyHandler interface for REST proxy.
@@ -31,7 +32,7 @@ type RESTHandler struct {
 // NewRESTHandler creates a RESTHandler from operation.
 func NewRESTHandler(
 	operation *highv3.Operation,
-	proxyAction *base_schema.RelixyAction,
+	rawProxyAction *yaml.Node,
 	options *proxyhandler.NewRelixyHandlerOptions,
 ) (proxyhandler.RelixyHandler, error) {
 	handler := &RESTHandler{
@@ -39,12 +40,21 @@ func NewRESTHandler(
 		parameters: openapi.MergeParameters(options.Parameters, operation.Parameters),
 	}
 
-	if proxyAction == nil {
+	if rawProxyAction == nil {
 		return handler, nil
 	}
 
-	if proxyAction.Path != "" {
-		handler.requestPath = proxyAction.Path
+	var proxyAction RelixyRESTActionConfig
+
+	err := rawProxyAction.Decode(&proxyAction)
+	if err != nil {
+		return nil, err
+	}
+
+	if proxyAction.Request != nil {
+		if proxyAction.Request.Path != "" {
+			handler.requestPath = proxyAction.Request.Path
+		}
 	}
 
 	getEnvFunc := options.GetEnvFunc()

@@ -10,7 +10,6 @@ import (
 
 	"github.com/invopop/jsonschema"
 	"github.com/relychan/relixy/config"
-	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
 )
 
@@ -89,56 +88,6 @@ func genConfigurationSchema() error {
 
 	return os.WriteFile( //nolint:gosec
 		"relixy.schema.json",
-		buffer.Bytes(), 0o644,
-	)
-}
-
-func genRelixyActionSchema() error {
-	r := new(jsonschema.Reflector)
-
-	for _, name := range []string{"/schema/base_schema"} {
-		err := r.AddGoComments(
-			"github.com/relychan/relixy"+name,
-			".."+name,
-			jsonschema.WithFullComment(),
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	reflectSchema := r.Reflect(base_schema.RelixyAction{})
-
-	for _, externalType := range []any{
-		base_schema.GraphQLVariableDefinition{},
-		base_schema.RelixyGraphQLRequestConfig{},
-		base_schema.RelixyResponseConfig{},
-	} {
-		externalSchema := r.Reflect(externalType)
-
-		for key, def := range externalSchema.Definitions {
-			if _, ok := reflectSchema.Definitions[key]; !ok {
-				reflectSchema.Definitions[key] = def
-			}
-		}
-	}
-
-	reflectSchema.Definitions["TemplateTransformerConfig"] = &jsonschema.Schema{
-		Ref: "https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json",
-	}
-
-	buffer := new(bytes.Buffer)
-	enc := json.NewEncoder(buffer)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", " ")
-
-	err := enc.Encode(reflectSchema)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile( //nolint:gosec
-		"relixy-action.schema.json",
 		buffer.Bytes(), 0o644,
 	)
 }

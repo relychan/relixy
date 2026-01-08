@@ -6,7 +6,6 @@ import (
 
 	"github.com/hasura/goenvconf"
 	orderedmap "github.com/pb33f/ordered-map/v2"
-	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/vektah/gqlparser/ast"
 	"github.com/vektah/gqlparser/parser"
 )
@@ -51,7 +50,7 @@ func ValidateGraphQLString(query string) (*GraphQLHandler, error) {
 }
 
 func validateGraphQLVariables(
-	inputs *orderedmap.OrderedMap[string, *base_schema.GraphQLVariableDefinition],
+	inputs *orderedmap.OrderedMap[string, *GraphQLVariableDefinition],
 	getEnvFunc goenvconf.GetEnvFunc,
 ) (map[string]graphqlVariable, error) {
 	result := make(map[string]graphqlVariable)

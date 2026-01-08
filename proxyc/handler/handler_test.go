@@ -5,7 +5,9 @@ import (
 
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/pb33f/libopenapi/orderedmap"
+	"github.com/relychan/relixy/proxyc/handler/graphqlhandler"
 	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
+	"github.com/relychan/relixy/proxyc/handler/resthandler"
 	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
 	"go.yaml.in/yaml/v4"
@@ -34,9 +36,11 @@ func TestNewProxyHandler(t *testing.T) {
 		},
 		{
 			name: "REST handler with explicit proxy action",
-			operation: createOperationWithProxyAction(t, base_schema.RelixyAction{
+			operation: createOperationWithProxyAction(t, resthandler.RelixyRESTActionConfig{
 				Type: base_schema.ProxyTypeREST,
-				Path: "/test",
+				Request: &resthandler.RelixyRESTRequestConfig{
+					Path: "/test",
+				},
 			}),
 			options: &proxyhandler.NewRelixyHandlerOptions{
 				Method: "POST",
@@ -46,9 +50,9 @@ func TestNewProxyHandler(t *testing.T) {
 		},
 		{
 			name: "GraphQL handler with valid query",
-			operation: createOperationWithProxyAction(t, base_schema.RelixyAction{
+			operation: createOperationWithProxyAction(t, graphqlhandler.RelixyGraphQLActionConfig{
 				Type: base_schema.ProxyTypeGraphQL,
-				Request: &base_schema.RelixyGraphQLRequestConfig{
+				Request: &graphqlhandler.RelixyGraphQLRequestConfig{
 					Query: "query { users { id name } }",
 				},
 			}),
@@ -60,9 +64,9 @@ func TestNewProxyHandler(t *testing.T) {
 		},
 		{
 			name: "GraphQL handler with invalid query",
-			operation: createOperationWithProxyAction(t, base_schema.RelixyAction{
+			operation: createOperationWithProxyAction(t, graphqlhandler.RelixyGraphQLActionConfig{
 				Type: base_schema.ProxyTypeGraphQL,
-				Request: &base_schema.RelixyGraphQLRequestConfig{
+				Request: &graphqlhandler.RelixyGraphQLRequestConfig{
 					Query: "invalid query {",
 				},
 			}),
@@ -74,8 +78,8 @@ func TestNewProxyHandler(t *testing.T) {
 		},
 		{
 			name: "unsupported proxy type",
-			operation: createOperationWithProxyAction(t, base_schema.RelixyAction{
-				Type: "unsupported",
+			operation: createOperationWithProxyAction(t, map[string]any{
+				"type": "unsupported",
 			}),
 			options: &proxyhandler.NewRelixyHandlerOptions{
 				Method: "GET",
@@ -118,7 +122,7 @@ func TestRegisterProxyHandler(t *testing.T) {
 	customType := base_schema.RelixyActionType("custom")
 	customConstructor := func(
 		operation *highv3.Operation,
-		proxyAction *base_schema.RelixyAction,
+		proxyAction *yaml.Node,
 		options *proxyhandler.NewRelixyHandlerOptions,
 	) (proxyhandler.RelixyHandler, error) {
 		return nil, nil
@@ -131,7 +135,7 @@ func TestRegisterProxyHandler(t *testing.T) {
 }
 
 // Helper function to create an operation with a proxy action extension
-func createOperationWithProxyAction(t *testing.T, action base_schema.RelixyAction) *highv3.Operation {
+func createOperationWithProxyAction(t *testing.T, action any) *highv3.Operation {
 	t.Helper()
 
 	extensions := orderedmap.New[string, *yaml.Node]()

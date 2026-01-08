@@ -23,11 +23,11 @@ import (
 	"github.com/vektah/gqlparser/ast"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"go.yaml.in/yaml/v4"
 )
 
 // GraphQLHandler implements the RelixyHandler interface for GraphQL proxy.
 type GraphQLHandler struct {
-	requestPath         string
 	parameters          []*highv3.Parameter
 	query               string
 	operation           ast.Operation
@@ -41,10 +41,21 @@ type GraphQLHandler struct {
 // NewGraphQLHandler creates a GraphQL request from operation.
 func NewGraphQLHandler( //nolint:ireturn,nolintlint
 	operation *highv3.Operation,
-	proxyAction *base_schema.RelixyAction,
+	rawProxyAction *yaml.Node,
 	options *proxyhandler.NewRelixyHandlerOptions,
 ) (proxyhandler.RelixyHandler, error) {
-	if proxyAction == nil || proxyAction.Type != base_schema.ProxyTypeGraphQL {
+	if rawProxyAction == nil {
+		return nil, ErrProxyActionInvalid
+	}
+
+	var proxyAction RelixyGraphQLActionConfig
+
+	err := rawProxyAction.Decode(&proxyAction)
+	if err != nil {
+		return nil, err
+	}
+
+	if proxyAction.Type != base_schema.ProxyTypeGraphQL {
 		return nil, ErrProxyActionInvalid
 	}
 
@@ -56,8 +67,6 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 	if err != nil {
 		return nil, err
 	}
-
-	handler.requestPath = proxyAction.Path
 
 	getEnvFunc := options.GetEnvFunc()
 	handler.parameters = openapi.MergeParameters(options.Parameters, operation.Parameters)
@@ -113,10 +122,7 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 		attribute.String("graphql.query", ge.query),
 	)
 
-	logAttrs := []slog.Attr{
-		slog.String("path", ge.requestPath),
-	}
-
+	logAttrs := make([]slog.Attr, 0, 13)
 	requestHeaders := map[string]string{}
 
 	for key, header := range request.Header {
@@ -192,7 +198,7 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 		),
 	)
 
-	req := options.NewRequest(http.MethodPost, ge.requestPath)
+	req := options.NewRequest(http.MethodPost, "")
 	reqHeader := req.Header()
 
 	reqHeader.Set(httpheader.ContentType, httpheader.ContentTypeJSON)

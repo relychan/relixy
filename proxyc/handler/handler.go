@@ -11,6 +11,7 @@ import (
 	"github.com/relychan/relixy/proxyc/handler/resthandler"
 	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
+	"go.yaml.in/yaml/v4"
 )
 
 var ErrUnsupportedProxyType = errors.New("unsupported proxy type")
@@ -25,10 +26,14 @@ func NewProxyHandler( //nolint:ireturn,nolintlint
 	operation *highv3.Operation,
 	options *proxyhandler.NewRelixyHandlerOptions,
 ) (proxyhandler.RelixyHandler, error) {
-	var proxyAction base_schema.RelixyAction
+	var proxyAction rawRelixyActionConfig
+
+	var rawProxyAction *yaml.Node
 
 	if operation.Extensions != nil {
-		rawProxyAction, exist := operation.Extensions.Get(openapi.XRelyProxyAction)
+		var exist bool
+
+		rawProxyAction, exist = operation.Extensions.Get(openapi.XRelyProxyAction)
 		if exist && rawProxyAction != nil {
 			err := rawProxyAction.Decode(&proxyAction)
 			if err != nil {
@@ -37,15 +42,8 @@ func NewProxyHandler( //nolint:ireturn,nolintlint
 		}
 	}
 
-	switch proxyAction.Type {
-	case base_schema.ProxyTypeGraphQL:
-		_, err := graphqlhandler.ValidateGraphQLString(proxyAction.Request.Query)
-		if err != nil {
-			return nil, err
-		}
-	case "":
+	if proxyAction.Type == "" {
 		proxyAction.Type = base_schema.ProxyTypeREST
-	default:
 	}
 
 	constructor, ok := proxyHandlerConstructors[proxyAction.Type]
@@ -53,7 +51,7 @@ func NewProxyHandler( //nolint:ireturn,nolintlint
 		return nil, fmt.Errorf("%w: %s", ErrUnsupportedProxyType, proxyAction.Type)
 	}
 
-	return constructor(operation, &proxyAction, options)
+	return constructor(operation, rawProxyAction, options)
 }
 
 // RegisterProxyHandler registers the handler to the global registry.
@@ -62,4 +60,10 @@ func RegisterProxyHandler(
 	constructor proxyhandler.NewRelixyHandlerFunc,
 ) {
 	proxyHandlerConstructors[proxyType] = constructor
+}
+
+// rawRelixyActionConfig represents a raw proxy action with type only.
+type rawRelixyActionConfig struct {
+	// Type of the proxy action.
+	Type base_schema.RelixyActionType `json:"type" yaml:"type"`
 }
