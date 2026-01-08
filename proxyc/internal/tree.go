@@ -4,6 +4,7 @@ package internal
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"slices"
 	"sort"
@@ -206,7 +207,10 @@ func (n *Node) insertChildStaticNode(
 	paramKeys []string,
 	options *proxyhandler.InsertRouteOptions,
 ) (*Node, error) {
-	rawSegment, remain, _ := strings.Cut(search, "/")
+	rawSegment, remain, _, err := cutURLPath(search)
+	if err != nil {
+		return nil, err
+	}
 
 	childIndex := slices.IndexFunc(n.children[ntStatic], func(child *Node) bool {
 		return child.key == rawSegment
@@ -415,23 +419,41 @@ type patNextSegmentResult struct {
 
 // patNextSegment returns the next segment details from a pattern.
 func patNextSegment(pattern string) (*patNextSegmentResult, error) {
-	endIndex := len(pattern) - 1
+	var endIndex, regexIndex int
 
-	if pattern[endIndex] != '}' {
+	for i := 1; i < len(pattern); i++ {
+		c := pattern[i]
+
+		switch c {
+		case ':':
+			regexIndex = i
+		case '}':
+			endIndex = i
+		default:
+		}
+	}
+
+	if endIndex == 0 {
 		return nil, ErrMissingClosingBracket
 	}
 
 	// Param/Regexp pattern is next
 	nt := ntParam
 
-	paramName, rePattern, _ := strings.Cut(pattern[1:endIndex], ":")
+	var rePattern string
 
-	if paramName == "" {
-		return nil, ErrParamKeyRequired
-	}
+	paramName := pattern[1:endIndex]
 
-	if len(rePattern) > 0 {
+	if regexIndex > 0 {
+		if regexIndex >= endIndex {
+			return nil, ErrInvalidRegexpPatternParamInRoute
+		}
+
 		nt = ntRegexp
+
+		paramName = pattern[1:regexIndex]
+		rePattern = pattern[regexIndex+1 : endIndex]
+
 		// make sure that the regular expression evaluates the exact match.
 		if rePattern[0] != '^' {
 			rePattern = "^" + rePattern
@@ -442,11 +464,27 @@ func patNextSegment(pattern string) (*patNextSegmentResult, error) {
 		}
 	}
 
-	return &patNextSegmentResult{
+	if paramName == "" {
+		return nil, ErrParamKeyRequired
+	}
+
+	result := &patNextSegmentResult{
 		NodeType:  nt,
 		ParamName: paramName,
 		Regexp:    rePattern,
-	}, nil
+	}
+
+	if endIndex == len(pattern)-1 {
+		return result, nil
+	}
+
+	switch pattern[endIndex+1] {
+	case '?', '#':
+		// Leaf node with query or fragment params are valid.
+		return result, nil
+	default:
+		return nil, ErrInvalidParamPattern
+	}
 }
 
 func createMethods( //nolint:cyclop,funlen
@@ -692,4 +730,43 @@ func extractParametersFromOperationV3(
 	}
 
 	return params
+}
+
+// cut the first path of the url and parse the query param if exists. Ignore fragments.
+func cutURLPath(search string) (string, string, url.Values, error) { //nolint:revive
+	if search == "" {
+		return search, "", nil, nil
+	}
+
+	var endPathIndex int
+
+	maxLength := len(search)
+
+L:
+	for ; endPathIndex < maxLength; endPathIndex++ {
+		c := search[endPathIndex]
+
+		switch c {
+		case '/', '#':
+			break L
+		case '?':
+			if endPathIndex == maxLength-1 {
+				return search[:endPathIndex], "", nil, nil
+			}
+
+			queryParams, err := url.ParseQuery(search[endPathIndex+1:])
+			if err != nil {
+				return "", "", nil, err
+			}
+
+			return search[:endPathIndex], "", queryParams, nil
+		default:
+		}
+	}
+
+	if endPathIndex == maxLength {
+		return search, "", nil, nil
+	}
+
+	return search[0:endPathIndex], search[endPathIndex+1:], nil, nil
 }

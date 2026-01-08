@@ -71,6 +71,20 @@ func TestTreeNodes(t *testing.T) {
 				ParamValues: map[string]string{},
 			},
 		},
+		{
+			Path:    "/posts/1/authors/abc",
+			Pattern: "/posts/{id}/authors/{authorId:^[a-z]+$}?foo=bar",
+			Method:  http.MethodGet,
+			Handlers: &highv3.PathItem{
+				Get: &highv3.Operation{},
+			},
+			Route: Route{
+				ParamValues: map[string]string{
+					"id":       "1",
+					"authorId": "abc",
+				},
+			},
+		},
 	}
 
 	node := new(Node)
@@ -85,6 +99,9 @@ func TestTreeNodes(t *testing.T) {
   - /posts [GET]
     - /{id} []
       - / [POST]
+      - /authors []
+        - /{authorId:^[a-z]+$} []
+          - / [GET]
       - /comments []
         - /{commentId:^[a-z]+$} []
           - / [GET]
@@ -219,7 +236,7 @@ func TestRouteFindingEdgeCases(t *testing.T) {
 		"/users/{userId}/posts/{postId}":     {Get: &highv3.Operation{}},
 		"/api/v1/*":                          {Get: &highv3.Operation{}},
 		"/products/{category}/{subcategory}": {Get: &highv3.Operation{}},
-		"/products/{category}/{id:[0-9]+}":   {Get: &highv3.Operation{}},
+		"/products/{category}/{id:[0-9]+}?foo=bar": {Get: &highv3.Operation{}},
 	}
 
 	for pattern, handlers := range routes {
@@ -319,7 +336,7 @@ func TestRouteFindingEdgeCases(t *testing.T) {
 				"category": "electronics",
 				"id":       "12345",
 			},
-			expectedPattern: "/products/{category}/{id:[0-9]+}",
+			expectedPattern: "/products/{category}/{id:[0-9]+}?foo=bar",
 		},
 		{
 			name:       "method_not_found",
@@ -1312,8 +1329,8 @@ func TestRegexpNodeWithDifferentPatterns(t *testing.T) {
 
 // BenchmarkTree/insert_routes-old-11         162159	      6242 ns/op	   15077 B/op	     182 allocs/op
 // BenchmarkTree/insert_routes-11         	  225356	      5096 ns/op	   16232 B/op	     167 allocs/op
-// BenchmarkTree/find_route-old-11           4510472	       225.3 ns/op	     400 B/op	       3 allocs/op
-// BenchmarkTree/find_route-11            	 5535712	       212.3 ns/op	     416 B/op	       4 allocs/op
+// BenchmarkTree/find_route-old-11           4510472	      225.3 ns/op	     400 B/op	       3 allocs/op
+// BenchmarkTree/find_route-11            	 5535712	      212.3 ns/op	     416 B/op	       4 allocs/op
 func BenchmarkTree(b *testing.B) {
 	routes := map[string]*highv3.PathItem{
 		"/posts":                   {Get: &highv3.Operation{}},
