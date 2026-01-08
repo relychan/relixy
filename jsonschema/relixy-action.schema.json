@@ -79,7 +79,7 @@
        "description": "Configuration for the GraphQL request"
       },
       "response": {
-       "$ref": "#/$defs/RelixyGraphQLResponseConfig",
+       "$ref": "#/$defs/RelixyResponseConfig",
        "description": "Configuration for the GraphQL response"
       }
      },
@@ -119,7 +119,7 @@
     "query"
    ]
   },
-  "RelixyGraphQLResponseConfig": {
+  "RelixyResponseConfig": {
    "properties": {
     "httpErrorCode": {
      "type": "integer",

@@ -112,7 +112,7 @@ func genRelixyActionSchema() error {
 	for _, externalType := range []any{
 		base_schema.GraphQLVariableDefinition{},
 		base_schema.RelixyGraphQLRequestConfig{},
-		base_schema.RelixyGraphQLResponseConfig{},
+		base_schema.RelixyResponseConfig{},
 	} {
 		externalSchema := r.Reflect(externalType)
 

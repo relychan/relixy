@@ -15,6 +15,7 @@ var (
 	ErrProxyActionInvalid           = errors.New("proxy action must exist with the graphql type")
 	ErrGraphQLQueryEmpty            = errors.New("query is required for graphql proxy")
 	ErrGraphQLUnsupportedQueryBatch = errors.New("graphql query batch is not supported")
+	ErrGraphQLResponseRequired      = errors.New("graphql response must be a valid JSON object")
 )
 
 // ValidateGraphQLString parses and validates the GraphQL query string.

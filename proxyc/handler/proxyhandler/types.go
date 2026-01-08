@@ -4,6 +4,8 @@ import (
 	"errors"
 
 	"github.com/hasura/goenvconf"
+	"github.com/relychan/gotransform"
+	"github.com/relychan/relixy/schema/base_schema"
 )
 
 var (
@@ -35,4 +37,44 @@ type OAuth2Credentials struct {
 	ClientSecret *goenvconf.EnvString `json:"clientSecret,omitempty" yaml:"clientSecret,omitempty"`
 	// Optional query parameters for the token and refresh URLs.
 	EndpointParams map[string]goenvconf.EnvString `json:"endpointParams,omitempty" yaml:"endpointParams,omitempty"`
+}
+
+// RelixyResponseConfig represents configurations for the proxy response.
+type RelixyResponseConfig struct {
+	// HTTP error code will be used if the response body has errors.
+	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
+	HTTPErrorCode *int
+	// Configurations for transforming response data.
+	Transform gotransform.TemplateTransformer
+}
+
+// NewRelixyResponseConfig creates a [RelixyResponseConfig] from raw configurations.
+func NewRelixyResponseConfig(
+	config *base_schema.RelixyResponseConfig,
+	getEnv goenvconf.GetEnvFunc,
+) (RelixyResponseConfig, error) {
+	result := RelixyResponseConfig{}
+
+	if config == nil {
+		return result, nil
+	}
+
+	result.HTTPErrorCode = config.HTTPErrorCode
+
+	if config.Transform != nil {
+		transformer, err := gotransform.NewTransformerFromConfig("", *config.Transform, getEnv)
+		if err != nil {
+			return result, err
+		}
+
+		result.Transform = transformer
+	}
+
+	return result, nil
+}
+
+// IsZero checks if the configuration is empty.
+func (conf RelixyResponseConfig) IsZero() bool {
+	return conf.HTTPErrorCode == nil &&
+		(conf.Transform == nil || conf.Transform.IsZero())
 }

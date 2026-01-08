@@ -15,9 +15,9 @@ type RelixyAction struct {
 	// Overrides the request path. Use the original request path if empty.
 	Path string `json:"path,omitempty" yaml:"path,omitempty"`
 	// Configurations for the proxy request.
-	Request RelixyGraphQLRequestConfig `json:"request" yaml:"request"`
+	Request *RelixyGraphQLRequestConfig `json:"request" yaml:"request"`
 	// Configurations for evaluating graphql responses.
-	Response RelixyGraphQLResponseConfig `json:"response" yaml:"response"`
+	Response *RelixyResponseConfig `json:"response" yaml:"response"`
 }
 
 // JSONSchema defines a custom definition for JSON schema.
@@ -45,7 +45,7 @@ func (RelixyAction) JSONSchema() *jsonschema.Schema {
 	})
 	graphqlSchema.Set("response", &jsonschema.Schema{
 		Description: "Configuration for the GraphQL response",
-		Ref:         "#/$defs/RelixyGraphQLResponseConfig",
+		Ref:         "#/$defs/RelixyResponseConfig",
 	})
 
 	return &jsonschema.Schema{
@@ -116,8 +116,8 @@ func (RelixyGraphQLRequestConfig) JSONSchema() *jsonschema.Schema {
 	}
 }
 
-// RelixyGraphQLResponseConfig represents configurations for the proxy response.
-type RelixyGraphQLResponseConfig struct {
+// RelixyResponseConfig represents configurations for the proxy response.
+type RelixyResponseConfig struct {
 	// HTTP error code will be used if the response body has errors.
 	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
 	HTTPErrorCode *int `json:"httpErrorCode,omitempty" yaml:"httpErrorCode,omitempty" jsonschema:"minimum=400,maximum=599,default=400"`
@@ -126,7 +126,7 @@ type RelixyGraphQLResponseConfig struct {
 }
 
 // IsZero checks if the configuration is empty.
-func (conf RelixyGraphQLResponseConfig) IsZero() bool {
+func (conf RelixyResponseConfig) IsZero() bool {
 	return conf.HTTPErrorCode == nil &&
 		(conf.Transform == nil || conf.Transform.IsZero())
 }

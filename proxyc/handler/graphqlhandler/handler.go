@@ -35,7 +35,7 @@ type GraphQLHandler struct {
 	variables           map[string]graphqlVariable
 	extensions          map[string]graphqlVariable
 	operationName       string
-	responseConfig      base_schema.RelixyGraphQLResponseConfig
+	responseConfig      proxyhandler.RelixyResponseConfig
 }
 
 // NewGraphQLHandler creates a GraphQL request from operation.
@@ -48,29 +48,43 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 		return nil, ErrProxyActionInvalid
 	}
 
+	if proxyAction.Request == nil {
+		return nil, fmt.Errorf("%w: proxy request config is required", ErrProxyActionInvalid)
+	}
+
 	handler, err := ValidateGraphQLString(proxyAction.Request.Query)
 	if err != nil {
 		return nil, err
 	}
 
 	handler.requestPath = proxyAction.Path
-	handler.responseConfig = proxyAction.Response
-	handler.parameters = openapi.MergeParameters(options.Parameters, operation.Parameters)
 
 	getEnvFunc := options.GetEnvFunc()
+	handler.parameters = openapi.MergeParameters(options.Parameters, operation.Parameters)
 
 	handler.variables, err = validateGraphQLVariables(
 		proxyAction.Request.Variables,
 		getEnvFunc,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to initialize request variables config: %w", err)
 	}
 
 	handler.extensions, err = validateGraphQLVariables(
 		proxyAction.Request.Extensions,
 		getEnvFunc,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize request extensions config: %w", err)
+	}
+
+	handler.responseConfig, err = proxyhandler.NewRelixyResponseConfig(
+		proxyAction.Response,
+		getEnvFunc,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize response config: %w", err)
+	}
 
 	return handler, err
 }
@@ -222,14 +236,17 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 
 	span.SetAttributes(attribute.Int("http.response.original_status_code", resp.StatusCode))
 
-	if ge.responseConfig.IsZero() {
+	if resp.Body == nil {
 		ge.printLog(
 			ctx, request,
-			resp.Status,
-			logAttrs,
+			"invalid response",
+			append(
+				logAttrs,
+				slog.String("error", ErrGraphQLResponseRequired.Error()),
+			),
 		)
 
-		return resp, resp.Body, nil
+		return resp, nil, err
 	}
 
 	newResp, respBody, respLogAttrs, err := ge.transformResponse(resp)
@@ -238,7 +255,7 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 	if err != nil {
 		ge.printLog(
 			ctx, request,
-			"failed to transform request",
+			"failed to transform response",
 			append(
 				logAttrs,
 				slog.String("error", err.Error()),
@@ -248,11 +265,7 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 		return resp, nil, err
 	}
 
-	ge.printLog(
-		ctx, request,
-		resp.Status,
-		append(logAttrs, slog.Any("response_body", respBody)),
-	)
+	ge.printLog(ctx, request, resp.Status, logAttrs)
 
 	return newResp, respBody, err
 }
@@ -262,7 +275,7 @@ func (ge *GraphQLHandler) transformResponse( //nolint:revive
 ) (*http.Response, any, []slog.Attr, error) {
 	defer goutils.CatchWarnErrorFunc(resp.Body.Close)
 
-	responseLogAttrs := []slog.Attr{}
+	responseLogAttrs := make([]slog.Attr, 0, 3)
 
 	var responseBody map[string]any
 
@@ -286,7 +299,18 @@ func (ge *GraphQLHandler) transformResponse( //nolint:revive
 		slog.Int("status_code_final", resp.StatusCode),
 	)
 
-	return resp, responseBody, responseLogAttrs, nil
+	if ge.responseConfig.Transform != nil && !ge.responseConfig.Transform.IsZero() {
+		return resp, responseBody, responseLogAttrs, nil
+	}
+
+	transformedBody, err := ge.responseConfig.Transform.Transform(responseBody)
+	if err != nil {
+		return resp, responseBody, responseLogAttrs, err
+	}
+
+	responseLogAttrs = append(responseLogAttrs, slog.Any("response_body", transformedBody))
+
+	return resp, transformedBody, responseLogAttrs, err
 }
 
 func (ge *GraphQLHandler) resolveRequestVariables(

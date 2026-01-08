@@ -25,7 +25,7 @@ func TestRelixyAction_JSONMarshal(t *testing.T) {
 			name: "GraphQL action",
 			action: RelixyAction{
 				Type: ProxyTypeGraphQL,
-				Request: RelixyGraphQLRequestConfig{
+				Request: &RelixyGraphQLRequestConfig{
 					Query: "query { users { id name } }",
 				},
 			},
@@ -141,24 +141,24 @@ func TestRelixyGraphQLRequestConfig_JSONSchema(t *testing.T) {
 func TestRelixyGraphQLResponseConfig_IsZero(t *testing.T) {
 	testCases := []struct {
 		name     string
-		config   RelixyGraphQLResponseConfig
+		config   RelixyResponseConfig
 		expected bool
 	}{
 		{
 			name:     "empty config",
-			config:   RelixyGraphQLResponseConfig{},
+			config:   RelixyResponseConfig{},
 			expected: true,
 		},
 		{
 			name: "config with http error code",
-			config: RelixyGraphQLResponseConfig{
+			config: RelixyResponseConfig{
 				HTTPErrorCode: func() *int { v := 400; return &v }(),
 			},
 			expected: false,
 		},
 		{
 			name: "config with nil http error code",
-			config: RelixyGraphQLResponseConfig{
+			config: RelixyResponseConfig{
 				HTTPErrorCode: nil,
 			},
 			expected: true,
@@ -175,14 +175,14 @@ func TestRelixyGraphQLResponseConfig_IsZero(t *testing.T) {
 
 func TestRelixyGraphQLResponseConfig_JSONMarshal(t *testing.T) {
 	errorCode := 400
-	config := RelixyGraphQLResponseConfig{
+	config := RelixyResponseConfig{
 		HTTPErrorCode: &errorCode,
 	}
 
 	data, err := json.Marshal(config)
 	assert.NilError(t, err)
 
-	var result RelixyGraphQLResponseConfig
+	var result RelixyResponseConfig
 	err = json.Unmarshal(data, &result)
 	assert.NilError(t, err)
 	assert.Assert(t, result.HTTPErrorCode != nil)
@@ -191,14 +191,14 @@ func TestRelixyGraphQLResponseConfig_JSONMarshal(t *testing.T) {
 
 func TestRelixyGraphQLResponseConfig_YAMLMarshal(t *testing.T) {
 	errorCode := 500
-	config := RelixyGraphQLResponseConfig{
+	config := RelixyResponseConfig{
 		HTTPErrorCode: &errorCode,
 	}
 
 	data, err := yaml.Marshal(config)
 	assert.NilError(t, err)
 
-	var result RelixyGraphQLResponseConfig
+	var result RelixyResponseConfig
 	err = yaml.Unmarshal(data, &result)
 	assert.NilError(t, err)
 	assert.Assert(t, result.HTTPErrorCode != nil)

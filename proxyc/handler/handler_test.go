@@ -48,7 +48,7 @@ func TestNewProxyHandler(t *testing.T) {
 			name: "GraphQL handler with valid query",
 			operation: createOperationWithProxyAction(t, base_schema.RelixyAction{
 				Type: base_schema.ProxyTypeGraphQL,
-				Request: base_schema.RelixyGraphQLRequestConfig{
+				Request: &base_schema.RelixyGraphQLRequestConfig{
 					Query: "query { users { id name } }",
 				},
 			}),
@@ -62,7 +62,7 @@ func TestNewProxyHandler(t *testing.T) {
 			name: "GraphQL handler with invalid query",
 			operation: createOperationWithProxyAction(t, base_schema.RelixyAction{
 				Type: base_schema.ProxyTypeGraphQL,
-				Request: base_schema.RelixyGraphQLRequestConfig{
+				Request: &base_schema.RelixyGraphQLRequestConfig{
 					Query: "invalid query {",
 				},
 			}),
