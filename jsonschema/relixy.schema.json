@@ -204,6 +204,7 @@
     },
     "spec": {
      "$ref": "https://raw.githubusercontent.com/relychan/relixy/refs/heads/main/jsonschema/openapi-3.json",
+     "title": "OpenAPIv3Document",
      "description": "Specification of the OpenAPI v3 documentation."
     }
    },

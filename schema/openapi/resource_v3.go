@@ -51,6 +51,7 @@ type RelixyOpenAPIv3ResourceDefinition struct {
 func (RelixyOpenAPIv3ResourceDefinition) JSONSchemaExtend(schema *jsonschema.Schema) {
 	schema.Properties.
 		Set("spec", &jsonschema.Schema{
+			Title:       "OpenAPIv3Document",
 			Description: "Specification of the OpenAPI v3 documentation.",
 			Ref:         "https://raw.githubusercontent.com/relychan/relixy/refs/heads/main/jsonschema/openapi-3.json",
 		})
