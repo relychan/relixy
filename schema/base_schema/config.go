@@ -1,6 +1,8 @@
 package base_schema
 
-import "github.com/relychan/gohttpc/loadbalancer"
+import (
+	"github.com/relychan/gohttpc/loadbalancer"
+)
 
 // RelixyHealthCheckConfig holds health check configurations for server recovery.
 type RelixyHealthCheckConfig struct {

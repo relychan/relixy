@@ -2,11 +2,7 @@ package graphqlhandler
 
 import (
 	"errors"
-	"fmt"
 
-	"github.com/hasura/goenvconf"
-	orderedmap "github.com/pb33f/ordered-map/v2"
-	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/vektah/gqlparser/ast"
 	"github.com/vektah/gqlparser/parser"
 )
@@ -48,38 +44,4 @@ func ValidateGraphQLString(query string) (*GraphQLHandler, error) {
 	default:
 		return nil, ErrGraphQLUnsupportedQueryBatch
 	}
-}
-
-func validateGraphQLVariables(
-	inputs *orderedmap.OrderedMap[string, *base_schema.GraphQLVariableDefinition],
-	getEnvFunc goenvconf.GetEnvFunc,
-) (map[string]graphqlVariable, error) {
-	result := make(map[string]graphqlVariable)
-
-	if inputs == nil {
-		return result, nil
-	}
-
-	for iter := inputs.Oldest(); iter != nil; iter = iter.Next() {
-		variable := graphqlVariable{
-			Path: iter.Value.Path,
-		}
-
-		if iter.Value.Default != nil {
-			defaultValue, err := iter.Value.Default.GetCustom(getEnvFunc)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"failed to evaluate default value of variable %s: %w",
-					iter.Key,
-					err,
-				)
-			}
-
-			variable.Default = defaultValue
-		}
-
-		result[iter.Key] = variable
-	}
-
-	return result, nil
 }

@@ -13,39 +13,47 @@ import (
 
 	"github.com/hasura/gotel"
 	"github.com/hasura/gotel/otelutils"
-	"github.com/jmespath-community/go-jmespath"
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	"github.com/relychan/gotransform/jmes"
 	"github.com/relychan/goutils"
 	"github.com/relychan/goutils/httpheader"
 	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
-	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
 	"github.com/vektah/gqlparser/ast"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"go.yaml.in/yaml/v4"
 )
 
 // GraphQLHandler implements the RelixyHandler interface for GraphQL proxy.
 type GraphQLHandler struct {
-	requestPath         string
 	parameters          []*highv3.Parameter
+	operationName       string
 	query               string
 	operation           ast.Operation
 	variableDefinitions ast.VariableDefinitionList
-	variables           map[string]graphqlVariable
-	extensions          map[string]graphqlVariable
-	operationName       string
-	responseConfig      proxyhandler.RelixyResponseConfig
+	// The configuration to transform request headers.
+	headers        map[string]jmes.FieldMappingEntryString
+	variables      map[string]jmes.FieldMappingEntry
+	extensions     map[string]jmes.FieldMappingEntry
+	customResponse *RelixyCustomGraphQLResponse
 }
 
 // NewGraphQLHandler creates a GraphQL request from operation.
 func NewGraphQLHandler( //nolint:ireturn,nolintlint
 	operation *highv3.Operation,
-	proxyAction *base_schema.RelixyAction,
+	rawProxyAction *yaml.Node,
 	options *proxyhandler.NewRelixyHandlerOptions,
 ) (proxyhandler.RelixyHandler, error) {
-	if proxyAction == nil || proxyAction.Type != base_schema.ProxyTypeGraphQL {
+	if rawProxyAction == nil {
 		return nil, ErrProxyActionInvalid
+	}
+
+	var proxyAction RelixyGraphQLActionConfig
+
+	err := rawProxyAction.Decode(&proxyAction)
+	if err != nil {
+		return nil, err
 	}
 
 	if proxyAction.Request == nil {
@@ -57,28 +65,34 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 		return nil, err
 	}
 
-	handler.requestPath = proxyAction.Path
-
 	getEnvFunc := options.GetEnvFunc()
 	handler.parameters = openapi.MergeParameters(options.Parameters, operation.Parameters)
 
-	handler.variables, err = validateGraphQLVariables(
+	handler.headers, err = jmes.EvaluateObjectFieldMappingStringEntries(
+		proxyAction.Request.Headers,
+		getEnvFunc,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize custom request headers config: %w", err)
+	}
+
+	handler.variables, err = jmes.EvaluateObjectFieldMappingEntries(
 		proxyAction.Request.Variables,
 		getEnvFunc,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize request variables config: %w", err)
+		return nil, fmt.Errorf("failed to initialize custom request variables config: %w", err)
 	}
 
-	handler.extensions, err = validateGraphQLVariables(
+	handler.extensions, err = jmes.EvaluateObjectFieldMappingEntries(
 		proxyAction.Request.Extensions,
 		getEnvFunc,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize request extensions config: %w", err)
+		return nil, fmt.Errorf("failed to initialize custom request extensions config: %w", err)
 	}
 
-	handler.responseConfig, err = proxyhandler.NewRelixyResponseConfig(
+	handler.customResponse, err = NewRelixyCustomGraphQLResponse(
 		proxyAction.Response,
 		getEnvFunc,
 	)
@@ -90,8 +104,8 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 }
 
 // Type returns type of the current handler.
-func (*GraphQLHandler) Type() base_schema.RelixyActionType {
-	return base_schema.ProxyTypeGraphQL
+func (*GraphQLHandler) Type() proxyhandler.ProxyActionType {
+	return ProxyTypeGraphQL
 }
 
 // Handle resolves the HTTP request and proxies that request to the remote server.
@@ -113,47 +127,29 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 		attribute.String("graphql.query", ge.query),
 	)
 
-	logAttrs := []slog.Attr{
-		slog.String("path", ge.requestPath),
+	logAttrs := make([]slog.Attr, 0, 13)
+
+	requestData, _, err := proxyhandler.NewRequestTemplateData(
+		request,
+		httpheader.ContentTypeJSON,
+		options.ParamValues,
+	)
+	if err != nil {
+		ge.printLog(
+			ctx,
+			request, "failed to decode body",
+			append(
+				logAttrs,
+				slog.String("error", err.Error()),
+			),
+		)
+
+		return nil, nil, err
 	}
 
-	requestHeaders := map[string]string{}
+	rawRequestData := requestData.ToMap()
 
-	for key, header := range request.Header {
-		if len(header) == 0 {
-			continue
-		}
-
-		requestHeaders[strings.ToLower(key)] = header[0]
-	}
-
-	requestData := &requestTemplateData{
-		Params:      options.ParamValues,
-		QueryParams: request.URL.Query(),
-		Headers:     requestHeaders,
-	}
-
-	if request.Body != nil && request.Body != http.NoBody {
-		var body any
-
-		err := json.NewDecoder(request.Body).Decode(&body)
-		if err != nil {
-			ge.printLog(
-				ctx,
-				request, "failed to decode body",
-				append(
-					logAttrs,
-					slog.String("error", err.Error()),
-				),
-			)
-
-			return nil, nil, err
-		}
-
-		requestData.Body = body
-	}
-
-	variables, err := ge.resolveRequestVariables(requestData)
+	variables, err := ge.resolveRequestVariables(requestData, rawRequestData)
 	if err != nil {
 		ge.printLog(
 			ctx,
@@ -169,7 +165,7 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 
 	graphqlPayload.Variables = variables
 
-	graphqlPayload.Extensions, err = ge.resolveRequestExtensions(requestData)
+	graphqlPayload.Extensions, err = ge.resolveRequestExtensions(rawRequestData)
 	if err != nil {
 		ge.printLog(
 			ctx,
@@ -192,8 +188,19 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 		),
 	)
 
-	req := options.NewRequest(http.MethodPost, ge.requestPath)
+	req := options.NewRequest(http.MethodPost, "")
 	reqHeader := req.Header()
+
+	for key, header := range ge.headers {
+		value, err := header.EvaluateString(rawRequestData)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to evaluate custom header %s: %w", key, err)
+		}
+
+		if value != nil && *value != "" {
+			reqHeader.Set(key, *value)
+		}
+	}
 
 	reqHeader.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
 
@@ -275,22 +282,25 @@ func (ge *GraphQLHandler) transformResponse( //nolint:revive
 ) (*http.Response, any, []slog.Attr, error) {
 	defer goutils.CatchWarnErrorFunc(resp.Body.Close)
 
-	responseLogAttrs := make([]slog.Attr, 0, 3)
-
 	var responseBody map[string]any
 
 	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	if err != nil {
-		return resp, nil, responseLogAttrs, fmt.Errorf("failed to decode graphql response: %w", err)
+		return resp, nil, nil, fmt.Errorf("failed to decode graphql response: %w", err)
 	}
 
+	if ge.customResponse == nil {
+		return resp, responseBody, nil, err
+	}
+
+	responseLogAttrs := make([]slog.Attr, 0, 3)
 	responseLogAttrs = append(responseLogAttrs, slog.Any("original_body", responseBody))
 
-	if ge.responseConfig.HTTPErrorCode != nil {
+	if ge.customResponse.HTTPErrorCode != nil {
 		errorBody, hasError := responseBody["errors"]
 		if hasError && errorBody != nil {
 			// overwrite the error code.
-			resp.StatusCode = *ge.responseConfig.HTTPErrorCode
+			resp.StatusCode = *ge.customResponse.HTTPErrorCode
 		}
 	}
 
@@ -299,11 +309,11 @@ func (ge *GraphQLHandler) transformResponse( //nolint:revive
 		slog.Int("status_code_final", resp.StatusCode),
 	)
 
-	if ge.responseConfig.Transform == nil || ge.responseConfig.Transform.IsZero() {
+	if ge.customResponse.Body == nil || ge.customResponse.Body.IsZero() {
 		return resp, responseBody, responseLogAttrs, nil
 	}
 
-	transformedBody, err := ge.responseConfig.Transform.Transform(responseBody)
+	transformedBody, err := ge.customResponse.Body.Transform(responseBody)
 	if err != nil {
 		return resp, responseBody, responseLogAttrs, err
 	}
@@ -314,15 +324,14 @@ func (ge *GraphQLHandler) transformResponse( //nolint:revive
 }
 
 func (ge *GraphQLHandler) resolveRequestVariables(
-	requestData *requestTemplateData,
+	requestData *proxyhandler.RequestTemplateData,
+	rawRequestData map[string]any,
 ) (map[string]any, error) {
 	results := make(map[string]any)
 
 	if len(ge.variableDefinitions) == 0 {
 		return results, nil
 	}
-
-	rawRequestData := requestData.ToMap()
 
 	for _, varDef := range ge.variableDefinitions {
 		// Resolve graphql variables. Variables are resolved in order:
@@ -331,35 +340,31 @@ func (ge *GraphQLHandler) resolveRequestVariables(
 		// - Default value in config.
 		variable, ok := ge.variables[varDef.Variable]
 		if ok {
-			if variable.Default != nil {
-				results[varDef.Variable] = variable.Default
+			value, err := variable.Evaluate(rawRequestData)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"failed to select value of variable %s: %w",
+					varDef.Variable,
+					err,
+				)
 			}
 
-			if variable.Path != "" {
-				value, err := jmespath.Search(variable.Path, rawRequestData)
+			if value != nil {
+				typedValue, err := convertVariableTypeFromUnknownValue(varDef, value)
 				if err != nil {
 					return nil, fmt.Errorf(
-						"failed to select value of variable %s: %w",
+						"failed to evaluate value of variable %s: %w",
 						varDef.Variable,
 						err,
 					)
 				}
 
-				if value != nil {
-					typedValue, err := convertVariableTypeFromUnknownValue(varDef, value)
-					if err != nil {
-						return nil, fmt.Errorf(
-							"failed to evaluate value of variable %s: %w",
-							varDef.Variable,
-							err,
-						)
-					}
-
-					results[varDef.Variable] = typedValue
-				}
-
-				continue
+				results[varDef.Variable] = typedValue
+			} else {
+				results[varDef.Variable] = value
 			}
+
+			continue
 		}
 
 		if varDef.Variable == "body" {
@@ -403,28 +408,17 @@ func (ge *GraphQLHandler) resolveRequestVariables(
 }
 
 func (ge *GraphQLHandler) resolveRequestExtensions(
-	requestData *requestTemplateData,
+	rawRequestData map[string]any,
 ) (map[string]any, error) {
 	results := make(map[string]any)
-	rawRequestData := requestData.ToMap()
 
 	for key, extension := range ge.extensions {
-		if extension.Default != nil {
-			results[key] = extension.Default
+		value, err := extension.Evaluate(rawRequestData)
+		if err != nil {
+			return nil, fmt.Errorf("failed to select value of extension %s: %w", key, err)
 		}
 
-		if extension.Path != "" {
-			value, err := jmespath.Search(extension.Path, rawRequestData)
-			if err != nil {
-				return nil, fmt.Errorf("failed to select value of extension %s: %w", key, err)
-			}
-
-			if value != nil {
-				results[key] = value
-			}
-
-			continue
-		}
+		results[key] = value
 	}
 
 	return results, nil
@@ -445,7 +439,7 @@ func (ge *GraphQLHandler) printLog(
 	attrs = append(
 		attrs,
 		slog.String("type", "proxy-handler"),
-		slog.String("handler_type", string(base_schema.ProxyTypeGraphQL)),
+		slog.String("handler_type", "graphql"),
 		slog.String("operation_name", ge.operationName),
 		slog.String("operation_type", string(ge.operation)),
 		slog.String("request_url", request.URL.String()),

@@ -8,22 +8,14 @@ import (
 	"github.com/hasura/goenvconf"
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/gohttpc"
-	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
+	"go.yaml.in/yaml/v4"
 )
-
-// RelixyHandleOptions hold request options for the proxy handler.
-type RelixyHandleOptions struct {
-	NewRequest  NewRequestFunc
-	Settings    *openapi.RelixyOpenAPISettings
-	Path        string
-	ParamValues map[string]string
-}
 
 // RelixyHandler abstracts the executor to proxy HTTP requests.
 type RelixyHandler interface {
 	// Type returns type of the current handler.
-	Type() base_schema.RelixyActionType
+	Type() ProxyActionType
 	// Handle resolves the HTTP request and proxies that request to the remote server.
 	Handle(
 		ctx context.Context,
@@ -49,7 +41,15 @@ func (nrp NewRelixyHandlerOptions) GetEnvFunc() goenvconf.GetEnvFunc {
 }
 
 // NewRelixyHandlerFunc abstracts a function to create a new proxy handler.
-type NewRelixyHandlerFunc func(operation *highv3.Operation, proxyAction *base_schema.RelixyAction, options *NewRelixyHandlerOptions) (RelixyHandler, error)
+type NewRelixyHandlerFunc func(operation *highv3.Operation, rawProxyAction *yaml.Node, options *NewRelixyHandlerOptions) (RelixyHandler, error)
 
 // NewRequestFunc abstracts a function to create an HTTP request.
 type NewRequestFunc func(method string, url string) *gohttpc.RequestWithClient
+
+// RelixyHandleOptions hold request options for the proxy handler.
+type RelixyHandleOptions struct {
+	NewRequest  NewRequestFunc
+	Settings    *openapi.RelixyOpenAPISettings
+	Path        string
+	ParamValues map[string]string
+}

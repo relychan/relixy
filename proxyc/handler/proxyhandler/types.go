@@ -1,11 +1,15 @@
 package proxyhandler
 
 import (
+	"encoding/json"
 	"errors"
+	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/hasura/goenvconf"
-	"github.com/relychan/gotransform"
-	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/goutils"
+	"github.com/relychan/goutils/httpheader"
 )
 
 var (
@@ -14,6 +18,9 @@ var (
 		"tokenUrl is required in the OAuth2 Client Credentials flow",
 	)
 )
+
+// ProxyActionType represents enums of proxy types.
+type ProxyActionType string
 
 // InsertRouteOptions represents options for inserting routes.
 type InsertRouteOptions struct {
@@ -39,42 +46,72 @@ type OAuth2Credentials struct {
 	EndpointParams map[string]goenvconf.EnvString `json:"endpointParams,omitempty" yaml:"endpointParams,omitempty"`
 }
 
-// RelixyResponseConfig represents configurations for the proxy response.
-type RelixyResponseConfig struct {
-	// HTTP error code will be used if the response body has errors.
-	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
-	HTTPErrorCode *int
-	// Configurations for transforming response data.
-	Transform gotransform.TemplateTransformer
+// RequestTemplateData represents the request data for template transformation.
+type RequestTemplateData struct {
+	Params      map[string]string
+	QueryParams url.Values
+	Headers     map[string]string
+	Body        any
 }
 
-// NewRelixyResponseConfig creates a [RelixyResponseConfig] from raw configurations.
-func NewRelixyResponseConfig(
-	config *base_schema.RelixyResponseConfig,
-	getEnv goenvconf.GetEnvFunc,
-) (RelixyResponseConfig, error) {
-	result := RelixyResponseConfig{}
+// NewRequestTemplateData creates a new [RequestTemplateData] from the HTTP request to a map for request transformation.
+func NewRequestTemplateData(
+	request *http.Request,
+	contentType string,
+	paramValues map[string]string,
+) (*RequestTemplateData, bool, error) {
+	requestHeaders := map[string]string{}
 
-	if config == nil {
-		return result, nil
-	}
-
-	result.HTTPErrorCode = config.HTTPErrorCode
-
-	if config.Transform != nil {
-		transformer, err := gotransform.NewTransformerFromConfig("", *config.Transform, getEnv)
-		if err != nil {
-			return result, err
+	for key, header := range request.Header {
+		if len(header) == 0 {
+			continue
 		}
 
-		result.Transform = transformer
+		requestHeaders[strings.ToLower(key)] = header[0]
 	}
 
-	return result, nil
+	requestData := &RequestTemplateData{
+		Params:      paramValues,
+		QueryParams: request.URL.Query(),
+		Headers:     requestHeaders,
+	}
+
+	if request.Body == nil || request.Body == http.NoBody {
+		return requestData, true, nil
+	}
+
+	switch {
+	case strings.HasPrefix(contentType, httpheader.ContentTypeJSON):
+		defer goutils.CatchWarnErrorFunc(request.Body.Close)
+
+		var body any
+
+		err := json.NewDecoder(request.Body).Decode(&body)
+		if err != nil {
+			return nil, true, err
+		}
+
+		requestData.Body = body
+
+		return requestData, true, nil
+	default:
+		// skip other content types.
+	}
+
+	return requestData, false, nil
 }
 
-// IsZero checks if the configuration is empty.
-func (conf RelixyResponseConfig) IsZero() bool {
-	return conf.HTTPErrorCode == nil &&
-		(conf.Transform == nil || conf.Transform.IsZero())
+// ToMap converts the struct to map.
+func (rtd RequestTemplateData) ToMap() map[string]any {
+	result := map[string]any{
+		"param":   rtd.Params,
+		"query":   rtd.QueryParams,
+		"headers": rtd.Headers,
+	}
+
+	if rtd.Body != nil {
+		result["body"] = rtd.Body
+	}
+
+	return result
 }

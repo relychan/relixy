@@ -564,7 +564,7 @@
           "description": "An alternative servers array to service this operation. If a servers array is specified at the Path Item Object or OpenAPI Object level, it will be overridden by this value."
         },
         "x-rely-proxy-action": {
-          "$ref": "relixy-action.schema.json",
+          "$ref": "https://raw.githubusercontent.com/relychan/relixy/refs/heads/main/jsonschema/relixy-action.schema.json",
           "description": "Defines action information to proxy request to the remote server."
         }
       },

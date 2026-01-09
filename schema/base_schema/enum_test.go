@@ -7,66 +7,6 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestRelixyActionType_Constants(t *testing.T) {
-	assert.Equal(t, RelixyActionType("graphql"), ProxyTypeGraphQL)
-	assert.Equal(t, RelixyActionType("rest"), ProxyTypeREST)
-}
-
-func TestRelixyActionType_JSONMarshal(t *testing.T) {
-	testCases := []struct {
-		name     string
-		value    RelixyActionType
-		expected string
-	}{
-		{
-			name:     "graphql type",
-			value:    ProxyTypeGraphQL,
-			expected: `"graphql"`,
-		},
-		{
-			name:     "rest type",
-			value:    ProxyTypeREST,
-			expected: `"rest"`,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.value)
-			assert.NilError(t, err)
-			assert.Equal(t, tc.expected, string(data))
-		})
-	}
-}
-
-func TestRelixyActionType_JSONUnmarshal(t *testing.T) {
-	testCases := []struct {
-		name     string
-		jsonData string
-		expected RelixyActionType
-	}{
-		{
-			name:     "graphql type",
-			jsonData: `"graphql"`,
-			expected: ProxyTypeGraphQL,
-		},
-		{
-			name:     "rest type",
-			jsonData: `"rest"`,
-			expected: ProxyTypeREST,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			var result RelixyActionType
-			err := json.Unmarshal([]byte(tc.jsonData), &result)
-			assert.NilError(t, err)
-			assert.Equal(t, tc.expected, result)
-		})
-	}
-}
-
 func TestPrimitiveType_Constants(t *testing.T) {
 	assert.Equal(t, PrimitiveType("string"), String)
 	assert.Equal(t, PrimitiveType("number"), Number)

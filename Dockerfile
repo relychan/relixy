@@ -10,7 +10,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 go build \
     -ldflags="-X 'github.com/relychan/relixy/types.BuildVersion=${VERSION}'" \
-    -v -o relixy ./server/rest
+    -v -o relixy ./cmd/rest
 
 # stage 2: production image
 FROM gcr.io/distroless/static-debian13:nonroot

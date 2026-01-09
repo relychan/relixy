@@ -1,7 +1,6 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
- "$id": "https://github.com/relychan/relixy/schema/base_schema/relixy-action",
- "$ref": "#/$defs/RelixyAction",
+ "$ref": "#/$defs/RelixyActionConfig",
  "$defs": {
   "EnvAny": {
    "anyOf": [
@@ -30,96 +29,73 @@
    "additionalProperties": false,
    "type": "object"
   },
-  "GraphQLVariableDefinition": {
-   "properties": {
-    "path": {
-     "type": "string"
+  "EnvString": {
+   "anyOf": [
+    {
+     "required": [
+      "value"
+     ],
+     "title": "value"
     },
-    "default": {
-     "$ref": "#/$defs/EnvAny"
+    {
+     "required": [
+      "env"
+     ],
+     "title": "env"
+    }
+   ],
+   "properties": {
+    "value": {
+     "type": "string",
+     "description": "Default literal value if the env is empty"
+    },
+    "env": {
+     "type": "string",
+     "description": "Environment variable to be evaluated"
     }
    },
    "additionalProperties": false,
    "type": "object"
   },
-  "RelixyAction": {
+  "FieldMappingEntryConfig": {
+   "properties": {
+    "path": {
+     "type": "string",
+     "description": "JMESPath expression to find a value in the input data"
+    },
+    "default": {
+     "$ref": "#/$defs/EnvAny",
+     "description": "Default value to be used when no value is found"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "FieldMappingEntryStringConfig": {
+   "properties": {
+    "path": {
+     "type": "string"
+    },
+    "default": {
+     "$ref": "#/$defs/EnvString"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelixyActionConfig": {
    "oneOf": [
     {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "rest"
-       ],
-       "description": "Type of the proxy action"
-      },
-      "path": {
-       "type": "string",
-       "description": "Overrides the request path. Use the original request path if empty"
-      }
-     },
-     "type": "object",
-     "required": [
-      "type"
-     ],
-     "title": "RelixyActionREST",
+     "$ref": "#/$defs/RelixyRESTActionConfig",
      "description": "Proxy configuration to the remote REST service"
     },
     {
-     "properties": {
-      "type": {
-       "type": "string",
-       "enum": [
-        "graphql"
-       ],
-       "description": "Type of the proxy action"
-      },
-      "request": {
-       "$ref": "#/$defs/RelixyGraphQLRequestConfig",
-       "description": "Configuration for the GraphQL request"
-      },
-      "response": {
-       "$ref": "#/$defs/RelixyResponseConfig",
-       "description": "Configuration for the GraphQL response"
-      }
-     },
-     "type": "object",
-     "required": [
-      "type",
-      "request"
-     ],
-     "title": "RelixyActionGraphQL",
+     "$ref": "#/$defs/RelixyGraphQLActionConfig",
      "description": "Configurations for proxying request to the remote GraphQL server"
     }
    ]
   },
-  "RelixyGraphQLRequestConfig": {
-   "properties": {
-    "query": {
-     "type": "string",
-     "description": "GraphQL query string to send"
-    },
-    "variables": {
-     "additionalProperties": {
-      "$ref": "#/$defs/GraphQLVariableDefinition"
-     },
-     "type": "object",
-     "description": "Definition of GraphQL variables"
-    },
-    "extensions": {
-     "additionalProperties": {
-      "$ref": "#/$defs/GraphQLVariableDefinition"
-     },
-     "type": "object",
-     "description": "Definition of GraphQL extensions"
-    }
-   },
-   "type": "object",
-   "required": [
-    "query"
-   ]
-  },
-  "RelixyResponseConfig": {
+  "RelixyCustomGraphQLResponseConfig": {
    "properties": {
     "httpErrorCode": {
      "type": "integer",
@@ -127,7 +103,106 @@
      "minimum": 400,
      "default": 400
     },
-    "transform": {
+    "body": {
+     "$ref": "#/$defs/TemplateTransformerConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelixyCustomRESTResponseConfig": {
+   "properties": {
+    "body": {
+     "$ref": "#/$defs/TemplateTransformerConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelixyGraphQLActionConfig": {
+   "properties": {
+    "type": {
+     "type": "string",
+     "enum": [
+      "graphql"
+     ]
+    },
+    "request": {
+     "$ref": "#/$defs/RelixyGraphQLRequestConfig"
+    },
+    "response": {
+     "$ref": "#/$defs/RelixyCustomGraphQLResponseConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "type"
+   ]
+  },
+  "RelixyGraphQLRequestConfig": {
+   "properties": {
+    "headers": {
+     "additionalProperties": {
+      "$ref": "#/$defs/FieldMappingEntryStringConfig"
+     },
+     "type": "object"
+    },
+    "query": {
+     "type": "string"
+    },
+    "variables": {
+     "additionalProperties": {
+      "$ref": "#/$defs/FieldMappingEntryConfig"
+     },
+     "type": "object"
+    },
+    "extensions": {
+     "additionalProperties": {
+      "$ref": "#/$defs/FieldMappingEntryConfig"
+     },
+     "type": "object"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "query"
+   ]
+  },
+  "RelixyRESTActionConfig": {
+   "properties": {
+    "type": {
+     "type": "string",
+     "enum": [
+      "rest"
+     ]
+    },
+    "request": {
+     "$ref": "#/$defs/RelixyRESTRequestConfig"
+    },
+    "response": {
+     "$ref": "#/$defs/RelixyCustomRESTResponseConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "type"
+   ]
+  },
+  "RelixyRESTRequestConfig": {
+   "properties": {
+    "path": {
+     "type": "string"
+    },
+    "headers": {
+     "additionalProperties": {
+      "$ref": "#/$defs/FieldMappingEntryStringConfig"
+     },
+     "type": "object"
+    },
+    "body": {
      "$ref": "#/$defs/TemplateTransformerConfig"
     }
    },
