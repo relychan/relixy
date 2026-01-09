@@ -17,9 +17,51 @@ type RelixyRESTActionConfig struct {
 	// Type of the proxy action which is always rest
 	Type proxyhandler.ProxyActionType `json:"type" yaml:"type" jsonschema:"enum=rest"`
 	// Configurations for the REST proxy request.
-	Request *RelixyRESTRequestConfig `json:"request" yaml:"request"`
+	Request *RelixyRESTRequestConfig `json:"request,omitempty" yaml:"request,omitempty"`
 	// Configurations for evaluating REST responses.
-	Response *proxyhandler.RelixyCustomResponseConfig `json:"response" yaml:"response"`
+	Response *RelixyCustomRESTResponseConfig `json:"response,omitempty" yaml:"response,omitempty"`
+}
+
+// RelixyCustomRESTResponseConfig represents configurations for the proxy response.
+type RelixyCustomRESTResponseConfig struct {
+	// Configurations for transforming response data.
+	Body *gotransform.TemplateTransformerConfig `json:"body,omitempty" yaml:"body,omitempty"`
+}
+
+// IsZero checks if the configuration is empty.
+func (conf RelixyCustomRESTResponseConfig) IsZero() bool {
+	return conf.Body == nil || conf.Body.IsZero()
+}
+
+type customRESTResponse struct {
+	// Configurations for transforming response body data.
+	Body gotransform.TemplateTransformer
+}
+
+// newCustomRESTResponse creates a [RelixyCustomResponse] from raw configurations.
+func newCustomRESTResponse(
+	config *RelixyCustomRESTResponseConfig,
+	getEnv goenvconf.GetEnvFunc,
+) (*customRESTResponse, error) {
+	if config == nil || config.IsZero() {
+		return nil, nil
+	}
+
+	transformer, err := gotransform.NewTransformerFromConfig("", *config.Body, getEnv)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &customRESTResponse{
+		Body: transformer,
+	}
+
+	return result, nil
+}
+
+// IsZero checks if the configuration is empty.
+func (conf customRESTResponse) IsZero() bool {
+	return conf.Body == nil || conf.Body.IsZero()
 }
 
 // RelixyRESTRequestConfig represents configurations for the proxy request.
@@ -29,7 +71,7 @@ type RelixyRESTRequestConfig struct {
 	// The configuration to transform request headers.
 	Headers map[string]jmes.FieldMappingEntryStringConfig `json:"additional,omitempty" yaml:"additional,omitempty"`
 	// The configuration to transform request body.
-	Body *gotransform.TemplateTransformerConfig `json:"body,omitempty"    yaml:"body,omitempty"`
+	Body *gotransform.TemplateTransformerConfig `json:"body,omitempty" yaml:"body,omitempty"`
 }
 
 // IsZero checks if the configuration is empty.

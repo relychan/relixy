@@ -29,13 +29,55 @@
    "additionalProperties": false,
    "type": "object"
   },
-  "GraphQLVariableDefinition": {
+  "EnvString": {
+   "anyOf": [
+    {
+     "required": [
+      "value"
+     ],
+     "title": "value"
+    },
+    {
+     "required": [
+      "env"
+     ],
+     "title": "env"
+    }
+   ],
+   "properties": {
+    "value": {
+     "type": "string",
+     "description": "Default literal value if the env is empty"
+    },
+    "env": {
+     "type": "string",
+     "description": "Environment variable to be evaluated"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "FieldMappingEntryConfig": {
+   "properties": {
+    "path": {
+     "type": "string",
+     "description": "JMESPath expression to find a value in the input data"
+    },
+    "default": {
+     "$ref": "#/$defs/EnvAny",
+     "description": "Default value to be used when no value is found"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "FieldMappingEntryStringConfig": {
    "properties": {
     "path": {
      "type": "string"
     },
     "default": {
-     "$ref": "#/$defs/EnvAny"
+     "$ref": "#/$defs/EnvString"
     }
    },
    "additionalProperties": false,
@@ -53,6 +95,30 @@
     }
    ]
   },
+  "RelixyCustomGraphQLResponseConfig": {
+   "properties": {
+    "httpErrorCode": {
+     "type": "integer",
+     "maximum": 599,
+     "minimum": 400,
+     "default": 400
+    },
+    "body": {
+     "$ref": "#/$defs/TemplateTransformerConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
+  "RelixyCustomRESTResponseConfig": {
+   "properties": {
+    "body": {
+     "$ref": "#/$defs/TemplateTransformerConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
   "RelixyGraphQLActionConfig": {
    "properties": {
     "type": {
@@ -65,15 +131,13 @@
      "$ref": "#/$defs/RelixyGraphQLRequestConfig"
     },
     "response": {
-     "$ref": "#/$defs/RelixyResponseRawConfig"
+     "$ref": "#/$defs/RelixyCustomGraphQLResponseConfig"
     }
    },
    "additionalProperties": false,
    "type": "object",
    "required": [
-    "type",
-    "request",
-    "response"
+    "type"
    ]
   },
   "RelixyGraphQLRequestConfig": {
@@ -83,21 +147,22 @@
     },
     "variables": {
      "additionalProperties": {
-      "$ref": "#/$defs/GraphQLVariableDefinition"
+      "$ref": "#/$defs/FieldMappingEntryConfig"
      },
-     "type": "object",
-     "description": "Definition of GraphQL variables."
+     "type": "object"
     },
     "extensions": {
      "additionalProperties": {
-      "$ref": "#/$defs/GraphQLVariableDefinition"
+      "$ref": "#/$defs/FieldMappingEntryConfig"
      },
-     "type": "object",
-     "description": "Definition of GraphQL extensions."
+     "type": "object"
     }
    },
    "additionalProperties": false,
-   "type": "object"
+   "type": "object",
+   "required": [
+    "query"
+   ]
   },
   "RelixyRESTActionConfig": {
    "properties": {
@@ -111,15 +176,13 @@
      "$ref": "#/$defs/RelixyRESTRequestConfig"
     },
     "response": {
-     "$ref": "#/$defs/RelixyResponseRawConfig"
+     "$ref": "#/$defs/RelixyCustomRESTResponseConfig"
     }
    },
    "additionalProperties": false,
    "type": "object",
    "required": [
-    "type",
-    "request",
-    "response"
+    "type"
    ]
   },
   "RelixyRESTRequestConfig": {
@@ -127,36 +190,13 @@
     "path": {
      "type": "string"
     },
-    "transform": {
-     "$ref": "#/$defs/TemplateTransformerConfig"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
-  },
-  "RelixyResponseConfig": {
-   "properties": {
-    "HTTPErrorCode": {
-     "type": "integer"
+    "additional": {
+     "additionalProperties": {
+      "$ref": "#/$defs/FieldMappingEntryStringConfig"
+     },
+     "type": "object"
     },
-    "Transform": true
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "HTTPErrorCode",
-    "Transform"
-   ]
-  },
-  "RelixyResponseRawConfig": {
-   "properties": {
-    "httpErrorCode": {
-     "type": "integer",
-     "maximum": 599,
-     "minimum": 400,
-     "default": 400
-    },
-    "transform": {
+    "body": {
      "$ref": "#/$defs/TemplateTransformerConfig"
     }
    },

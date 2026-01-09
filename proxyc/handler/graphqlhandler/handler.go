@@ -28,13 +28,13 @@ import (
 // GraphQLHandler implements the RelixyHandler interface for GraphQL proxy.
 type GraphQLHandler struct {
 	parameters          []*highv3.Parameter
+	operationName       string
 	query               string
 	operation           ast.Operation
 	variableDefinitions ast.VariableDefinitionList
 	variables           map[string]jmes.FieldMappingEntry
 	extensions          map[string]jmes.FieldMappingEntry
-	operationName       string
-	customResponse      *proxyhandler.RelixyCustomResponse
+	customResponse      *RelixyCustomGraphQLResponse
 }
 
 // NewGraphQLHandler creates a GraphQL request from operation.
@@ -86,7 +86,7 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 		return nil, fmt.Errorf("failed to initialize request extensions config: %w", err)
 	}
 
-	handler.customResponse, err = proxyhandler.NewRelixyCustomResponse(
+	handler.customResponse, err = NewRelixyCustomGraphQLResponse(
 		proxyAction.Response,
 		getEnvFunc,
 	)

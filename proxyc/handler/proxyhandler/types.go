@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/hasura/goenvconf"
-	"github.com/relychan/gotransform"
 	"github.com/relychan/goutils"
 	"github.com/relychan/goutils/httpheader"
 )
@@ -45,61 +44,6 @@ type OAuth2Credentials struct {
 	ClientSecret *goenvconf.EnvString `json:"clientSecret,omitempty" yaml:"clientSecret,omitempty"`
 	// Optional query parameters for the token and refresh URLs.
 	EndpointParams map[string]goenvconf.EnvString `json:"endpointParams,omitempty" yaml:"endpointParams,omitempty"`
-}
-
-// RelixyCustomResponseConfig represents configurations for the proxy response.
-type RelixyCustomResponseConfig struct {
-	// HTTP error code will be used if the response body has errors.
-	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
-	HTTPErrorCode *int `json:"httpErrorCode,omitempty" yaml:"httpErrorCode,omitempty" jsonschema:"minimum=400,maximum=599,default=400"`
-	// Configurations for transforming response data.
-	Transform *gotransform.TemplateTransformerConfig `json:"transform,omitempty" yaml:"transform,omitempty"`
-}
-
-// IsZero checks if the configuration is empty.
-func (conf RelixyCustomResponseConfig) IsZero() bool {
-	return conf.HTTPErrorCode == nil &&
-		(conf.Transform == nil || conf.Transform.IsZero())
-}
-
-// RelixyCustomResponse represents configurations for the proxy response.
-type RelixyCustomResponse struct {
-	// HTTP error code will be used if the response body has errors.
-	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
-	HTTPErrorCode *int
-	// Configurations for transforming response body data.
-	Body gotransform.TemplateTransformer
-}
-
-// NewRelixyCustomResponse creates a [RelixyCustomResponse] from raw configurations.
-func NewRelixyCustomResponse(
-	config *RelixyCustomResponseConfig,
-	getEnv goenvconf.GetEnvFunc,
-) (*RelixyCustomResponse, error) {
-	if config == nil || config.IsZero() {
-		return nil, nil
-	}
-
-	result := &RelixyCustomResponse{
-		HTTPErrorCode: config.HTTPErrorCode,
-	}
-
-	if config.Transform != nil {
-		transformer, err := gotransform.NewTransformerFromConfig("", *config.Transform, getEnv)
-		if err != nil {
-			return result, err
-		}
-
-		result.Body = transformer
-	}
-
-	return result, nil
-}
-
-// IsZero checks if the configuration is empty.
-func (conf RelixyCustomResponse) IsZero() bool {
-	return conf.HTTPErrorCode == nil &&
-		(conf.Body == nil || conf.Body.IsZero())
 }
 
 // RequestTemplateData represents the request data for template transformation.

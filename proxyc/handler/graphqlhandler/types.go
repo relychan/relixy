@@ -23,15 +23,15 @@ type RelixyGraphQLActionConfig struct {
 	// Type of the proxy action which is always graphql
 	Type proxyhandler.ProxyActionType `json:"type" yaml:"type" jsonschema:"enum=graphql"`
 	// Configurations for the GraphQL proxy request.
-	Request *RelixyGraphQLRequestConfig `json:"request" yaml:"request"`
+	Request *RelixyGraphQLRequestConfig `json:"request,omitempty" yaml:"request,omitempty"`
 	// Configurations for evaluating graphql responses.
-	Response *proxyhandler.RelixyCustomResponseConfig `json:"response" yaml:"response"`
+	Response *RelixyCustomGraphQLResponseConfig `json:"response,omitempty" yaml:"response,omitempty"`
 }
 
 // RelixyGraphQLRequestConfig represents configurations for the proxy request.
 type RelixyGraphQLRequestConfig struct {
 	// GraphQL query
-	Query string `json:"query,omitempty" yaml:"query,omitempty"`
+	Query string `json:"query" yaml:"query"`
 	// Definition of GraphQL variables.
 	Variables map[string]jmes.FieldMappingEntryConfig `json:"variables,omitempty" yaml:"variables,omitempty"`
 	// Definition of GraphQL extensions.
@@ -41,7 +41,7 @@ type RelixyGraphQLRequestConfig struct {
 // RelixyCustomGraphQLResponseConfig represents configurations for the proxy response.
 type RelixyCustomGraphQLResponseConfig struct {
 	// HTTP error code will be used if the response body has errors.
-	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
+	// If not set, forward the HTTP status from the upstream response which is usually 200 OK.
 	HTTPErrorCode *int `json:"httpErrorCode,omitempty" yaml:"httpErrorCode,omitempty" jsonschema:"minimum=400,maximum=599,default=400"`
 	// Configurations for transforming response data.
 	Body *gotransform.TemplateTransformerConfig `json:"body,omitempty" yaml:"body,omitempty"`
@@ -56,24 +56,24 @@ func (conf RelixyCustomGraphQLResponseConfig) IsZero() bool {
 // RelixyCustomGraphQLResponse represents configurations for the proxy response.
 type RelixyCustomGraphQLResponse struct {
 	// HTTP error code will be used if the response body has errors.
-	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
+	// If not set, forward the HTTP status from the upstream response which is usually 200 OK.
 	HTTPErrorCode *int
 	// Configurations for transforming response body data.
 	Body gotransform.TemplateTransformer
 }
 
-// NewRelixyResponse creates a [RelixyResponseConfig] from raw configurations.
-func NewRelixyResponse(
+// NewRelixyCustomGraphQLResponse creates a [RelixyCustomGraphQLResponse] from raw configurations.
+func NewRelixyCustomGraphQLResponse(
 	config *RelixyCustomGraphQLResponseConfig,
 	getEnv goenvconf.GetEnvFunc,
-) (RelixyCustomGraphQLResponse, error) {
-	result := RelixyCustomGraphQLResponse{}
-
-	if config == nil {
-		return result, nil
+) (*RelixyCustomGraphQLResponse, error) {
+	if config == nil || config.IsZero() {
+		return nil, nil
 	}
 
-	result.HTTPErrorCode = config.HTTPErrorCode
+	result := &RelixyCustomGraphQLResponse{
+		HTTPErrorCode: config.HTTPErrorCode,
+	}
 
 	if config.Body != nil {
 		transformer, err := gotransform.NewTransformerFromConfig("", *config.Body, getEnv)

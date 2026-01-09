@@ -25,7 +25,7 @@ import (
 type RESTHandler struct {
 	method         string
 	customRequest  *customRESTRequest
-	customResponse *proxyhandler.RelixyCustomResponse
+	customResponse *customRESTResponse
 	parameters     []*highv3.Parameter
 }
 
@@ -58,7 +58,7 @@ func NewRESTHandler(
 		return nil, err
 	}
 
-	handler.customResponse, err = proxyhandler.NewRelixyCustomResponse(
+	handler.customResponse, err = newCustomRESTResponse(
 		proxyAction.Response,
 		getEnvFunc,
 	)
