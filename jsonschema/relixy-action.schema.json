@@ -86,39 +86,12 @@
   "RelixyActionConfig": {
    "oneOf": [
     {
-     "properties": {
-      "type": {
-       "const": "rest",
-       "description": "Type of the proxy action which is always rest"
-      },
-      "config": {
-       "$ref": "#/$defs/RelixyRESTActionConfig",
-       "description": "Configuration for the REST proxy."
-      }
-     },
-     "required": [
-      "type"
-     ],
-     "title": "RelixyRESTActionConfigObject",
-     "description": "Proxy configuration to the remote REST service."
+     "$ref": "#/$defs/RelixyRESTActionConfig",
+     "description": "Proxy configuration to the remote REST service"
     },
     {
-     "properties": {
-      "type": {
-       "const": "graphql",
-       "description": "Type of the proxy action which is always graphql"
-      },
-      "config": {
-       "$ref": "#/$defs/RelixyGraphQLActionConfig",
-       "description": "Configuration for the GraphQL proxy."
-      }
-     },
-     "required": [
-      "type",
-      "config"
-     ],
-     "title": "RelixyGraphQLActionConfigObject",
-     "description": "Configurations for proxying request to the remote GraphQL service."
+     "$ref": "#/$defs/RelixyGraphQLActionConfig",
+     "description": "Configurations for proxying request to the remote GraphQL server"
     }
    ]
   },
@@ -148,6 +121,12 @@
   },
   "RelixyGraphQLActionConfig": {
    "properties": {
+    "type": {
+     "type": "string",
+     "enum": [
+      "graphql"
+     ]
+    },
     "request": {
      "$ref": "#/$defs/RelixyGraphQLRequestConfig"
     },
@@ -156,7 +135,10 @@
     }
    },
    "additionalProperties": false,
-   "type": "object"
+   "type": "object",
+   "required": [
+    "type"
+   ]
   },
   "RelixyGraphQLRequestConfig": {
    "properties": {
@@ -190,6 +172,12 @@
   },
   "RelixyRESTActionConfig": {
    "properties": {
+    "type": {
+     "type": "string",
+     "enum": [
+      "rest"
+     ]
+    },
     "request": {
      "$ref": "#/$defs/RelixyRESTRequestConfig"
     },
@@ -198,7 +186,10 @@
     }
    },
    "additionalProperties": false,
-   "type": "object"
+   "type": "object",
+   "required": [
+    "type"
+   ]
   },
   "RelixyRESTRequestConfig": {
    "properties": {

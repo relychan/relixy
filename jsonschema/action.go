@@ -15,43 +15,15 @@ type RelixyActionConfig struct{}
 
 // JSONSchema defines a custom definition for JSON schema.
 func (RelixyActionConfig) JSONSchema() *jsonschema.Schema {
-	restConfigProps := jsonschema.NewProperties()
-	restConfigProps.Set("type", &jsonschema.Schema{
-		Const: resthandler.ProxyActionTypeREST,
-		Description: "Type of the proxy action which is always " + string(
-			resthandler.ProxyActionTypeREST,
-		),
-	})
-	restConfigProps.Set("config", &jsonschema.Schema{
-		Description: "Configuration for the REST proxy.",
-		Ref:         "#/$defs/RelixyRESTActionConfig",
-	})
-
-	graphqlConfigProps := jsonschema.NewProperties()
-	graphqlConfigProps.Set("type", &jsonschema.Schema{
-		Const: graphqlhandler.ProxyTypeGraphQL,
-		Description: "Type of the proxy action which is always " + string(
-			graphqlhandler.ProxyTypeGraphQL,
-		),
-	})
-	graphqlConfigProps.Set("config", &jsonschema.Schema{
-		Description: "Configuration for the GraphQL proxy.",
-		Ref:         "#/$defs/RelixyGraphQLActionConfig",
-	})
-
 	return &jsonschema.Schema{
 		OneOf: []*jsonschema.Schema{
 			{
-				Title:       "RelixyRESTActionConfigObject",
-				Description: "Proxy configuration to the remote REST service.",
-				Properties:  restConfigProps,
-				Required:    []string{"type"},
+				Description: "Proxy configuration to the remote REST service",
+				Ref:         "#/$defs/RelixyRESTActionConfig",
 			},
 			{
-				Title:       "RelixyGraphQLActionConfigObject",
-				Description: "Configurations for proxying request to the remote GraphQL service.",
-				Properties:  graphqlConfigProps,
-				Required:    []string{"type", "config"},
+				Description: "Configurations for proxying request to the remote GraphQL server",
+				Ref:         "#/$defs/RelixyGraphQLActionConfig",
 			},
 		},
 	}

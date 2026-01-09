@@ -50,7 +50,7 @@ func NewProxyHandler( //nolint:ireturn,nolintlint
 		return nil, fmt.Errorf("%w: %s", ErrUnsupportedProxyType, proxyAction.Type)
 	}
 
-	return constructor(operation, proxyAction.Config, options)
+	return constructor(operation, rawProxyAction, options)
 }
 
 // RegisterProxyHandler registers the handler to the global registry.
@@ -63,6 +63,6 @@ func RegisterProxyHandler(
 
 // rawRelixyActionConfig represents a raw proxy action with type only.
 type rawRelixyActionConfig struct {
-	Type   proxyhandler.ProxyActionType `yaml:"type"`
-	Config *yaml.Node                   `yaml:"config"`
+	// Type of the proxy action.
+	Type proxyhandler.ProxyActionType `json:"type" yaml:"type"`
 }

@@ -20,6 +20,8 @@ type GraphQLRequestBody struct {
 
 // RelixyGraphQLActionConfig represents a proxy action config for GraphQL.
 type RelixyGraphQLActionConfig struct {
+	// Type of the proxy action which is always graphql.
+	Type proxyhandler.ProxyActionType `json:"type" yaml:"type" jsonschema:"enum=graphql"`
 	// Configurations for the GraphQL proxy request.
 	Request *RelixyGraphQLRequestConfig `json:"request,omitempty" yaml:"request,omitempty"`
 	// Configurations for evaluating graphql responses.

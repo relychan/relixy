@@ -19,38 +19,36 @@ definition:
           operationId: artistByName
           x-rely-proxy-action:
             type: graphql
-            config:
-              request:
-                query: |
-                  query artistByName($name: string!) { 
-                    artist(where: {
-                      name: { _eq: $name }
-                    }) { 
-                      name 
-                    }
+            request:
+              query: |
+                query artistByName($name: string!) { 
+                  artist(where: {
+                    name: { _eq: $name }
+                  }) { 
+                    name 
                   }
-                variables:
-                  name:
-                    path: param.name
+                }
+              variables:
+                name:
+                  path: param.name
       /v1/api/rest/artists:
         get:
           operationId: artists
           x-rely-proxy-action:
             type: graphql
-            config:
-              request:
-                query: |
-                  query artists($limit: Int = 10, $offset: Int = 0) { 
-                    artist(limit: $limit, offset: $offset) { 
-                      name 
-                    }
+            request:
+              query: |
+                query artists($limit: Int = 10, $offset: Int = 0) { 
+                  artist(limit: $limit, offset: $offset) { 
+                    name 
                   }
-                variables:
-                  limit:
-                    path: query.limit[0]
-                    default:
-                      value: 19
-                  offset:
-                    path: query.offset[0]
-                    default:
-                      value: 0
+                }
+              variables:
+                limit:
+                  path: query.limit[0]
+                  default:
+                    value: 19
+                offset:
+                  path: query.offset[0]
+                  default:
+                    value: 0

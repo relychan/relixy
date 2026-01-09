@@ -36,6 +36,7 @@ func TestNewProxyHandler(t *testing.T) {
 		{
 			name: "REST handler with explicit proxy action",
 			operation: createOperationWithProxyAction(t, resthandler.RelixyRESTActionConfig{
+				Type: resthandler.ProxyActionTypeREST,
 				Request: &resthandler.RelixyRESTRequestConfig{
 					Path: "/test",
 				},
@@ -49,6 +50,7 @@ func TestNewProxyHandler(t *testing.T) {
 		{
 			name: "GraphQL handler with valid query",
 			operation: createOperationWithProxyAction(t, graphqlhandler.RelixyGraphQLActionConfig{
+				Type: graphqlhandler.ProxyTypeGraphQL,
 				Request: &graphqlhandler.RelixyGraphQLRequestConfig{
 					Query: "query { users { id name } }",
 				},
@@ -62,6 +64,7 @@ func TestNewProxyHandler(t *testing.T) {
 		{
 			name: "GraphQL handler with invalid query",
 			operation: createOperationWithProxyAction(t, graphqlhandler.RelixyGraphQLActionConfig{
+				Type: graphqlhandler.ProxyTypeGraphQL,
 				Request: &graphqlhandler.RelixyGraphQLRequestConfig{
 					Query: "invalid query {",
 				},
