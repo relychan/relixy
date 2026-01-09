@@ -29,35 +29,37 @@ definition:
           description: "Get characters"
           x-rely-proxy-action:
             type: graphql
-            request:
-              query: |
-                query GetCharacters {
-                  characters(page: 1, filter: { name: "Morty" }) {
-                    info {
-                      count
+            config:
+              request:
+                query: |
+                  query GetCharacters {
+                    characters(page: 1, filter: { name: "Morty" }) {
+                      info {
+                        count
+                      }
+                      results {
+                        name
+                      }
                     }
-                    results {
-                      name
+                    location(id: 1) {
+                      id
+                    }
+                    episodesByIds(ids: [1, 2]) {
+                      id
                     }
                   }
-                  location(id: 1) {
-                    id
-                  }
-                  episodesByIds(ids: [1, 2]) {
-                    id
-                  }
-                }
       /characters/{id}:
         get:
           operationId: getCharacters
           description: "Get character by ID"
           x-rely-proxy-action:
             type: graphql
-            request:
-              query: |
-                query Character($id: ID! = "1") {
-                  character(id: $id) {
-                    id
-                    name
+            config:
+              request:
+                query: |
+                  query Character($id: ID! = "1") {
+                    character(id: $id) {
+                      id
+                      name
+                    }
                   }
-                }

@@ -56,10 +56,6 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 		return nil, err
 	}
 
-	if proxyAction.Type != ProxyTypeGraphQL {
-		return nil, ErrProxyActionInvalid
-	}
-
 	if proxyAction.Request == nil {
 		return nil, fmt.Errorf("%w: proxy request config is required", ErrProxyActionInvalid)
 	}

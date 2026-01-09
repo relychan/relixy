@@ -218,7 +218,7 @@ func (re *RESTHandler) transformRequest(
 	return req, logAttrs, nil
 }
 
-func (re *RESTHandler) transformResponse( //nolint:revive
+func (re *RESTHandler) transformResponse(
 	resp *http.Response,
 ) (*http.Response, io.ReadCloser, []slog.Attr, error) {
 	if re.customResponse == nil || re.customResponse.Body == nil ||
