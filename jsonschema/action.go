@@ -8,7 +8,6 @@ import (
 
 	"github.com/invopop/jsonschema"
 	"github.com/relychan/relixy/proxyc/handler/graphqlhandler"
-	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 	"github.com/relychan/relixy/proxyc/handler/resthandler"
 )
 
@@ -53,8 +52,6 @@ func genRelixyActionSchema() error {
 	for _, externalType := range []any{
 		graphqlhandler.RelixyGraphQLActionConfig{},
 		resthandler.RelixyRESTActionConfig{},
-		proxyhandler.RelixyResponseConfig{},
-		graphqlhandler.GraphQLVariableDefinition{},
 	} {
 		externalSchema := r.Reflect(externalType)
 

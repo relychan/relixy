@@ -1,10 +1,16 @@
 package proxyhandler
 
 import (
+	"encoding/json"
 	"errors"
+	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/hasura/goenvconf"
 	"github.com/relychan/gotransform"
+	"github.com/relychan/goutils"
+	"github.com/relychan/goutils/httpheader"
 )
 
 var (
@@ -41,8 +47,8 @@ type OAuth2Credentials struct {
 	EndpointParams map[string]goenvconf.EnvString `json:"endpointParams,omitempty" yaml:"endpointParams,omitempty"`
 }
 
-// RelixyResponseRawConfig represents configurations for the proxy response.
-type RelixyResponseRawConfig struct {
+// RelixyCustomResponseConfig represents configurations for the proxy response.
+type RelixyCustomResponseConfig struct {
 	// HTTP error code will be used if the response body has errors.
 	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
 	HTTPErrorCode *int `json:"httpErrorCode,omitempty" yaml:"httpErrorCode,omitempty" jsonschema:"minimum=400,maximum=599,default=400"`
@@ -51,32 +57,32 @@ type RelixyResponseRawConfig struct {
 }
 
 // IsZero checks if the configuration is empty.
-func (conf RelixyResponseRawConfig) IsZero() bool {
+func (conf RelixyCustomResponseConfig) IsZero() bool {
 	return conf.HTTPErrorCode == nil &&
 		(conf.Transform == nil || conf.Transform.IsZero())
 }
 
-// RelixyResponseConfig represents configurations for the proxy response.
-type RelixyResponseConfig struct {
+// RelixyCustomResponse represents configurations for the proxy response.
+type RelixyCustomResponse struct {
 	// HTTP error code will be used if the response body has errors.
 	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
 	HTTPErrorCode *int
-	// Configurations for transforming response data.
-	Transform gotransform.TemplateTransformer
+	// Configurations for transforming response body data.
+	Body gotransform.TemplateTransformer
 }
 
-// NewRelixyResponseConfig creates a [RelixyResponseConfig] from raw configurations.
-func NewRelixyResponseConfig(
-	config *RelixyResponseRawConfig,
+// NewRelixyCustomResponse creates a [RelixyCustomResponse] from raw configurations.
+func NewRelixyCustomResponse(
+	config *RelixyCustomResponseConfig,
 	getEnv goenvconf.GetEnvFunc,
-) (RelixyResponseConfig, error) {
-	result := RelixyResponseConfig{}
-
-	if config == nil {
-		return result, nil
+) (*RelixyCustomResponse, error) {
+	if config == nil || config.IsZero() {
+		return nil, nil
 	}
 
-	result.HTTPErrorCode = config.HTTPErrorCode
+	result := &RelixyCustomResponse{
+		HTTPErrorCode: config.HTTPErrorCode,
+	}
 
 	if config.Transform != nil {
 		transformer, err := gotransform.NewTransformerFromConfig("", *config.Transform, getEnv)
@@ -84,14 +90,82 @@ func NewRelixyResponseConfig(
 			return result, err
 		}
 
-		result.Transform = transformer
+		result.Body = transformer
 	}
 
 	return result, nil
 }
 
 // IsZero checks if the configuration is empty.
-func (conf RelixyResponseConfig) IsZero() bool {
+func (conf RelixyCustomResponse) IsZero() bool {
 	return conf.HTTPErrorCode == nil &&
-		(conf.Transform == nil || conf.Transform.IsZero())
+		(conf.Body == nil || conf.Body.IsZero())
+}
+
+// RequestTemplateData represents the request data for template transformation.
+type RequestTemplateData struct {
+	Params      map[string]string
+	QueryParams url.Values
+	Headers     map[string]string
+	Body        any
+}
+
+// NewRequestTemplateData creates a new [RequestTemplateData] from the HTTP request to a map for request transformation.
+func NewRequestTemplateData(
+	request *http.Request,
+	contentType string,
+	paramValues map[string]string,
+) (*RequestTemplateData, bool, error) {
+	requestHeaders := map[string]string{}
+
+	for key, header := range request.Header {
+		if len(header) == 0 {
+			continue
+		}
+
+		requestHeaders[strings.ToLower(key)] = header[0]
+	}
+
+	requestData := &RequestTemplateData{
+		Params:      paramValues,
+		QueryParams: request.URL.Query(),
+		Headers:     requestHeaders,
+	}
+
+	if request.Body == nil || request.Body == http.NoBody {
+		return requestData, true, nil
+	}
+
+	switch {
+	case strings.HasPrefix(contentType, httpheader.ContentTypeJSON):
+		defer goutils.CatchWarnErrorFunc(request.Body.Close)
+
+		var body any
+
+		err := json.NewDecoder(request.Body).Decode(&body)
+		if err != nil {
+			return nil, true, err
+		}
+
+		requestData.Body = body
+	default:
+		// skip other content types.
+	}
+
+	return requestData, false, nil
+}
+
+// ToMap converts the struct to map.
+func (rtd RequestTemplateData) ToMap() map[string]any {
+	result := map[string]any{
+		"param":   rtd.Params,
+		"query":   rtd.QueryParams,
+		"headers": rtd.Headers,
+	}
+
+	if rtd.Body != nil {
+		result["body"] = rtd.Body
+	}
+
+	return result
 }

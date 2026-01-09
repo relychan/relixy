@@ -1,11 +1,9 @@
 package graphqlhandler
 
 import (
-	"net/url"
-
 	"github.com/hasura/goenvconf"
-	"github.com/invopop/jsonschema"
-	orderedmap "github.com/pb33f/ordered-map/v2"
+	"github.com/relychan/gotransform"
+	"github.com/relychan/gotransform/jmes"
 	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 )
 
@@ -20,33 +18,6 @@ type GraphQLRequestBody struct {
 	Extensions    map[string]any `json:"extensions,omitempty"`
 }
 
-type graphqlVariable struct {
-	Path    string
-	Default any
-}
-
-type requestTemplateData struct {
-	Params      map[string]string
-	QueryParams url.Values
-	Headers     map[string]string
-	Body        any
-}
-
-// ToMap converts the struct to map.
-func (rtd requestTemplateData) ToMap() map[string]any {
-	result := map[string]any{
-		"param":   rtd.Params,
-		"query":   rtd.QueryParams,
-		"headers": rtd.Headers,
-	}
-
-	if rtd.Body != nil {
-		result["body"] = rtd.Body
-	}
-
-	return result
-}
-
 // RelixyGraphQLActionConfig represents a proxy action config for GraphQL.
 type RelixyGraphQLActionConfig struct {
 	// Type of the proxy action which is always graphql
@@ -54,15 +25,7 @@ type RelixyGraphQLActionConfig struct {
 	// Configurations for the GraphQL proxy request.
 	Request *RelixyGraphQLRequestConfig `json:"request" yaml:"request"`
 	// Configurations for evaluating graphql responses.
-	Response *proxyhandler.RelixyResponseRawConfig `json:"response" yaml:"response"`
-}
-
-// GraphQLVariableDefinition defines information of the GraphQL variable.
-type GraphQLVariableDefinition struct {
-	// JMESPath to evaluate the variable from request.
-	Path string `json:"path,omitempty" yaml:"path,omitempty"`
-	// Default value if the path or value is empty.
-	Default *goenvconf.EnvAny `json:"default,omitempty" yaml:"default,omitempty"`
+	Response *proxyhandler.RelixyCustomResponseConfig `json:"response" yaml:"response"`
 }
 
 // RelixyGraphQLRequestConfig represents configurations for the proxy request.
@@ -70,27 +33,62 @@ type RelixyGraphQLRequestConfig struct {
 	// GraphQL query
 	Query string `json:"query,omitempty" yaml:"query,omitempty"`
 	// Definition of GraphQL variables.
-	Variables *orderedmap.OrderedMap[string, *GraphQLVariableDefinition] `json:"variables,omitempty" yaml:"variables,omitempty"`
+	Variables map[string]jmes.FieldMappingEntryConfig `json:"variables,omitempty" yaml:"variables,omitempty"`
 	// Definition of GraphQL extensions.
-	Extensions *orderedmap.OrderedMap[string, *GraphQLVariableDefinition] `json:"extensions,omitempty" yaml:"extensions,omitempty"`
+	Extensions map[string]jmes.FieldMappingEntryConfig `json:"extensions,omitempty" yaml:"extensions,omitempty"`
 }
 
-// JSONSchemaExtend modifies the JSON schema afterwards.
-func (RelixyGraphQLRequestConfig) JSONSchemaExtend(schema *jsonschema.Schema) {
-	schema.Properties.
-		Set("variables", &jsonschema.Schema{
-			Description: "Definition of GraphQL variables.",
-			Type:        "object",
-			AdditionalProperties: &jsonschema.Schema{
-				Ref: "#/$defs/GraphQLVariableDefinition",
-			},
-		})
-	schema.Properties.
-		Set("extensions", &jsonschema.Schema{
-			Description: "Definition of GraphQL extensions.",
-			Type:        "object",
-			AdditionalProperties: &jsonschema.Schema{
-				Ref: "#/$defs/GraphQLVariableDefinition",
-			},
-		})
+// RelixyCustomGraphQLResponseConfig represents configurations for the proxy response.
+type RelixyCustomGraphQLResponseConfig struct {
+	// HTTP error code will be used if the response body has errors.
+	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
+	HTTPErrorCode *int `json:"httpErrorCode,omitempty" yaml:"httpErrorCode,omitempty" jsonschema:"minimum=400,maximum=599,default=400"`
+	// Configurations for transforming response data.
+	Body *gotransform.TemplateTransformerConfig `json:"body,omitempty" yaml:"body,omitempty"`
+}
+
+// IsZero checks if the configuration is empty.
+func (conf RelixyCustomGraphQLResponseConfig) IsZero() bool {
+	return conf.HTTPErrorCode == nil &&
+		(conf.Body == nil || conf.Body.IsZero())
+}
+
+// RelixyCustomGraphQLResponse represents configurations for the proxy response.
+type RelixyCustomGraphQLResponse struct {
+	// HTTP error code will be used if the response body has errors.
+	// If not set, forward the HTTP status from the GraphQL response which is usually 200 OK.
+	HTTPErrorCode *int
+	// Configurations for transforming response body data.
+	Body gotransform.TemplateTransformer
+}
+
+// NewRelixyResponse creates a [RelixyResponseConfig] from raw configurations.
+func NewRelixyResponse(
+	config *RelixyCustomGraphQLResponseConfig,
+	getEnv goenvconf.GetEnvFunc,
+) (RelixyCustomGraphQLResponse, error) {
+	result := RelixyCustomGraphQLResponse{}
+
+	if config == nil {
+		return result, nil
+	}
+
+	result.HTTPErrorCode = config.HTTPErrorCode
+
+	if config.Body != nil {
+		transformer, err := gotransform.NewTransformerFromConfig("", *config.Body, getEnv)
+		if err != nil {
+			return result, err
+		}
+
+		result.Body = transformer
+	}
+
+	return result, nil
+}
+
+// IsZero checks if the configuration is empty.
+func (conf RelixyCustomGraphQLResponse) IsZero() bool {
+	return conf.HTTPErrorCode == nil &&
+		(conf.Body == nil || conf.Body.IsZero())
 }

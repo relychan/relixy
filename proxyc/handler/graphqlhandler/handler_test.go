@@ -4,6 +4,9 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/relychan/gotransform/jmes"
+	"github.com/relychan/goutils"
+	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 	"github.com/vektah/gqlparser/ast"
 	"gotest.tools/v3/assert"
 )
@@ -12,7 +15,7 @@ func TestTransformRequest(t *testing.T) {
 	testCases := []struct {
 		Name         string
 		Handler      GraphQLHandler
-		TemplateData requestTemplateData
+		TemplateData proxyhandler.RequestTemplateData
 		Expected     map[string]any
 	}{
 		{
@@ -28,13 +31,13 @@ func TestTransformRequest(t *testing.T) {
 						Variable: "name",
 					},
 				},
-				variables: map[string]graphqlVariable{
+				variables: map[string]jmes.FieldMappingEntry{
 					"name": {
-						Path: "param.name",
+						Path: goutils.ToPtr("param.name"),
 					},
 				},
 			},
-			TemplateData: requestTemplateData{
+			TemplateData: proxyhandler.RequestTemplateData{
 				Params: map[string]string{
 					"name": "Queen",
 				},
@@ -54,16 +57,16 @@ func TestTransformRequest(t *testing.T) {
 						Variable: "offset",
 					},
 				},
-				variables: map[string]graphqlVariable{
+				variables: map[string]jmes.FieldMappingEntry{
 					"limit": {
-						Path: "query.limit[0]",
+						Path: goutils.ToPtr("query.limit[0]"),
 					},
 					"offset": {
-						Path: "query.offset[0]",
+						Path: goutils.ToPtr("query.offset[0]"),
 					},
 				},
 			},
-			TemplateData: requestTemplateData{
+			TemplateData: proxyhandler.RequestTemplateData{
 				QueryParams: map[string][]string{
 					"limit":  {"10"},
 					"offset": {"1"},
@@ -82,14 +85,14 @@ func TestTransformRequest(t *testing.T) {
 						Variable: "status",
 					},
 				},
-				variables: map[string]graphqlVariable{
+				variables: map[string]jmes.FieldMappingEntry{
 					"status": {
-						Path:    "param.status",
+						Path:    goutils.ToPtr("param.status"),
 						Default: "active",
 					},
 				},
 			},
-			TemplateData: requestTemplateData{
+			TemplateData: proxyhandler.RequestTemplateData{
 				Params: map[string]string{},
 			},
 			Expected: map[string]any{
@@ -104,9 +107,9 @@ func TestTransformRequest(t *testing.T) {
 						Variable: "body",
 					},
 				},
-				variables: map[string]graphqlVariable{},
+				variables: map[string]jmes.FieldMappingEntry{},
 			},
-			TemplateData: requestTemplateData{
+			TemplateData: proxyhandler.RequestTemplateData{
 				Body: map[string]any{
 					"name": "test",
 				},
@@ -134,7 +137,7 @@ func TestGraphQLHandler_Type(t *testing.T) {
 }
 
 func TestRequestTemplateData_ToMap(t *testing.T) {
-	data := requestTemplateData{
+	data := proxyhandler.RequestTemplateData{
 		Params: map[string]string{
 			"id": "123",
 		},
@@ -161,27 +164,27 @@ func TestResolveRequestExtensions(t *testing.T) {
 	testCases := []struct {
 		name         string
 		handler      GraphQLHandler
-		templateData requestTemplateData
+		templateData proxyhandler.RequestTemplateData
 		expected     map[string]any
 	}{
 		{
 			name: "empty extensions",
 			handler: GraphQLHandler{
-				extensions: map[string]graphqlVariable{},
+				extensions: map[string]jmes.FieldMappingEntry{},
 			},
-			templateData: requestTemplateData{},
+			templateData: proxyhandler.RequestTemplateData{},
 			expected:     map[string]any{},
 		},
 		{
 			name: "extension with path",
 			handler: GraphQLHandler{
-				extensions: map[string]graphqlVariable{
+				extensions: map[string]jmes.FieldMappingEntry{
 					"tracing": {
-						Path: "headers.x_trace_id",
+						Path: goutils.ToPtr("headers.x_trace_id"),
 					},
 				},
 			},
-			templateData: requestTemplateData{
+			templateData: proxyhandler.RequestTemplateData{
 				Headers: map[string]string{
 					"x_trace_id": "trace-123",
 				},
@@ -193,13 +196,13 @@ func TestResolveRequestExtensions(t *testing.T) {
 		{
 			name: "extension with default value",
 			handler: GraphQLHandler{
-				extensions: map[string]graphqlVariable{
+				extensions: map[string]jmes.FieldMappingEntry{
 					"version": {
 						Default: "1.0",
 					},
 				},
 			},
-			templateData: requestTemplateData{},
+			templateData: proxyhandler.RequestTemplateData{},
 			expected: map[string]any{
 				"version": "1.0",
 			},

@@ -12,14 +12,6 @@ import (
 	"go.yaml.in/yaml/v4"
 )
 
-// RelixyHandleOptions hold request options for the proxy handler.
-type RelixyHandleOptions struct {
-	NewRequest  NewRequestFunc
-	Settings    *openapi.RelixyOpenAPISettings
-	Path        string
-	ParamValues map[string]string
-}
-
 // RelixyHandler abstracts the executor to proxy HTTP requests.
 type RelixyHandler interface {
 	// Type returns type of the current handler.
@@ -53,3 +45,11 @@ type NewRelixyHandlerFunc func(operation *highv3.Operation, rawProxyAction *yaml
 
 // NewRequestFunc abstracts a function to create an HTTP request.
 type NewRequestFunc func(method string, url string) *gohttpc.RequestWithClient
+
+// RelixyHandleOptions hold request options for the proxy handler.
+type RelixyHandleOptions struct {
+	NewRequest  NewRequestFunc
+	Settings    *openapi.RelixyOpenAPISettings
+	Path        string
+	ParamValues map[string]string
+}
