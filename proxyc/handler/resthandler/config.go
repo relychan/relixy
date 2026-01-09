@@ -14,7 +14,7 @@ const ProxyActionTypeREST proxyhandler.ProxyActionType = "rest"
 
 // RelixyRESTActionConfig represents a proxy action config for REST operation.
 type RelixyRESTActionConfig struct {
-	// Type of the proxy action which is always rest
+	// Type of the proxy action which is always rest.
 	Type proxyhandler.ProxyActionType `json:"type" yaml:"type" jsonschema:"enum=rest"`
 	// Configurations for the REST proxy request.
 	Request *RelixyRESTRequestConfig `json:"request,omitempty" yaml:"request,omitempty"`
@@ -69,7 +69,7 @@ type RelixyRESTRequestConfig struct {
 	// Overrides the request path. Use the original request path if empty.
 	Path string `json:"path,omitempty" yaml:"path,omitempty"`
 	// The configuration to transform request headers.
-	Headers map[string]jmes.FieldMappingEntryStringConfig `json:"additional,omitempty" yaml:"additional,omitempty"`
+	Headers map[string]jmes.FieldMappingEntryStringConfig `json:"headers,omitempty" yaml:"headers,omitempty"`
 	// The configuration to transform request body.
 	Body *gotransform.TemplateTransformerConfig `json:"body,omitempty" yaml:"body,omitempty"`
 }
@@ -78,7 +78,7 @@ type RelixyRESTRequestConfig struct {
 func (rr RelixyRESTRequestConfig) IsZero() bool {
 	return rr.Path == "" &&
 		len(rr.Headers) == 0 &&
-		rr.Body == nil
+		(rr.Body == nil || rr.Body.IsZero())
 }
 
 type customRESTRequest struct {

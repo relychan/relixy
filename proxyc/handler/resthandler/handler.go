@@ -193,9 +193,9 @@ func (re *RESTHandler) transformRequest(
 		}
 	}
 
-	if !alreadyRead || (re.customRequest.Body == nil && !re.customRequest.Body.IsZero()) {
+	if !alreadyRead || re.customRequest.Body == nil || re.customRequest.Body.IsZero() {
 		if !alreadyRead {
-			// unsupported content types will be ignore,
+			// unsupported content types will be ignored,
 			// the client proxies the raw request to the remote service.
 			req.SetBody(request.Body)
 		}
