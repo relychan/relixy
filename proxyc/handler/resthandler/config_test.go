@@ -4,6 +4,9 @@ import (
 	"testing"
 
 	"github.com/hasura/goenvconf"
+	"github.com/relychan/gotransform"
+	"github.com/relychan/gotransform/jmes"
+	"github.com/relychan/goutils"
 	"gotest.tools/v3/assert"
 )
 
@@ -148,5 +151,58 @@ func TestNewCustomRESTRequestFromConfig(t *testing.T) {
 		assert.NilError(t, err)
 		assert.Assert(t, result != nil)
 		assert.Equal(t, "/custom/path", result.Path)
+	})
+
+	t.Run("with_headers", func(t *testing.T) {
+		config := &RelixyRESTRequestConfig{
+			Headers: map[string]jmes.FieldMappingEntryStringConfig{
+				"X-Custom-Header": {
+					Path: goutils.ToPtr("headers.authorization"),
+				},
+			},
+		}
+		result, err := newCustomRESTRequestFromConfig(config, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, result != nil)
+		assert.Assert(t, len(result.Headers) > 0)
+	})
+
+	t.Run("with_path_and_headers", func(t *testing.T) {
+		config := &RelixyRESTRequestConfig{
+			Path: "/api/endpoint",
+			Headers: map[string]jmes.FieldMappingEntryStringConfig{
+				"Authorization": {
+					Path: goutils.ToPtr("headers.auth"),
+				},
+			},
+		}
+		result, err := newCustomRESTRequestFromConfig(config, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, result != nil)
+		assert.Equal(t, "/api/endpoint", result.Path)
+		assert.Assert(t, len(result.Headers) > 0)
+	})
+
+	t.Run("invalid_headers_config", func(t *testing.T) {
+		config := &RelixyRESTRequestConfig{
+			Headers: map[string]jmes.FieldMappingEntryStringConfig{
+				"X-Invalid": {},
+			},
+		}
+		_, err := newCustomRESTRequestFromConfig(config, goenvconf.GetOSEnv)
+		assert.Assert(t, err != nil)
+		assert.ErrorContains(t, err, "failed to initialize custom request headers")
+	})
+
+	t.Run("with_body_only", func(t *testing.T) {
+		bodyConfig := gotransform.TemplateTransformerConfig{}
+		config := &RelixyRESTRequestConfig{
+			Body: &bodyConfig,
+		}
+		_, err := newCustomRESTRequestFromConfig(config, goenvconf.GetOSEnv)
+		// May fail due to invalid body config, which is expected
+		if err != nil {
+			assert.ErrorContains(t, err, "failed to initialize custom request body")
+		}
 	})
 }

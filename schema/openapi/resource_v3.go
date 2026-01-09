@@ -52,7 +52,7 @@ func (RelixyOpenAPIv3ResourceDefinition) JSONSchemaExtend(schema *jsonschema.Sch
 	schema.Properties.
 		Set("spec", &jsonschema.Schema{
 			Description: "Specification of the OpenAPI v3 documentation.",
-			Ref:         "openapi-3.json",
+			Ref:         "https://raw.githubusercontent.com/relychan/relixy/refs/heads/main/jsonschema/openapi-3.json",
 		})
 }
 
