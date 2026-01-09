@@ -267,3 +267,646 @@ func TestGetAuthenticatorWithNoSchemes(t *testing.T) {
 	result := auth.GetAuthenticator(nil)
 	assert.Assert(t, result == nil)
 }
+
+// TestGetAuthenticator_WithSecurityRequirements tests GetAuthenticator with various security requirements
+func TestGetAuthenticator_WithSecurityRequirements(t *testing.T) {
+	t.Run("with_matching_security_requirement", func(t *testing.T) {
+		// Create an authenticator with a scheme
+		apiKeyValue := goenvconf.NewEnvStringValue("test-key")
+		creds := APIKeyCredentials{
+			APIKey: &apiKeyValue,
+		}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("api_key", &highv3.SecurityScheme{
+			Type:       "apiKey",
+			Name:       "X-API-Key",
+			In:         "header",
+			Extensions: extensions,
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+
+		// Create security requirement
+		requirements := orderedmap.New[string, []string]()
+		requirements.Set("api_key", []string{})
+
+		security := []*base.SecurityRequirement{
+			{
+				Requirements: requirements,
+			},
+		}
+
+		result := auth.GetAuthenticator(security)
+		assert.Assert(t, result != nil)
+	})
+
+	t.Run("with_empty_requirement_optional", func(t *testing.T) {
+		apiKeyValue := goenvconf.NewEnvStringValue("test-key")
+		creds := APIKeyCredentials{
+			APIKey: &apiKeyValue,
+		}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("api_key", &highv3.SecurityScheme{
+			Type:       "apiKey",
+			Name:       "X-API-Key",
+			In:         "header",
+			Extensions: extensions,
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+
+		security := []*base.SecurityRequirement{
+			{
+				ContainsEmptyRequirement: true,
+			},
+		}
+
+		result := auth.GetAuthenticator(security)
+		assert.Assert(t, result == nil)
+	})
+
+	t.Run("with_default_authenticator", func(t *testing.T) {
+		apiKeyValue := goenvconf.NewEnvStringValue("test-key")
+		creds := APIKeyCredentials{
+			APIKey: &apiKeyValue,
+		}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("api_key", &highv3.SecurityScheme{
+			Type:       "apiKey",
+			Name:       "X-API-Key",
+			In:         "header",
+			Extensions: extensions,
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+
+		// Create security requirement with non-matching name
+		requirements := orderedmap.New[string, []string]()
+		requirements.Set("other_key", []string{})
+
+		security := []*base.SecurityRequirement{
+			{
+				Requirements: requirements,
+			},
+		}
+
+		result := auth.GetAuthenticator(security)
+		assert.Assert(t, result != nil) // Should return default authenticator
+	})
+}
+
+// TestCreateOAuthAuthenticator tests OAuth2 authenticator creation
+func TestCreateOAuthAuthenticator(t *testing.T) {
+	t.Run("with_valid_oauth2_client_credentials", func(t *testing.T) {
+		clientID := goenvconf.NewEnvStringValue("test-client-id")
+		clientSecret := goenvconf.NewEnvStringValue("test-client-secret")
+		creds := OAuth2Credentials{
+			ClientID:     &clientID,
+			ClientSecret: &clientSecret,
+		}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("oauth2", &highv3.SecurityScheme{
+			Type: "oauth2",
+			Flows: &highv3.OAuthFlows{
+				ClientCredentials: &highv3.OAuthFlow{
+					TokenUrl:   "https://example.com/token",
+					Extensions: extensions,
+				},
+			},
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		assert.Equal(t, 1, len(auth.securitySchemes))
+	})
+
+	t.Run("with_oauth2_missing_client_id", func(t *testing.T) {
+		clientSecret := goenvconf.NewEnvStringValue("test-client-secret")
+		creds := OAuth2Credentials{
+			ClientSecret: &clientSecret,
+		}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("oauth2", &highv3.SecurityScheme{
+			Type: "oauth2",
+			Flows: &highv3.OAuthFlows{
+				ClientCredentials: &highv3.OAuthFlow{
+					TokenUrl:   "https://example.com/token",
+					Extensions: extensions,
+				},
+			},
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		_, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.ErrorContains(t, err, "clientId and clientSecret must not be empty")
+	})
+
+	t.Run("with_oauth2_no_token_url", func(t *testing.T) {
+		clientID := goenvconf.NewEnvStringValue("test-client-id")
+		clientSecret := goenvconf.NewEnvStringValue("test-client-secret")
+		creds := OAuth2Credentials{
+			ClientID:     &clientID,
+			ClientSecret: &clientSecret,
+		}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("oauth2", &highv3.SecurityScheme{
+			Type: "oauth2",
+			Flows: &highv3.OAuthFlows{
+				ClientCredentials: &highv3.OAuthFlow{
+					Extensions: extensions,
+				},
+			},
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		_, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.ErrorContains(t, err, "tokenUrl is required")
+	})
+
+	t.Run("with_oauth2_no_flows", func(t *testing.T) {
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("oauth2", &highv3.SecurityScheme{
+			Type: "oauth2",
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		// Should not create authenticator without flows
+		assert.Equal(t, 0, len(auth.securitySchemes))
+	})
+
+	t.Run("with_oauth2_refresh_url", func(t *testing.T) {
+		clientID := goenvconf.NewEnvStringValue("test-client-id")
+		clientSecret := goenvconf.NewEnvStringValue("test-client-secret")
+		creds := OAuth2Credentials{
+			ClientID:     &clientID,
+			ClientSecret: &clientSecret,
+		}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("oauth2", &highv3.SecurityScheme{
+			Type: "oauth2",
+			Flows: &highv3.OAuthFlows{
+				ClientCredentials: &highv3.OAuthFlow{
+					TokenUrl:   "https://example.com/token",
+					RefreshUrl: "https://example.com/refresh",
+					Extensions: extensions,
+				},
+			},
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		assert.Equal(t, 1, len(auth.securitySchemes))
+	})
+
+	t.Run("with_oauth2_custom_token_location", func(t *testing.T) {
+		clientID := goenvconf.NewEnvStringValue("test-client-id")
+		clientSecret := goenvconf.NewEnvStringValue("test-client-secret")
+		creds := OAuth2Credentials{
+			ClientID:     &clientID,
+			ClientSecret: &clientSecret,
+		}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("oauth2", &highv3.SecurityScheme{
+			Type:   "oauth2",
+			Name:   "X-Custom-Token",
+			In:     "header",
+			Scheme: "custom",
+			Flows: &highv3.OAuthFlows{
+				ClientCredentials: &highv3.OAuthFlow{
+					TokenUrl:   "https://example.com/token",
+					Extensions: extensions,
+				},
+			},
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		assert.Equal(t, 1, len(auth.securitySchemes))
+	})
+}
+
+// TestStaticAuthenticator tests static authenticator creation with various schemes
+func TestStaticAuthenticator(t *testing.T) {
+	t.Run("with_api_key_in_query", func(t *testing.T) {
+		tokenValue := goenvconf.NewEnvStringValue("test-token")
+		creds := APIKeyCredentials{
+			APIKey: &tokenValue,
+		}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("api_key", &highv3.SecurityScheme{
+			Type:       "apiKey",
+			In:         "query",
+			Name:       "access_token",
+			Extensions: extensions,
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		assert.Equal(t, 1, len(auth.securitySchemes))
+	})
+
+	t.Run("with_api_key_in_cookie", func(t *testing.T) {
+		tokenValue := goenvconf.NewEnvStringValue("test-token")
+		creds := APIKeyCredentials{
+			APIKey: &tokenValue,
+		}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("api_key", &highv3.SecurityScheme{
+			Type:       "apiKey",
+			In:         "cookie",
+			Name:       "auth_token",
+			Extensions: extensions,
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		assert.Equal(t, 1, len(auth.securitySchemes))
+	})
+
+	t.Run("with_invalid_location", func(t *testing.T) {
+		tokenValue := goenvconf.NewEnvStringValue("test-token")
+		creds := APIKeyCredentials{
+			APIKey: &tokenValue,
+		}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("api_key", &highv3.SecurityScheme{
+			Type:       "apiKey",
+			In:         "invalid_location",
+			Name:       "token",
+			Extensions: extensions,
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		_, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.ErrorContains(t, err, "invalid AuthLocation")
+	})
+}
+
+// TestUnsupportedSecuritySchemes tests unsupported security scheme types
+func TestUnsupportedSecuritySchemes(t *testing.T) {
+	t.Run("with_openIdConnect_scheme", func(t *testing.T) {
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("oidc", &highv3.SecurityScheme{
+			Type:             "openIdConnect",
+			OpenIdConnectUrl: "https://example.com/.well-known/openid-configuration",
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		// OpenID Connect is not supported, so no authenticator should be created
+		assert.Equal(t, 0, len(auth.securitySchemes))
+	})
+
+	t.Run("with_mutualTLS_scheme", func(t *testing.T) {
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("mtls", &highv3.SecurityScheme{
+			Type: "mutualTLS",
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		// Mutual TLS is not supported, so no authenticator should be created
+		assert.Equal(t, 0, len(auth.securitySchemes))
+	})
+}
+
+// TestSecuritySchemesWithoutCredentials tests security schemes without credentials
+func TestSecuritySchemesWithoutCredentials(t *testing.T) {
+	t.Run("with_api_key_no_credentials", func(t *testing.T) {
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("api_key", &highv3.SecurityScheme{
+			Type: "apiKey",
+			Name: "X-API-Key",
+			In:   "header",
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		// No credentials, so no authenticator should be created
+		assert.Equal(t, 0, len(auth.securitySchemes))
+	})
+
+	t.Run("with_basic_auth_no_credentials", func(t *testing.T) {
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("basic", &highv3.SecurityScheme{
+			Type:   "http",
+			Scheme: "basic",
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		// No credentials, so no authenticator should be created
+		assert.Equal(t, 0, len(auth.securitySchemes))
+	})
+
+	t.Run("with_basic_auth_empty_credentials", func(t *testing.T) {
+		creds := BasicCredentials{}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("basic", &highv3.SecurityScheme{
+			Type:       "http",
+			Scheme:     "basic",
+			Extensions: extensions,
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		// Empty credentials, so no authenticator should be created
+		assert.Equal(t, 0, len(auth.securitySchemes))
+	})
+
+	t.Run("with_api_key_empty_credentials", func(t *testing.T) {
+		creds := APIKeyCredentials{}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("api_key", &highv3.SecurityScheme{
+			Type:       "apiKey",
+			Name:       "X-API-Key",
+			In:         "header",
+			Extensions: extensions,
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		// Empty credentials, so no authenticator should be created
+		assert.Equal(t, 0, len(auth.securitySchemes))
+	})
+}
+
+// TestHTTPBearerScheme tests HTTP bearer authentication
+func TestHTTPBearerScheme(t *testing.T) {
+	t.Run("with_http_bearer_token", func(t *testing.T) {
+		tokenValue := goenvconf.NewEnvStringValue("test-bearer-token")
+		creds := APIKeyCredentials{
+			APIKey: &tokenValue,
+		}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("bearer", &highv3.SecurityScheme{
+			Type:       "http",
+			Scheme:     "bearer",
+			Name:       "Authorization",
+			Extensions: extensions,
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		assert.Equal(t, 1, len(auth.securitySchemes))
+	})
+
+	t.Run("with_http_custom_scheme", func(t *testing.T) {
+		tokenValue := goenvconf.NewEnvStringValue("test-token")
+		creds := APIKeyCredentials{
+			APIKey: &tokenValue,
+		}
+		credsData, _ := yaml.Marshal(creds)
+		var credsNode yaml.Node
+		_ = yaml.Unmarshal(credsData, &credsNode)
+
+		extensions := orderedmap.New[string, *yaml.Node]()
+		extensions.Set(openapi.XRelySecurityCredentials, &credsNode)
+
+		securitySchemes := orderedmap.New[string, *highv3.SecurityScheme]()
+		securitySchemes.Set("custom", &highv3.SecurityScheme{
+			Type:       "http",
+			Scheme:     "custom-scheme",
+			Name:       "X-Custom-Auth",
+			Extensions: extensions,
+		})
+
+		doc := &highv3.Document{
+			Components: &highv3.Components{
+				SecuritySchemes: securitySchemes,
+			},
+		}
+
+		auth, err := NewOpenAPIv3Authenticator(doc, goenvconf.GetOSEnv)
+		assert.NilError(t, err)
+		assert.Assert(t, auth != nil)
+		assert.Equal(t, 1, len(auth.securitySchemes))
+	})
+}

@@ -159,7 +159,7 @@ func TestNewRequestTemplateData(t *testing.T) {
 
 		data, alreadyRead, err := NewRequestTemplateData(req, "application/json", paramValues)
 		assert.NilError(t, err)
-		assert.Assert(t, !alreadyRead)
+		assert.Assert(t, alreadyRead)
 		assert.Assert(t, data != nil)
 		assert.Equal(t, "123", data.Params["id"])
 

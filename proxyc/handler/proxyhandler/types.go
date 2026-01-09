@@ -92,6 +92,8 @@ func NewRequestTemplateData(
 		}
 
 		requestData.Body = body
+
+		return requestData, true, nil
 	default:
 		// skip other content types.
 	}
