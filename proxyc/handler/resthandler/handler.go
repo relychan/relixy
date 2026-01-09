@@ -111,7 +111,7 @@ func (re *RESTHandler) Handle(
 	logAttrs = append(logAttrs, slog.Int("response_status", resp.StatusCode))
 
 	if re.customResponse == nil || re.customResponse.IsZero() ||
-		(resp.StatusCode < 200 && resp.StatusCode >= 300) ||
+		(resp.StatusCode < 200 || resp.StatusCode >= 300) ||
 		resp.Header.Get(httpheader.ContentType) != httpheader.ContentTypeJSON {
 		printDebugLog(
 			ctx, request,
