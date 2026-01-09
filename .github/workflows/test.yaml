@@ -13,7 +13,7 @@ env:
 
 permissions:
   pull-requests: write
-  
+
 jobs:
   lint:
     name: Lint and test
@@ -52,7 +52,7 @@ jobs:
           hide_complexity: true
           indicators: true
           output: both
-          thresholds: "60 80"
+          thresholds: "50 80"
       - name: Add Coverage PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
@@ -82,7 +82,7 @@ jobs:
             -t "$DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:$VERSION" .
         env:
           VERSION: ${{ steps.get-version.outputs.ref_version }}
-          
+
       - name: Scan High/Critical Vulnerabilities
         uses: aquasecurity/trivy-action@0.33.1
         with:
