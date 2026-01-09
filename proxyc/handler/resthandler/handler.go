@@ -122,7 +122,7 @@ func (re *RESTHandler) Handle(
 		return resp, resp.Body, err
 	}
 
-	newResp, respBody, respLogAttrs, err := re.transformResponse(resp)
+	newResp, respLogAttrs, err := re.transformResponse(resp)
 	logAttrs = append(logAttrs, respLogAttrs...)
 
 	if err != nil {
@@ -140,7 +140,7 @@ func (re *RESTHandler) Handle(
 
 	printDebugLog(ctx, request, resp.Status, logAttrs)
 
-	return newResp, respBody, err
+	return newResp, newResp.Body, err
 }
 
 func (re *RESTHandler) transformRequest(
@@ -220,20 +220,20 @@ func (re *RESTHandler) transformRequest(
 
 func (re *RESTHandler) transformResponse(
 	resp *http.Response,
-) (*http.Response, io.ReadCloser, []slog.Attr, error) {
+) (*http.Response, []slog.Attr, error) {
 	if re.customResponse == nil || re.customResponse.Body == nil ||
 		re.customResponse.Body.IsZero() {
-		return resp, resp.Body, nil, nil
+		return resp, nil, nil
 	}
-
-	defer goutils.CatchWarnErrorFunc(resp.Body.Close)
 
 	var responseBody any
 
 	if resp.Body != nil {
 		err := json.NewDecoder(resp.Body).Decode(&responseBody)
+		goutils.CatchWarnErrorFunc(resp.Body.Close)
+
 		if err != nil {
-			return resp, nil, nil, fmt.Errorf("failed to decode http response: %w", err)
+			return resp, nil, fmt.Errorf("failed to decode http response: %w", err)
 		}
 	}
 
@@ -242,7 +242,7 @@ func (re *RESTHandler) transformResponse(
 
 	transformedBody, err := re.customResponse.Body.Transform(responseBody)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	responseLogAttrs = append(responseLogAttrs, slog.Any("response_body", transformedBody))
@@ -251,10 +251,12 @@ func (re *RESTHandler) transformResponse(
 
 	err = json.NewEncoder(buf).Encode(transformedBody)
 	if err != nil {
-		return resp, nil, nil, fmt.Errorf("failed to decode transformed response: %w", err)
+		return resp, nil, fmt.Errorf("failed to decode transformed response: %w", err)
 	}
 
-	return resp, io.NopCloser(buf), responseLogAttrs, err
+	resp.Body = io.NopCloser(buf)
+
+	return resp, responseLogAttrs, err
 }
 
 func printDebugLog(
