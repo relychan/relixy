@@ -124,7 +124,7 @@ func TestTransformRequest(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			result, err := tc.Handler.resolveRequestVariables(&tc.TemplateData)
+			result, err := tc.Handler.resolveRequestVariables(&tc.TemplateData, tc.TemplateData.ToMap())
 			assert.NilError(t, err)
 			assert.DeepEqual(t, tc.Expected, result)
 		})
@@ -211,7 +211,7 @@ func TestResolveRequestExtensions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := tc.handler.resolveRequestExtensions(&tc.templateData)
+			result, err := tc.handler.resolveRequestExtensions(tc.templateData.ToMap())
 			assert.NilError(t, err)
 			assert.DeepEqual(t, tc.expected, result)
 		})

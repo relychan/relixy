@@ -32,9 +32,11 @@ type GraphQLHandler struct {
 	query               string
 	operation           ast.Operation
 	variableDefinitions ast.VariableDefinitionList
-	variables           map[string]jmes.FieldMappingEntry
-	extensions          map[string]jmes.FieldMappingEntry
-	customResponse      *RelixyCustomGraphQLResponse
+	// The configuration to transform request headers.
+	headers        map[string]jmes.FieldMappingEntryString
+	variables      map[string]jmes.FieldMappingEntry
+	extensions     map[string]jmes.FieldMappingEntry
+	customResponse *RelixyCustomGraphQLResponse
 }
 
 // NewGraphQLHandler creates a GraphQL request from operation.
@@ -70,12 +72,20 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 	getEnvFunc := options.GetEnvFunc()
 	handler.parameters = openapi.MergeParameters(options.Parameters, operation.Parameters)
 
+	handler.headers, err = jmes.EvaluateObjectFieldMappingStringEntries(
+		proxyAction.Request.Headers,
+		getEnvFunc,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize custom request headers config: %w", err)
+	}
+
 	handler.variables, err = jmes.EvaluateObjectFieldMappingEntries(
 		proxyAction.Request.Variables,
 		getEnvFunc,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize request variables config: %w", err)
+		return nil, fmt.Errorf("failed to initialize custom request variables config: %w", err)
 	}
 
 	handler.extensions, err = jmes.EvaluateObjectFieldMappingEntries(
@@ -83,7 +93,7 @@ func NewGraphQLHandler( //nolint:ireturn,nolintlint
 		getEnvFunc,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize request extensions config: %w", err)
+		return nil, fmt.Errorf("failed to initialize custom request extensions config: %w", err)
 	}
 
 	handler.customResponse, err = NewRelixyCustomGraphQLResponse(
@@ -141,7 +151,9 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 		return nil, nil, err
 	}
 
-	variables, err := ge.resolveRequestVariables(requestData)
+	rawRequestData := requestData.ToMap()
+
+	variables, err := ge.resolveRequestVariables(requestData, rawRequestData)
 	if err != nil {
 		ge.printLog(
 			ctx,
@@ -157,7 +169,7 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 
 	graphqlPayload.Variables = variables
 
-	graphqlPayload.Extensions, err = ge.resolveRequestExtensions(requestData)
+	graphqlPayload.Extensions, err = ge.resolveRequestExtensions(rawRequestData)
 	if err != nil {
 		ge.printLog(
 			ctx,
@@ -182,6 +194,17 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 
 	req := options.NewRequest(http.MethodPost, "")
 	reqHeader := req.Header()
+
+	for key, header := range ge.headers {
+		value, err := header.EvaluateString(rawRequestData)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to evaluate custom header %s: %w", key, err)
+		}
+
+		if value != nil && *value != "" {
+			reqHeader.Set(key, *value)
+		}
+	}
 
 	reqHeader.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
 
@@ -306,14 +329,13 @@ func (ge *GraphQLHandler) transformResponse( //nolint:revive
 
 func (ge *GraphQLHandler) resolveRequestVariables(
 	requestData *proxyhandler.RequestTemplateData,
+	rawRequestData map[string]any,
 ) (map[string]any, error) {
 	results := make(map[string]any)
 
 	if len(ge.variableDefinitions) == 0 {
 		return results, nil
 	}
-
-	rawRequestData := requestData.ToMap()
 
 	for _, varDef := range ge.variableDefinitions {
 		// Resolve graphql variables. Variables are resolved in order:
@@ -390,10 +412,9 @@ func (ge *GraphQLHandler) resolveRequestVariables(
 }
 
 func (ge *GraphQLHandler) resolveRequestExtensions(
-	requestData *proxyhandler.RequestTemplateData,
+	rawRequestData map[string]any,
 ) (map[string]any, error) {
 	results := make(map[string]any)
-	rawRequestData := requestData.ToMap()
 
 	for key, extension := range ge.extensions {
 		value, err := extension.Evaluate(rawRequestData)

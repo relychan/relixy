@@ -20,7 +20,7 @@ type GraphQLRequestBody struct {
 
 // RelixyGraphQLActionConfig represents a proxy action config for GraphQL.
 type RelixyGraphQLActionConfig struct {
-	// Type of the proxy action which is always graphql
+	// Type of the proxy action which is always graphql.
 	Type proxyhandler.ProxyActionType `json:"type" yaml:"type" jsonschema:"enum=graphql"`
 	// Configurations for the GraphQL proxy request.
 	Request *RelixyGraphQLRequestConfig `json:"request,omitempty" yaml:"request,omitempty"`
@@ -30,7 +30,9 @@ type RelixyGraphQLActionConfig struct {
 
 // RelixyGraphQLRequestConfig represents configurations for the proxy request.
 type RelixyGraphQLRequestConfig struct {
-	// GraphQL query
+	// The configuration to transform request headers.
+	Headers map[string]jmes.FieldMappingEntryStringConfig `json:"headers,omitempty" yaml:"headers,omitempty"`
+	// GraphQL query to be sent.
 	Query string `json:"query" yaml:"query"`
 	// Definition of GraphQL variables.
 	Variables map[string]jmes.FieldMappingEntryConfig `json:"variables,omitempty" yaml:"variables,omitempty"`
