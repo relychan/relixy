@@ -110,7 +110,6 @@ Follow idiomatic Go practices and community standards when writing Go code. Thes
 
 - Follow standard Go project layout conventions
 - Keep `main` packages in `cmd/` directory
-- Put reusable packages in `pkg/` or `internal/`
 - Use `internal/` for packages that shouldn't be imported by external projects
 - Group related functionality into packages
 - Avoid circular dependencies
