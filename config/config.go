@@ -2,8 +2,10 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/hasura/gotel"
@@ -30,14 +32,17 @@ func (rlsc RelixyServerConfig) GetConfigPath() string {
 }
 
 // LoadServerConfig loads and parses configurations for [RelyAuthServerConfig].
-func LoadServerConfig() (*RelixyServerConfig, error) {
+func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, error) {
 	var result *RelixyServerConfig
 
 	var err error
 
 	serverConfigPath := os.Getenv("RELIXY_SERVER_CONFIG_PATH")
 	if serverConfigPath != "" {
-		result, err = goutils.ReadJSONOrYAMLFile[RelixyServerConfig](serverConfigPath)
+		ctx, cancel := context.WithTimeout(parentContext, time.Minute)
+		defer cancel()
+
+		result, err = goutils.ReadJSONOrYAMLFile[RelixyServerConfig](ctx, serverConfigPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load RELIXY_SERVER_CONFIG_PATH: %w", err)
 		}

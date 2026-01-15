@@ -25,7 +25,11 @@ func main() {
 }
 
 func startServer() error {
-	envVars, err := config.LoadServerConfig()
+	// Handle SIGINT (CTRL+C) gracefully.
+	ctx, stop := signal.NotifyContext(context.TODO(), os.Interrupt)
+	defer stop()
+
+	envVars, err := config.LoadServerConfig(ctx)
 	if err != nil {
 		return err
 	}
@@ -34,10 +38,6 @@ func startServer() error {
 	if err != nil {
 		return err
 	}
-
-	// Handle SIGINT (CTRL+C) gracefully.
-	ctx, stop := signal.NotifyContext(context.TODO(), os.Interrupt)
-	defer stop()
 
 	ts, err := gotel.SetupOTelExporters(ctx, &envVars.Telemetry, types.BuildVersion, logger)
 	if err != nil {
@@ -61,7 +61,7 @@ func setupRouter(
 	conf *config.RelixyServerConfig,
 	ts *gotel.OTelExporters,
 ) (*chi.Mux, func(), error) {
-	state, err := config.NewState(conf, ts)
+	state, err := config.NewState(ctx, conf, ts)
 	if err != nil {
 		return nil, nil, err
 	}

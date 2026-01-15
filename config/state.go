@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -22,10 +23,14 @@ import (
 
 // NewState creates the handler state from config.
 func NewState(
+	parentContext context.Context,
 	conf *RelixyServerConfig,
 	ts *gotel.OTelExporters,
 ) (*types.State, error) {
-	result, err := goutils.ReadJSONOrYAMLFile[openapi.RelixyOpenAPIv3Resource](conf.GetConfigPath())
+	ctx, cancel := context.WithTimeout(parentContext, time.Minute)
+	defer cancel()
+
+	result, err := goutils.ReadJSONOrYAMLFile[openapi.RelixyOpenAPIv3Resource](ctx, conf.GetConfigPath())
 	if err != nil {
 		return nil, err
 	}

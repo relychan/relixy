@@ -269,7 +269,7 @@ func runUnauthorizedRequest[T any](t *testing.T, r ddn.PreRoutePluginRequestBody
 func TestSetupRouter_InvalidConfig(t *testing.T) {
 	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/invalid-config.yaml")
 
-	envVars, err := config.LoadServerConfig()
+	envVars, err := config.LoadServerConfig(context.Background())
 	assert.NilError(t, err)
 
 	otelExporters := &gotel.OTelExporters{
@@ -287,7 +287,7 @@ func TestSetupRouter_InvalidConfig(t *testing.T) {
 func TestSetupRouter_ValidConfig(t *testing.T) {
 	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/jsonplaceholder.yaml")
 
-	envVars, err := config.LoadServerConfig()
+	envVars, err := config.LoadServerConfig(context.Background())
 	assert.NilError(t, err)
 
 	otelExporters := &gotel.OTelExporters{
@@ -376,7 +376,7 @@ func TestRESTHandler_GetAlbums(t *testing.T) {
 func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {
 	t.Setenv("RELIXY_CONFIG_PATH", configPath)
 
-	envVars, err := config.LoadServerConfig()
+	envVars, err := config.LoadServerConfig(context.Background())
 	assert.NilError(t, err)
 
 	envVars.Auth = auth.RelyAuthConfig{

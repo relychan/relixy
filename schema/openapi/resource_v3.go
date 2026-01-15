@@ -42,7 +42,11 @@ func (RelixyOpenAPIv3Resource) JSONSchemaExtend(schema *jsonschema.Schema) {
 
 type RelixyOpenAPIv3ResourceDefinition struct {
 	// Settings of the OpenAPI v3 resource.
-	Settings RelixyOpenAPISettings `json:"settings" yaml:"settings"`
+	Settings *RelixyOpenAPISettings `json:"settings,omitempty" yaml:"settings,omitempty"`
+	// Path of URL of the referenced OpenAPI document.
+	// Requires at least one of ref or spec.
+	// If both fields are configured, the spec will be merged into the reference.
+	Ref string `json:"ref,omitempty" yaml:"ref,omitempty"`
 	// Specification of the OpenAPI v3 documentation.
 	Spec *highv3.Document `json:"spec" yaml:"spec"`
 }
