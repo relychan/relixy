@@ -14,6 +14,7 @@ linters:
     - tagalign
     - tagliatelle
     - ireturn
+    - recvcheck
   settings:
     depguard:
       rules:
@@ -101,25 +102,6 @@ linters:
       # Ignore comments when counting lines.
       # Default: true
       ignore-comments: false
-    recvcheck:
-      # Disables the built-in method exclusions:
-      # - `MarshalText`
-      # - `MarshalJSON`
-      # - `MarshalYAML`
-      # - `MarshalXML`
-      # - `MarshalBinary`
-      # - `GobEncode`
-      # Default: false
-      disable-builtin: false
-      # User-defined method exclusions.
-      # The format is `struct_name.method_name` (ex: `Foo.MethodName`).
-      # A wildcard `*` can use as a struct name (ex: `*.MethodName`).
-      # Default: []
-      exclusions:
-        - "*.UnmarshalJSON"
-        - "*.UnmarshalYAML"
-        - "*.JSONSchema"
-        - "*.JSONSchemaExtended"
     modernize:
       # List of analyzers to disable.
       # By default, all analyzers are enabled.

@@ -18,7 +18,7 @@ import (
 type ProxyClient struct {
 	clientOptions  *gohttpc.ClientOptions
 	lbClient       *loadbalancer.LoadBalancerClient
-	metadata       *openapi.RelixyOpenAPIv3ResourceDefinition
+	metadata       *openapi.RelixyOpenAPIResourceDefinition
 	node           *internal.Node
 	defaultHeaders map[string]string
 	authenticators *proxyhandler.OpenAPIAuthenticator
@@ -26,7 +26,7 @@ type ProxyClient struct {
 
 // NewProxyClient creates a proxy client from the API document.
 func NewProxyClient(
-	metadata *openapi.RelixyOpenAPIv3ResourceDefinition,
+	metadata *openapi.RelixyOpenAPIResourceDefinition,
 	clientOptions *gohttpc.ClientOptions,
 ) (*ProxyClient, error) {
 	client := &ProxyClient{
@@ -44,7 +44,7 @@ func NewProxyClient(
 }
 
 // Metadata returns the metadata of the proxy client.
-func (pc *ProxyClient) Metadata() *openapi.RelixyOpenAPIv3ResourceDefinition {
+func (pc *ProxyClient) Metadata() *openapi.RelixyOpenAPIResourceDefinition {
 	return pc.metadata
 }
 

@@ -30,7 +30,7 @@ func NewState(
 	ctx, cancel := context.WithTimeout(parentContext, time.Minute)
 	defer cancel()
 
-	result, err := goutils.ReadJSONOrYAMLFile[openapi.RelixyOpenAPIv3Resource](ctx, conf.GetConfigPath())
+	result, err := goutils.ReadJSONOrYAMLFile[openapi.RelixyOpenAPIResource](ctx, conf.GetConfigPath())
 	if err != nil {
 		return nil, err
 	}

@@ -11,6 +11,7 @@ require (
 	github.com/hasura/gotel v0.5.0
 	github.com/invopop/jsonschema v0.13.0
 	github.com/pb33f/libopenapi v0.31.2
+	github.com/pb33f/ordered-map/v2 v2.3.0
 	github.com/relychan/gohttpc v0.0.0-20260105072806-2bdb705536d9
 	github.com/relychan/gohttps v0.0.0-20251206085650-5f2727ade1fa
 	github.com/relychan/gotransform v0.0.0-20260102021651-b47ff69e3c82
@@ -44,13 +45,12 @@ require (
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/influxdata/tdigest v0.0.1 // indirect
 	github.com/jmespath-community/go-jmespath v1.1.2-0.20250228093220-ef5fae83c6c0 // indirect
-	github.com/klauspost/compress v1.18.2 // indirect
+	github.com/klauspost/compress v1.18.3 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pb33f/jsonpath v0.7.0 // indirect
-	github.com/pb33f/ordered-map/v2 v2.3.0 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.5 // indirect

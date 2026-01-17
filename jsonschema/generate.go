@@ -44,7 +44,7 @@ func genConfigurationSchema() error {
 		}
 	}
 
-	reflectSchema := r.Reflect(openapi.RelixyOpenAPIv3Resource{})
+	reflectSchema := r.Reflect(openapi.RelixyOpenAPIResource{})
 
 	// custom schema types
 	reflectSchema.Definitions["HTTPClientConfig"] = &jsonschema.Schema{

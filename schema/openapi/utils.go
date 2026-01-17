@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	"github.com/pb33f/libopenapi/orderedmap"
 )
 
 // ExtractCommonParametersOfOperation extracts common parameters from operation's parameters.
@@ -49,6 +50,22 @@ L:
 		}
 
 		dest = append(dest, srcParam)
+	}
+
+	return dest
+}
+
+func mergeOrderedMaps[K comparable, V any](dest, src *orderedmap.Map[K, V]) *orderedmap.Map[K, V] {
+	if src == nil || src.Len() == 0 {
+		return dest
+	}
+
+	if dest == nil {
+		return src
+	}
+
+	for iter := src.Oldest(); iter != nil; iter = iter.Next() {
+		dest.Set(iter.Key, iter.Value)
 	}
 
 	return dest
