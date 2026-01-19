@@ -38,6 +38,10 @@ func NewOpenAPIv3Authenticator(
 	}
 
 	for iter := document.Components.SecuritySchemes.Oldest(); iter != nil; iter = iter.Next() {
+		if iter.Value == nil {
+			continue
+		}
+
 		key := iter.Key
 		security := iter.Value
 

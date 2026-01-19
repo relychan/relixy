@@ -5,8 +5,8 @@ package base_schema
 type RelixyResourceKind string
 
 const (
-	// OpenAPI3Kind represents a kind enum for the OpenAPI 3 specification.
-	OpenAPI3Kind RelixyResourceKind = "OpenAPI3"
+	// OpenAPIKind represents a kind enum for the OpenAPI 3 specification.
+	OpenAPIKind RelixyResourceKind = "OpenAPI"
 )
 
 // RelixyResourceMetadata represents common metadata of the resource.

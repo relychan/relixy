@@ -1,7 +1,12 @@
 package openapi
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"go.yaml.in/yaml/v4"
@@ -422,4 +427,201 @@ definition:
 			}
 		})
 	}
+}
+
+func TestRelixyOpenAPIResource_BuildJSON(t *testing.T) {
+	rawFileSpec := `{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Test API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/users": {
+      "get": {
+        "x-rely-proxy-action": {
+          "type": "graphql",
+          "request": {
+            "query": "{users { id }}"
+          }
+        }
+      }
+    },
+    "/projects": {
+      "get": {
+        "operationId": "getProjects"
+      }
+    }
+  }
+}`
+
+	tempDir := t.TempDir()
+	tempFile := filepath.Join(tempDir, "openapi.json")
+
+	err := os.WriteFile(tempFile, []byte(rawFileSpec), 0664)
+	assert.NilError(t, err)
+
+	jsonData := fmt.Sprintf(`{
+  "version": "v1",
+  "kind": "OpenAPI",
+  "metadata": {
+    "name": "test-api",
+    "description": "Test API description"
+  },
+  "definition": {
+    "ref": "%s",
+    "spec": {
+      "openapi": "3.0.0",
+      "info": {
+        "title": "Test API",
+        "version": "1.0.0"
+      },
+      "servers": [
+        {
+          "url": "https://api.example.com"
+        }
+      ],
+      "paths": {
+        "/users": {
+          "get": {
+            "operationId": "getUsers"
+          }
+        }
+      }
+    }
+  }
+}`, tempFile)
+
+	expectedData := `{
+	"spec": {
+		"openapi": "3.0.0",
+		"info": {
+			"title": "Test API",
+			"version": "1.0.0"
+		},
+		"servers": [
+			{
+			"url": "https://api.example.com"
+			}
+		],
+		"paths": {
+			"/users": {
+			"get": {
+				"operationId": "getUsers",
+				"x-rely-proxy-action": {
+				"type": "graphql",
+				"request": {
+					"query": "{users { id }}"
+				}
+				}
+			}
+			},
+			"/projects": {
+			"get": {
+				"operationId": "getProjects"
+			}
+			}
+		}
+		}
+}`
+
+	var rawResource RelixyOpenAPIResource
+	err = json.Unmarshal([]byte(jsonData), &rawResource)
+	assert.NilError(t, err)
+
+	result, err := rawResource.Definition.Build(context.TODO())
+	assert.NilError(t, err)
+
+	resultJsonBytes, err := json.Marshal(RelixyOpenAPIResourceDefinition{
+		Spec: result,
+	})
+	assert.NilError(t, err)
+
+	log.Println("result", string(resultJsonBytes))
+
+	var resultJson any
+	assert.NilError(t, json.Unmarshal(resultJsonBytes, &resultJson))
+
+	var expectedJson any
+	assert.NilError(t, json.Unmarshal([]byte(expectedData), &expectedJson))
+
+	assert.DeepEqual(t, resultJson, expectedJson)
+}
+
+func TestRelixyOpenAPIResource_BuildYAML(t *testing.T) {
+	rawFileSpec := `openapi: "3.0.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /users:
+    get:
+      x-rely-proxy-action:
+        type: graphql
+        request:
+          query: '{users { id }}'
+  /projects:
+    get:
+      operationId: getProjects`
+
+	tempDir := t.TempDir()
+	tempFile := filepath.Join(tempDir, "openapi.yaml")
+
+	err := os.WriteFile(tempFile, []byte(rawFileSpec), 0664)
+	assert.NilError(t, err)
+
+	yamlData := fmt.Sprintf(`version: v1
+kind: OpenAPI
+metadata:
+  name: test-api
+  description: Test API description
+definition:
+  ref: '%s'
+  spec:
+    openapi: "3.0.0"
+    info:
+      title: Test API
+      version: "1.0.0"
+    servers:
+      - url: https://api.example.com
+    paths:
+      /users:
+        get:
+          operationId: getUsers`, tempFile)
+
+	expectedData := `openapi: "3.0.0"
+info:
+  title: Test API
+  version: "1.0.0"
+servers:
+  - url: https://api.example.com
+paths:
+  /users:
+    get:
+      operationId: getUsers
+      x-rely-proxy-action:
+        type: graphql
+        request:
+          query: '{users { id }}'
+  /projects:
+    get:
+      operationId: getProjects`
+
+	var rawResource RelixyOpenAPIResource
+	err = yaml.Unmarshal([]byte(yamlData), &rawResource)
+	assert.NilError(t, err)
+
+	result, err := rawResource.Definition.Build(context.TODO())
+	assert.NilError(t, err)
+
+	resultYamlBytes, err := yaml.Marshal(result)
+	assert.NilError(t, err)
+
+	var resultYaml any
+	assert.NilError(t, yaml.Unmarshal(resultYamlBytes, &resultYaml))
+
+	var expectedYaml any
+	assert.NilError(t, yaml.Unmarshal([]byte(expectedData), &expectedYaml))
+
+	assert.DeepEqual(t, resultYaml, expectedYaml)
 }

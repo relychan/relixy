@@ -62,7 +62,7 @@ func NewState(
 
 	proxyClientOptions.HTTPClient = httpClient
 
-	proxyClient, err := proxyc.NewProxyClient(&result.Definition, proxyClientOptions)
+	proxyClient, err := proxyc.NewProxyClient(ctx, &result.Definition, proxyClientOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create proxy client: %w", err)
 	}

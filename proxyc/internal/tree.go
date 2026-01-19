@@ -706,8 +706,12 @@ func extractParametersFromOperationV3(
 	params = openapi.ExtractCommonParametersOfOperation(params, operations.Trace)
 
 	if operations.AdditionalOperations != nil {
-		for iter := operations.AdditionalOperations.First(); iter != nil; iter = iter.Next() {
-			params = openapi.ExtractCommonParametersOfOperation(params, iter.Value())
+		for iter := operations.AdditionalOperations.Oldest(); iter != nil; iter = iter.Next() {
+			if iter.Value == nil {
+				continue
+			}
+
+			params = openapi.ExtractCommonParametersOfOperation(params, iter.Value)
 		}
 	}
 

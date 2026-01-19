@@ -2,6 +2,7 @@
 package proxyc
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hasura/goenvconf"
@@ -26,6 +27,7 @@ type ProxyClient struct {
 
 // NewProxyClient creates a proxy client from the API document.
 func NewProxyClient(
+	ctx context.Context,
 	metadata *openapi.RelixyOpenAPIResourceDefinition,
 	clientOptions *gohttpc.ClientOptions,
 ) (*ProxyClient, error) {
@@ -35,7 +37,7 @@ func NewProxyClient(
 		defaultHeaders: map[string]string{},
 	}
 
-	err := client.init()
+	err := client.init(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -61,8 +63,13 @@ func (pc *ProxyClient) Close() error {
 	return nil
 }
 
-func (pc *ProxyClient) init() error {
-	err := pc.initServers()
+func (pc *ProxyClient) init(ctx context.Context) error {
+	spec, err := pc.metadata.Build(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = pc.initServers(spec)
 	if err != nil {
 		return err
 	}
@@ -73,14 +80,14 @@ func (pc *ProxyClient) init() error {
 	}
 
 	pc.authenticators, err = proxyhandler.NewOpenAPIv3Authenticator(
-		pc.metadata.Spec,
+		spec,
 		pc.clientOptions.GetEnvFunc(),
 	)
 	if err != nil {
 		return err
 	}
 
-	node, err := BuildMetadataTree(pc.metadata.Spec, pc.clientOptions)
+	node, err := BuildMetadataTree(spec, pc.clientOptions)
 	if err != nil {
 		return err
 	}
@@ -107,8 +114,8 @@ func (pc *ProxyClient) initDefaultHeaders() error {
 	return nil
 }
 
-func (pc *ProxyClient) initServers() error {
-	if len(pc.metadata.Spec.Servers) == 0 {
+func (pc *ProxyClient) initServers(spec *highv3.Document) error {
+	if len(spec.Servers) == 0 {
 		return errServerURLRequired
 	}
 
@@ -125,13 +132,9 @@ func (pc *ProxyClient) initServers() error {
 		healthCheckBuilder = loadbalancer.NewHTTPHealthCheckPolicyBuilder()
 	}
 
-	if len(pc.metadata.Spec.Servers) == 0 {
-		return errServerURLRequired
-	}
+	hosts := make([]*loadbalancer.Host, 0, len(spec.Servers))
 
-	hosts := make([]*loadbalancer.Host, 0, len(pc.metadata.Spec.Servers))
-
-	for _, server := range pc.metadata.Spec.Servers {
+	for _, server := range spec.Servers {
 		host, err := pc.initServer(server, healthCheckBuilder)
 		if err != nil {
 			return err

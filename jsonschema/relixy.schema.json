@@ -178,8 +178,8 @@
     },
     "kind": {
      "type": "string",
-     "const": "OpenAPI3",
-     "description": "Kind of the resource which is always OpenAPI3."
+     "const": "OpenAPI",
+     "description": "Kind of the resource which is always OpenAPI."
     },
     "metadata": {
      "$ref": "#/$defs/RelixyResourceMetadata"

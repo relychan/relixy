@@ -9,7 +9,7 @@ import (
 )
 
 func TestRelixyResourceKind_Constants(t *testing.T) {
-	assert.Equal(t, RelixyResourceKind("OpenAPI3"), OpenAPI3Kind)
+	assert.Equal(t, RelixyResourceKind("OpenAPI"), OpenAPIKind)
 }
 
 func TestRelixyResourceMetadata_JSONMarshal(t *testing.T) {
@@ -103,7 +103,7 @@ func TestRelixyResourceMetadata_JSONUnmarshal(t *testing.T) {
 func TestBaseResourceModel_GetBaseResource(t *testing.T) {
 	model := BaseResourceModel{
 		Version: "v1",
-		Kind:    "OpenAPI3",
+		Kind:    "OpenAPI",
 		Metadata: RelixyResourceMetadata{
 			Name:        "test-resource",
 			Description: "Test description",
@@ -120,7 +120,7 @@ func TestBaseResourceModel_GetBaseResource(t *testing.T) {
 func TestBaseResourceModel_JSONMarshal(t *testing.T) {
 	model := BaseResourceModel{
 		Version: "v1",
-		Kind:    "OpenAPI3",
+		Kind:    "OpenAPI",
 		Metadata: RelixyResourceMetadata{
 			Name:        "test-resource",
 			Description: "Test description",
@@ -141,7 +141,7 @@ func TestBaseResourceModel_JSONMarshal(t *testing.T) {
 func TestBaseResourceModel_YAMLMarshal(t *testing.T) {
 	model := BaseResourceModel{
 		Version: "v1",
-		Kind:    "OpenAPI3",
+		Kind:    "OpenAPI",
 		Metadata: RelixyResourceMetadata{
 			Name:        "test-resource",
 			Description: "Test description",
@@ -170,7 +170,7 @@ func TestBaseResourceModel_JSONUnmarshal(t *testing.T) {
 			name: "complete resource model",
 			jsonData: `{
 				"version": "v1",
-				"kind": "OpenAPI3",
+				"kind": "OpenAPI",
 				"metadata": {
 					"name": "test-api",
 					"description": "Test description"
@@ -179,7 +179,7 @@ func TestBaseResourceModel_JSONUnmarshal(t *testing.T) {
 			expectError: false,
 			checkFunc: func(t *testing.T, model *BaseResourceModel) {
 				assert.Equal(t, "v1", model.Version)
-				assert.Equal(t, "OpenAPI3", model.Kind)
+				assert.Equal(t, "OpenAPI", model.Kind)
 				assert.Equal(t, "test-api", model.Metadata.Name)
 				assert.Equal(t, "Test description", model.Metadata.Description)
 			},
@@ -188,7 +188,7 @@ func TestBaseResourceModel_JSONUnmarshal(t *testing.T) {
 			name: "minimal resource model",
 			jsonData: `{
 				"version": "v1",
-				"kind": "OpenAPI3",
+				"kind": "OpenAPI",
 				"metadata": {
 					"name": "test-api"
 				}
@@ -196,7 +196,7 @@ func TestBaseResourceModel_JSONUnmarshal(t *testing.T) {
 			expectError: false,
 			checkFunc: func(t *testing.T, model *BaseResourceModel) {
 				assert.Equal(t, "v1", model.Version)
-				assert.Equal(t, "OpenAPI3", model.Kind)
+				assert.Equal(t, "OpenAPI", model.Kind)
 				assert.Equal(t, "test-api", model.Metadata.Name)
 			},
 		},
@@ -229,14 +229,14 @@ func TestBaseResourceModel_YAMLUnmarshal(t *testing.T) {
 		{
 			name: "complete resource model",
 			yamlData: `version: v1
-kind: OpenAPI3
+kind: OpenAPI
 metadata:
   name: test-api
   description: Test description`,
 			expectError: false,
 			checkFunc: func(t *testing.T, model *BaseResourceModel) {
 				assert.Equal(t, "v1", model.Version)
-				assert.Equal(t, "OpenAPI3", model.Kind)
+				assert.Equal(t, "OpenAPI", model.Kind)
 				assert.Equal(t, "test-api", model.Metadata.Name)
 				assert.Equal(t, "Test description", model.Metadata.Description)
 			},
@@ -244,13 +244,13 @@ metadata:
 		{
 			name: "minimal resource model",
 			yamlData: `version: v1
-kind: OpenAPI3
+kind: OpenAPI
 metadata:
   name: test-api`,
 			expectError: false,
 			checkFunc: func(t *testing.T, model *BaseResourceModel) {
 				assert.Equal(t, "v1", model.Version)
-				assert.Equal(t, "OpenAPI3", model.Kind)
+				assert.Equal(t, "OpenAPI", model.Kind)
 				assert.Equal(t, "test-api", model.Metadata.Name)
 			},
 		},
