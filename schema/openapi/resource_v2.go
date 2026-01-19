@@ -8,31 +8,44 @@ import (
 	v3high "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
+	"github.com/relychan/goutils"
 	"go.yaml.in/yaml/v4"
 )
 
+type swaggerToOpenAPIv3Converter struct {
+	swagger *v2high.Swagger
+}
+
 func convertSwaggerToOpenAPIv3Document(src *v2high.Swagger) *v3high.Document {
+	sto := &swaggerToOpenAPIv3Converter{
+		swagger: src,
+	}
+
+	return sto.Convert()
+}
+
+func (sto *swaggerToOpenAPIv3Converter) Convert() *v3high.Document {
 	result := &v3high.Document{
 		Version:      "3.0.0",
-		Info:         src.Info,
-		Tags:         src.Tags,
-		ExternalDocs: src.ExternalDocs,
-		Extensions:   src.Extensions,
-		Security:     src.Security,
+		Info:         sto.swagger.Info,
+		Tags:         sto.swagger.Tags,
+		ExternalDocs: sto.swagger.ExternalDocs,
+		Extensions:   sto.swagger.Extensions,
+		Security:     sto.swagger.Security,
 		Components:   &v3high.Components{},
 	}
 
-	if src.Host != "" {
+	if sto.swagger.Host != "" {
 		scheme := "https"
 
-		if len(src.Schemes) > 0 && !slices.Contains(src.Schemes, scheme) {
-			scheme = src.Schemes[0]
+		if len(sto.swagger.Schemes) > 0 && !slices.Contains(sto.swagger.Schemes, scheme) {
+			scheme = sto.swagger.Schemes[0]
 		}
 
-		serverURL := scheme + "://" + src.Host + src.BasePath
+		serverURL := scheme + "://" + sto.swagger.Host + sto.swagger.BasePath
 
-		if src.BasePath != "" && src.BasePath != "/" {
-			serverURL += src.BasePath
+		if sto.swagger.BasePath != "" && sto.swagger.BasePath != "/" {
+			serverURL += sto.swagger.BasePath
 		}
 
 		result.Servers = []*v3high.Server{
@@ -42,23 +55,27 @@ func convertSwaggerToOpenAPIv3Document(src *v2high.Swagger) *v3high.Document {
 		}
 	}
 
-	result.Components.Parameters = convertParametersV2ToV3(src.Parameters)
-	result.Components.SecuritySchemes = convertSecurityDefinitionsV2ToV3(src.SecurityDefinitions)
+	result.Components.Parameters = sto.convertParameters()
+	result.Components.SecuritySchemes = sto.convertSecurityDefinitions()
 
-	if src.Responses != nil {
-		result.Components.Responses = convertResponsesMapV2ToV3(src.Responses.Definitions)
+	if sto.swagger.Responses != nil {
+		result.Components.Responses = sto.convertResponsesMap(
+			sto.swagger.Responses.Definitions,
+			sto.swagger.Produces,
+		)
 	}
 
-	if src.Definitions != nil && src.Definitions.Definitions != nil {
-		result.Components.Schemas = src.Definitions.Definitions
+	if sto.swagger.Definitions != nil && sto.swagger.Definitions.Definitions != nil {
+		result.Components.Schemas = sto.swagger.Definitions.Definitions
 	}
 
-	result.Paths = convertPathsV2ToV3(src.Paths)
+	result.Paths = sto.convertPaths()
 
 	return result
 }
 
-func convertPathsV2ToV3(paths *v2high.Paths) *v3high.Paths {
+func (sto *swaggerToOpenAPIv3Converter) convertPaths() *v3high.Paths {
+	paths := sto.swagger.Paths
 	if paths == nil {
 		return nil
 	}
@@ -78,14 +95,16 @@ func convertPathsV2ToV3(paths *v2high.Paths) *v3high.Paths {
 			continue
 		}
 
-		item := convertPathItemV2ToV3(iter.Value)
+		item := sto.convertPathItem(iter.Value)
 		result.PathItems.Set(iter.Key, item)
 	}
 
 	return result
 }
 
-func convertPathItemV2ToV3(pathItem *v2high.PathItem) *v3high.PathItem {
+func (sto *swaggerToOpenAPIv3Converter) convertPathItem(
+	pathItem *v2high.PathItem,
+) *v3high.PathItem {
 	result := &v3high.PathItem{
 		Extensions: pathItem.Extensions,
 		Reference:  pathItem.Ref,
@@ -93,29 +112,27 @@ func convertPathItemV2ToV3(pathItem *v2high.PathItem) *v3high.PathItem {
 	}
 
 	for i, param := range pathItem.Parameters {
-		item := convertParameterV2ToV3(param)
+		item := sto.convertParameter(param)
 		result.Parameters[i] = item
 	}
 
-	result.Get = convertOperationV2ToV3(pathItem.Get)
-	result.Post = convertOperationV2ToV3(pathItem.Post)
-	result.Put = convertOperationV2ToV3(pathItem.Put)
-	result.Delete = convertOperationV2ToV3(pathItem.Delete)
-	result.Patch = convertOperationV2ToV3(pathItem.Patch)
-	result.Head = convertOperationV2ToV3(pathItem.Head)
-	result.Options = convertOperationV2ToV3(pathItem.Options)
+	result.Get = sto.convertOperation(pathItem.Get)
+	result.Post = sto.convertOperation(pathItem.Post)
+	result.Put = sto.convertOperation(pathItem.Put)
+	result.Delete = sto.convertOperation(pathItem.Delete)
+	result.Patch = sto.convertOperation(pathItem.Patch)
+	result.Head = sto.convertOperation(pathItem.Head)
+	result.Options = sto.convertOperation(pathItem.Options)
 
 	return result
 }
 
-func convertOperationV2ToV3(operation *v2high.Operation) *v3high.Operation {
+func (sto *swaggerToOpenAPIv3Converter) convertOperation(
+	operation *v2high.Operation,
+) *v3high.Operation {
 	if operation == nil {
 		return nil
 	}
-
-	// Consumes     []string
-	// Produces     []string
-	// Responses    *Responses
 
 	result := &v3high.Operation{
 		Tags:         operation.Tags,
@@ -127,27 +144,97 @@ func convertOperationV2ToV3(operation *v2high.Operation) *v3high.Operation {
 		Deprecated:   &operation.Deprecated,
 		Security:     operation.Security,
 	}
+	formDataProps := orderedmap.New[string, *base.SchemaProxy]()
+
+	consumes := sto.swagger.Consumes
+	if len(operation.Produces) > 0 {
+		consumes = operation.Consumes
+	}
 
 	for i, param := range operation.Parameters {
-		item := convertParameterV2ToV3(param)
-		result.Parameters[i] = item
+		switch param.In {
+		case InFormData:
+			if param.Name == "" {
+				continue
+			}
+
+			schema := sto.schemaFromParameter(param)
+			formDataProps.Set(param.Name, schema)
+		case InBody:
+			result.RequestBody = &v3high.RequestBody{
+				Content:     orderedmap.New[string, *v3high.MediaType](),
+				Extensions:  param.Extensions,
+				Description: param.Description,
+				Required:    param.Required,
+			}
+
+			content := &v3high.MediaType{
+				Schema:     param.Schema,
+				Extensions: param.Extensions,
+			}
+
+			if param.Schema == nil {
+				content.Schema = sto.schemaFromParameter(param)
+			}
+
+			for _, mediaType := range consumes {
+				_, present := result.RequestBody.Content.Get(mediaType)
+				if present {
+					continue
+				}
+
+				result.RequestBody.Content.Set(mediaType, content)
+			}
+		default:
+			item := sto.convertParameter(param)
+			result.Parameters[i] = item
+		}
+	}
+
+	if formDataProps.Len() > 0 {
+		result.RequestBody = &v3high.RequestBody{
+			Content:  orderedmap.New[string, *v3high.MediaType](),
+			Required: goutils.ToPtr(true),
+		}
+
+		content := &v3high.MediaType{
+			Schema: base.CreateSchemaProxy(&base.Schema{
+				Type:       []string{"object"},
+				Properties: formDataProps,
+			}),
+		}
+
+		for _, mediaType := range consumes {
+			_, present := result.RequestBody.Content.Get(mediaType)
+			if present {
+				continue
+			}
+
+			result.RequestBody.Content.Set(mediaType, content)
+		}
 	}
 
 	if operation.Responses == nil {
 		return result
 	}
 
+	produces := sto.swagger.Produces
+	if len(operation.Produces) > 0 {
+		produces = operation.Produces
+	}
+
 	result.Responses = &v3high.Responses{
 		Extensions: operation.Responses.Extensions,
-		Default:    convertResponseV2ToV3(operation.Responses.Default),
-		Codes:      convertResponsesMapV2ToV3(operation.Responses.Codes),
+		Default:    sto.convertResponse(operation.Responses.Default, produces),
+		Codes:      sto.convertResponsesMap(operation.Responses.Codes, produces),
 	}
 
 	return result
 }
 
-func convertResponsesMapV2ToV3(
+func (sto *swaggerToOpenAPIv3Converter) convertResponsesMap(
 	responses *orderedmap.Map[string, *v2high.Response],
+	produces []string,
 ) *orderedmap.Map[string, *v3high.Response] {
 	if responses == nil || responses.Len() == 0 {
 		return nil
@@ -156,7 +243,7 @@ func convertResponsesMapV2ToV3(
 	result := orderedmap.New[string, *v3high.Response]()
 
 	for iter := responses.Oldest(); iter != nil; iter = iter.Next() {
-		resp := convertResponseV2ToV3(iter.Value)
+		resp := sto.convertResponse(iter.Value, produces)
 		if resp != nil {
 			result.Set(iter.Key, resp)
 		}
@@ -165,7 +252,10 @@ func convertResponsesMapV2ToV3(
 	return result
 }
 
-func convertResponseV2ToV3(value *v2high.Response) *v3high.Response {
+func (sto *swaggerToOpenAPIv3Converter) convertResponse(
+	value *v2high.Response,
+	produces []string,
+) *v3high.Response {
 	if value == nil {
 		return nil
 	}
@@ -173,109 +263,46 @@ func convertResponseV2ToV3(value *v2high.Response) *v3high.Response {
 	result := &v3high.Response{
 		Description: value.Description,
 		Extensions:  value.Extensions,
-		Headers:     convertHeadersV2ToV3(value.Headers),
+		Headers:     sto.convertHeaders(value.Headers),
 	}
 
-	// TODO
-	// Schema      *base.SchemaProxy
-
-	return result
-}
-
-func convertHeadersV2ToV3(
-	value *orderedmap.Map[string, *v2high.Header],
-) *orderedmap.Map[string, *v3high.Header] {
-	if value == nil || value.Len() == 0 {
-		return nil
+	if len(produces) == 0 {
+		return result
 	}
 
-	result := orderedmap.New[string, *v3high.Header]()
+	content := &v3high.MediaType{
+		Schema: value.Schema,
+	}
 
-	for iter := value.Oldest(); iter != nil; iter = iter.Next() {
-		if iter.Value == nil {
+	if value.Examples != nil && value.Examples.Values != nil &&
+		value.Examples.Values.Len() > 0 {
+		content.Examples = orderedmap.New[string, *base.Example]()
+
+		for iter := value.Examples.Values.Oldest(); iter != nil; iter = iter.Next() {
+			example := &base.Example{
+				Value: iter.Value,
+			}
+
+			content.Examples.Set(iter.Key, example)
+		}
+	}
+
+	result.Content = orderedmap.New[string, *v3high.MediaType]()
+
+	for _, mediaType := range produces {
+		_, present := result.Content.Get(mediaType)
+		if present {
 			continue
 		}
 
-		header := convertHeaderV2ToV3(iter.Value)
-		result.Set(iter.Key, header)
+		result.Content.Set(mediaType, content)
 	}
 
 	return result
 }
 
-func convertHeaderV2ToV3(value *v2high.Header) *v3high.Header {
-	baseSchema := &base.Schema{
-		Format:      value.Format,
-		Pattern:     value.Pattern,
-		UniqueItems: &value.UniqueItems,
-	}
-
-	if value.Default != nil {
-		baseSchema.Default = utils.CreateYamlNode(value.Default)
-	}
-
-	if value.Type != "" {
-		baseSchema.Type = []string{value.Type}
-	}
-
-	if len(value.Enum) > 0 {
-		baseSchema.Enum = make([]*yaml.Node, len(value.Enum))
-
-		for i, enum := range value.Enum {
-			baseSchema.Enum[i] = utils.CreateYamlNode(enum)
-		}
-	}
-
-	maximum := float64(value.Maximum)
-	baseSchema.Maximum = &maximum
-	minimum := float64(value.Minimum)
-	baseSchema.Minimum = &minimum
-	multipleOf := float64(value.MultipleOf)
-	baseSchema.MultipleOf = &multipleOf
-	baseSchema.ExclusiveMinimum = &base.DynamicValue[bool, float64]{
-		A: value.ExclusiveMinimum,
-	}
-
-	baseSchema.ExclusiveMaximum = &base.DynamicValue[bool, float64]{
-		A: value.ExclusiveMaximum,
-	}
-
-	if value.MaxLength > 0 {
-		maxLength := int64(value.MaxLength)
-		baseSchema.MaxLength = &maxLength
-	}
-
-	if value.MinLength > 0 {
-		minLength := int64(value.MinLength)
-		baseSchema.MaxLength = &minLength
-	}
-
-	if value.MaxItems > 0 {
-		maxItems := int64(value.MaxItems)
-		baseSchema.MaxItems = &maxItems
-	}
-
-	if value.MinItems > 0 {
-		minItems := int64(value.MinItems)
-		baseSchema.MinItems = &minItems
-	}
-
-	if value.Items != nil {
-		baseSchema.Items = convertItemsV2ToV3(value.Items)
-	}
-
-	result := &v3high.Header{
-		Description: value.Description,
-		Extensions:  value.Extensions,
-		Schema:      base.CreateSchemaProxy(baseSchema),
-	}
-
-	return result
-}
-
-func convertSecurityDefinitionsV2ToV3(
-	securityDefinitions *v2high.SecurityDefinitions,
-) *orderedmap.Map[string, *v3high.SecurityScheme] {
+func (sto *swaggerToOpenAPIv3Converter) convertSecurityDefinitions() *orderedmap.Map[string, *v3high.SecurityScheme] {
+	securityDefinitions := sto.swagger.SecurityDefinitions
 	if securityDefinitions == nil || securityDefinitions.Definitions == nil ||
 		securityDefinitions.Definitions.Len() == 0 {
 		return nil
@@ -288,14 +315,36 @@ func convertSecurityDefinitionsV2ToV3(
 			continue
 		}
 
-		security := convertSecuritySchemeV2ToV3(iter.Value)
+		security := sto.convertSecurityScheme(iter.Value)
 		result.Set(iter.Key, security)
 	}
 
 	return result
 }
 
-func convertSecuritySchemeV2ToV3(value *v2high.SecurityScheme) *v3high.SecurityScheme {
+func (sto *swaggerToOpenAPIv3Converter) convertParameters() *orderedmap.Map[string, *v3high.Parameter] {
+	parameters := sto.swagger.Parameters
+	if parameters == nil || parameters.Definitions == nil && parameters.Definitions.Len() == 0 {
+		return nil
+	}
+
+	result := orderedmap.New[string, *v3high.Parameter]()
+
+	for iter := parameters.Definitions.Oldest(); iter != nil; iter = iter.Next() {
+		if iter.Value == nil {
+			continue
+		}
+
+		param := sto.convertParameter(iter.Value)
+		result.Set(iter.Key, param)
+	}
+
+	return result
+}
+
+func (*swaggerToOpenAPIv3Converter) convertSecurityScheme(
+	value *v2high.SecurityScheme,
+) *v3high.SecurityScheme {
 	result := &v3high.SecurityScheme{
 		Description: value.Description,
 		Name:        value.Name,
@@ -338,28 +387,9 @@ func convertSecuritySchemeV2ToV3(value *v2high.SecurityScheme) *v3high.SecurityS
 	return result
 }
 
-func convertParametersV2ToV3(
-	parameters *v2high.ParameterDefinitions,
-) *orderedmap.Map[string, *v3high.Parameter] {
-	if parameters == nil || parameters.Definitions == nil && parameters.Definitions.Len() == 0 {
-		return nil
-	}
-
-	result := orderedmap.New[string, *v3high.Parameter]()
-
-	for iter := parameters.Definitions.Oldest(); iter != nil; iter = iter.Next() {
-		if iter.Value == nil {
-			continue
-		}
-
-		param := convertParameterV2ToV3(iter.Value)
-		result.Set(iter.Key, param)
-	}
-
-	return result
-}
-
-func convertParameterV2ToV3(parameter *v2high.Parameter) *v3high.Parameter {
+func (sto *swaggerToOpenAPIv3Converter) convertParameter(
+	parameter *v2high.Parameter,
+) *v3high.Parameter {
 	param := &v3high.Parameter{
 		Name:        parameter.Name,
 		In:          parameter.In,
@@ -374,11 +404,23 @@ func convertParameterV2ToV3(parameter *v2high.Parameter) *v3high.Parameter {
 		param.AllowEmptyValue = *parameter.AllowEmptyValue
 	}
 
+	style, explode := getStyleFromCollectionFormat(parameter.In, parameter.CollectionFormat)
+
+	param.Style = style
+	param.Explode = &explode
+
 	if param.Schema != nil {
 		return param
 	}
 
-	// CollectionFormat string
+	param.Schema = sto.schemaFromParameter(parameter)
+
+	return param
+}
+
+func (sto *swaggerToOpenAPIv3Converter) schemaFromParameter(
+	parameter *v2high.Parameter,
+) *base.SchemaProxy {
 	baseSchema := &base.Schema{
 		Format:      parameter.Format,
 		Pattern:     parameter.Pattern,
@@ -442,15 +484,107 @@ func convertParameterV2ToV3(parameter *v2high.Parameter) *v3high.Parameter {
 	}
 
 	if parameter.Items != nil {
-		baseSchema.Items = convertItemsV2ToV3(parameter.Items)
+		baseSchema.Items = sto.convertItems(parameter.Items)
 	}
 
-	param.Schema = base.CreateSchemaProxy(baseSchema)
-
-	return param
+	return base.CreateSchemaProxy(baseSchema)
 }
 
-func convertItemsV2ToV3(items *v2high.Items) *base.DynamicValue[*base.SchemaProxy, bool] {
+func (sto *swaggerToOpenAPIv3Converter) convertHeaders(
+	value *orderedmap.Map[string, *v2high.Header],
+) *orderedmap.Map[string, *v3high.Header] {
+	if value == nil || value.Len() == 0 {
+		return nil
+	}
+
+	result := orderedmap.New[string, *v3high.Header]()
+
+	for iter := value.Oldest(); iter != nil; iter = iter.Next() {
+		if iter.Value == nil {
+			continue
+		}
+
+		header := sto.convertHeader(iter.Value)
+		result.Set(iter.Key, header)
+	}
+
+	return result
+}
+
+func (sto *swaggerToOpenAPIv3Converter) convertHeader(value *v2high.Header) *v3high.Header {
+	baseSchema := &base.Schema{
+		Format:      value.Format,
+		Pattern:     value.Pattern,
+		UniqueItems: &value.UniqueItems,
+	}
+
+	if value.Default != nil {
+		baseSchema.Default = utils.CreateYamlNode(value.Default)
+	}
+
+	if value.Type != "" {
+		baseSchema.Type = []string{value.Type}
+	}
+
+	if len(value.Enum) > 0 {
+		baseSchema.Enum = make([]*yaml.Node, len(value.Enum))
+
+		for i, enum := range value.Enum {
+			baseSchema.Enum[i] = utils.CreateYamlNode(enum)
+		}
+	}
+
+	maximum := float64(value.Maximum)
+	baseSchema.Maximum = &maximum
+	minimum := float64(value.Minimum)
+	baseSchema.Minimum = &minimum
+	multipleOf := float64(value.MultipleOf)
+	baseSchema.MultipleOf = &multipleOf
+	baseSchema.ExclusiveMinimum = &base.DynamicValue[bool, float64]{
+		A: value.ExclusiveMinimum,
+	}
+
+	baseSchema.ExclusiveMaximum = &base.DynamicValue[bool, float64]{
+		A: value.ExclusiveMaximum,
+	}
+
+	if value.MaxLength > 0 {
+		maxLength := int64(value.MaxLength)
+		baseSchema.MaxLength = &maxLength
+	}
+
+	if value.MinLength > 0 {
+		minLength := int64(value.MinLength)
+		baseSchema.MaxLength = &minLength
+	}
+
+	if value.MaxItems > 0 {
+		maxItems := int64(value.MaxItems)
+		baseSchema.MaxItems = &maxItems
+	}
+
+	if value.MinItems > 0 {
+		minItems := int64(value.MinItems)
+		baseSchema.MinItems = &minItems
+	}
+
+	if value.Items != nil {
+		baseSchema.Items = sto.convertItems(value.Items)
+	}
+
+	result := &v3high.Header{
+		Description: value.Description,
+		Extensions:  value.Extensions,
+		Schema:      base.CreateSchemaProxy(baseSchema),
+		Explode:     value.CollectionFormat == "multi",
+	}
+
+	return result
+}
+
+func (sto *swaggerToOpenAPIv3Converter) convertItems(
+	items *v2high.Items,
+) *base.DynamicValue[*base.SchemaProxy, bool] {
 	baseSchema := &base.Schema{
 		Format:      items.Format,
 		Pattern:     items.Pattern,
@@ -498,11 +632,36 @@ func convertItemsV2ToV3(items *v2high.Items) *base.DynamicValue[*base.SchemaProx
 	}
 
 	if items.Items != nil {
-		baseSchema.Items = convertItemsV2ToV3(items.Items)
+		baseSchema.Items = sto.convertItems(items.Items)
 	}
 
 	return &base.DynamicValue[*base.SchemaProxy, bool]{
 		N: 0,
 		A: base.CreateSchemaProxy(baseSchema),
+	}
+}
+
+func getStyleFromCollectionFormat(location string, collectionFormat string) (string, bool) {
+	multiFormat := "multi"
+	formStyle := "form"
+
+	switch location {
+	case InPath, InHeader:
+		return "simple", collectionFormat == multiFormat
+	case InQuery:
+		switch collectionFormat {
+		case "ssv":
+			return "spaceDelimited", false
+		case "tsv", "pipes":
+			return "pipeDelimited", false
+		case multiFormat:
+			return formStyle, true
+		default:
+			return formStyle, false
+		}
+	case InCookie:
+		return formStyle, collectionFormat == multiFormat
+	default:
+		return "", false
 	}
 }
