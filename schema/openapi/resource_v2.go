@@ -151,43 +151,51 @@ func (sto *swaggerToOpenAPIv3Converter) convertOperation(
 		consumes = operation.Consumes
 	}
 
-	for i, param := range operation.Parameters {
-		switch param.In {
-		case InFormData:
-			if param.Name == "" {
-				continue
-			}
+	if len(operation.Parameters) > 0 {
+		result.Parameters = make([]*v3high.Parameter, 0, len(operation.Parameters))
 
-			schema := sto.schemaFromParameter(param)
-			formDataProps.Set(param.Name, schema)
-		case InBody:
-			result.RequestBody = &v3high.RequestBody{
-				Content:     orderedmap.New[string, *v3high.MediaType](),
-				Extensions:  param.Extensions,
-				Description: param.Description,
-				Required:    param.Required,
-			}
-
-			content := &v3high.MediaType{
-				Schema:     param.Schema,
-				Extensions: param.Extensions,
-			}
-
-			if param.Schema == nil {
-				content.Schema = sto.schemaFromParameter(param)
-			}
-
-			for _, mediaType := range consumes {
-				_, present := result.RequestBody.Content.Get(mediaType)
-				if present {
+		for _, param := range operation.Parameters {
+			switch param.In {
+			case InFormData:
+				if param.Name == "" {
 					continue
 				}
 
-				result.RequestBody.Content.Set(mediaType, content)
+				schema := sto.schemaFromParameter(param)
+				formDataProps.Set(param.Name, schema)
+			case InBody:
+				result.RequestBody = &v3high.RequestBody{
+					Content:     orderedmap.New[string, *v3high.MediaType](),
+					Extensions:  param.Extensions,
+					Description: param.Description,
+					Required:    param.Required,
+				}
+
+				content := &v3high.MediaType{
+					Schema:     param.Schema,
+					Extensions: param.Extensions,
+				}
+
+				if param.Schema == nil {
+					content.Schema = sto.schemaFromParameter(param)
+				}
+
+				for _, mediaType := range consumes {
+					_, present := result.RequestBody.Content.Get(mediaType)
+					if present {
+						continue
+					}
+
+					result.RequestBody.Content.Set(mediaType, content)
+				}
+			default:
+				item := sto.convertParameter(param)
+				result.Parameters = append(result.Parameters, item)
 			}
-		default:
-			item := sto.convertParameter(param)
-			result.Parameters[i] = item
+		}
+
+		if len(result.Parameters) != len(operation.Parameters) {
+			result.Parameters = slices.Clip(result.Parameters)
 		}
 	}
 

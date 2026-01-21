@@ -213,9 +213,6 @@ func (j *RelixyOpenAPIResourceDefinition) Build(ctx context.Context) (*highv3.Do
 		}
 
 		doc = convertSwaggerToOpenAPIv3Document(&spec.Model)
-		// if err != nil {
-		// 	return nil, fmt.Errorf("failed to convert openapi spec v2 to v3: %w", err)
-		// }
 	} else {
 		sourceSpec, err := sourceDoc.BuildV3Model()
 		if err != nil {
