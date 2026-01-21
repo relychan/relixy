@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/invopop/jsonschema"
@@ -212,7 +213,10 @@ func (j *RelixyOpenAPIResourceDefinition) Build(ctx context.Context) (*highv3.Do
 			return nil, err
 		}
 
-		doc = convertSwaggerToOpenAPIv3Document(&spec.Model)
+		doc, err = convertSwaggerToOpenAPIv3Document(&spec.Model)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert openapi spec v2 to v3: %w", err)
+		}
 	} else {
 		sourceSpec, err := sourceDoc.BuildV3Model()
 		if err != nil {

@@ -20,7 +20,8 @@ func TestConvertSwaggerToOpenAPIv3Document(t *testing.T) {
 			},
 		}
 
-		result := convertSwaggerToOpenAPIv3Document(swagger)
+		result, err := convertSwaggerToOpenAPIv3Document(swagger)
+		assert.NilError(t, err)
 		assert.Assert(t, result != nil)
 		assert.Equal(t, "3.0.0", result.Version)
 		assert.Equal(t, "Test API", result.Info.Title)
@@ -39,11 +40,11 @@ func TestConvertSwaggerToOpenAPIv3Document(t *testing.T) {
 			Schemes:  []string{"https"},
 		}
 
-		result := convertSwaggerToOpenAPIv3Document(swagger)
+		result, err := convertSwaggerToOpenAPIv3Document(swagger)
+		assert.NilError(t, err)
 		assert.Assert(t, result != nil)
 		assert.Assert(t, len(result.Servers) > 0)
-		// BasePath is appended twice in the code (line 45 and 48)
-		assert.Equal(t, "https://api.example.com/v1/v1", result.Servers[0].URL)
+		assert.Equal(t, "https://api.example.com/v1", result.Servers[0].URL)
 	})
 
 	t.Run("with_http_scheme", func(t *testing.T) {
@@ -57,10 +58,11 @@ func TestConvertSwaggerToOpenAPIv3Document(t *testing.T) {
 			Schemes:  []string{"http"},
 		}
 
-		result := convertSwaggerToOpenAPIv3Document(swagger)
+		result, err := convertSwaggerToOpenAPIv3Document(swagger)
+		assert.NilError(t, err)
 		assert.Assert(t, result != nil)
 		assert.Assert(t, len(result.Servers) > 0)
-		assert.Equal(t, "http://api.example.com/v1/v1", result.Servers[0].URL)
+		assert.Equal(t, "http://api.example.com/v1", result.Servers[0].URL)
 	})
 
 	t.Run("with_root_basepath", func(t *testing.T) {
@@ -74,11 +76,12 @@ func TestConvertSwaggerToOpenAPIv3Document(t *testing.T) {
 			Schemes:  []string{"https"},
 		}
 
-		result := convertSwaggerToOpenAPIv3Document(swagger)
+		result, err := convertSwaggerToOpenAPIv3Document(swagger)
+		assert.NilError(t, err)
 		assert.Assert(t, result != nil)
 		assert.Assert(t, len(result.Servers) > 0)
 		// Root basepath is included
-		assert.Equal(t, "https://api.example.com/", result.Servers[0].URL)
+		assert.Equal(t, "https://api.example.com", result.Servers[0].URL)
 	})
 
 	t.Run("with_definitions", func(t *testing.T) {
@@ -97,7 +100,8 @@ func TestConvertSwaggerToOpenAPIv3Document(t *testing.T) {
 			},
 		}
 
-		result := convertSwaggerToOpenAPIv3Document(swagger)
+		result, err := convertSwaggerToOpenAPIv3Document(swagger)
+		assert.NilError(t, err)
 		assert.Assert(t, result != nil)
 		assert.Assert(t, result.Components.Schemas != nil)
 		assert.Equal(t, 1, result.Components.Schemas.Len())

@@ -2,7 +2,9 @@ package openapi
 
 import (
 	"slices"
+	"strings"
 
+	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	v2high "github.com/pb33f/libopenapi/datamodel/high/v2"
 	v3high "github.com/pb33f/libopenapi/datamodel/high/v3"
@@ -16,7 +18,7 @@ type swaggerToOpenAPIv3Converter struct {
 	swagger *v2high.Swagger
 }
 
-func convertSwaggerToOpenAPIv3Document(src *v2high.Swagger) *v3high.Document {
+func convertSwaggerToOpenAPIv3Document(src *v2high.Swagger) (*v3high.Document, error) {
 	sto := &swaggerToOpenAPIv3Converter{
 		swagger: src,
 	}
@@ -24,8 +26,9 @@ func convertSwaggerToOpenAPIv3Document(src *v2high.Swagger) *v3high.Document {
 	return sto.Convert()
 }
 
-func (sto *swaggerToOpenAPIv3Converter) Convert() *v3high.Document {
-	result := &v3high.Document{
+// Convert openapi swagger to OpenAPI v3 document.
+func (sto *swaggerToOpenAPIv3Converter) Convert() (*v3high.Document, error) {
+	newDoc := &v3high.Document{
 		Version:      "3.0.0",
 		Info:         sto.swagger.Info,
 		Tags:         sto.swagger.Tags,
@@ -42,36 +45,50 @@ func (sto *swaggerToOpenAPIv3Converter) Convert() *v3high.Document {
 			scheme = sto.swagger.Schemes[0]
 		}
 
-		serverURL := scheme + "://" + sto.swagger.Host + sto.swagger.BasePath
+		serverURL := scheme + "://" + sto.swagger.Host
 
 		if sto.swagger.BasePath != "" && sto.swagger.BasePath != "/" {
 			serverURL += sto.swagger.BasePath
 		}
 
-		result.Servers = []*v3high.Server{
+		newDoc.Servers = []*v3high.Server{
 			{
 				URL: serverURL,
 			},
 		}
 	}
 
-	result.Components.Parameters = sto.convertParameters()
-	result.Components.SecuritySchemes = sto.convertSecurityDefinitions()
-
-	if sto.swagger.Responses != nil {
-		result.Components.Responses = sto.convertResponsesMap(
-			sto.swagger.Responses.Definitions,
-			sto.swagger.Produces,
-		)
-	}
+	newDoc.Components.SecuritySchemes = sto.convertSecurityDefinitions()
 
 	if sto.swagger.Definitions != nil && sto.swagger.Definitions.Definitions != nil {
-		result.Components.Schemas = sto.swagger.Definitions.Definitions
+		newDoc.Components.Schemas = sto.swagger.Definitions.Definitions
 	}
 
-	result.Paths = sto.convertPaths()
+	newDoc.Paths = sto.convertPaths()
 
-	return result
+	// render and replace the definition references to components/*
+	rawYamlBytes, err := newDoc.Render()
+	if err != nil {
+		return nil, err
+	}
+
+	rawYamlString := strings.ReplaceAll(
+		string(rawYamlBytes),
+		"#/definitions/",
+		"#/components/schemas/",
+	)
+
+	docV3, err := libopenapi.NewDocument([]byte(rawYamlString))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := docV3.BuildV3Model()
+	if err != nil {
+		return nil, err
+	}
+
+	return &result.Model, nil
 }
 
 func (sto *swaggerToOpenAPIv3Converter) convertPaths() *v3high.Paths {
@@ -325,26 +342,6 @@ func (sto *swaggerToOpenAPIv3Converter) convertSecurityDefinitions() *orderedmap
 
 		security := sto.convertSecurityScheme(iter.Value)
 		result.Set(iter.Key, security)
-	}
-
-	return result
-}
-
-func (sto *swaggerToOpenAPIv3Converter) convertParameters() *orderedmap.Map[string, *v3high.Parameter] {
-	parameters := sto.swagger.Parameters
-	if parameters == nil || parameters.Definitions == nil && parameters.Definitions.Len() == 0 {
-		return nil
-	}
-
-	result := orderedmap.New[string, *v3high.Parameter]()
-
-	for iter := parameters.Definitions.Oldest(); iter != nil; iter = iter.Next() {
-		if iter.Value == nil {
-			continue
-		}
-
-		param := sto.convertParameter(iter.Value)
-		result.Set(iter.Key, param)
 	}
 
 	return result

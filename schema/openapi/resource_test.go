@@ -3,8 +3,11 @@ package openapi
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"os"
 	"testing"
 
+	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/relixy/schema/base_schema"
@@ -124,13 +127,82 @@ func TestRelixyOpenAPIResourceDefinition_Build(t *testing.T) {
 	})
 
 	t.Run("with_ref_swagger_v2", func(t *testing.T) {
-		def := RelixyOpenAPIResourceDefinition{
-			Ref: "testdata/petstore2/swagger.json",
+		testCases := []struct {
+			Ref string
+		}{
+			{
+				Ref: "petstore2",
+			},
 		}
 
-		doc, err := def.Build(ctx)
-		assert.NilError(t, err)
-		assert.Assert(t, doc != nil)
-		assert.Assert(t, doc.Info != nil)
+		for _, tc := range testCases {
+			def := RelixyOpenAPIResourceDefinition{
+				Ref: fmt.Sprintf("testdata/%s/swagger.json", tc.Ref),
+			}
+
+			doc, err := def.Build(ctx)
+			assert.NilError(t, err)
+			assert.Assert(t, doc != nil)
+			assert.Assert(t, doc.Info != nil)
+
+			rawYamlBytes, err := doc.Render()
+			assert.NilError(t, err)
+
+			expectedPath := fmt.Sprintf("testdata/%s/expected.yaml", tc.Ref)
+			// assert.NilError(t, os.WriteFile(expectedPath, rawYamlBytes, 0664))
+
+			newDoc, err := libopenapi.NewDocument(rawYamlBytes)
+			assert.NilError(t, err)
+
+			expectedBytes, err := os.ReadFile(expectedPath)
+			assert.NilError(t, err)
+
+			expectedRawDoc, err := libopenapi.NewDocument(expectedBytes)
+			assert.NilError(t, err)
+
+			changes, err := libopenapi.CompareDocuments(expectedRawDoc, newDoc)
+			assert.NilError(t, err)
+			assert.Assert(t, len(changes.GetAllChanges()) == 0)
+		}
+	})
+
+	t.Run("with_ref_openapi_v3", func(t *testing.T) {
+		testCases := []struct {
+			Ref string
+		}{
+			{
+				Ref: "petstore3",
+			},
+		}
+
+		for _, tc := range testCases {
+			def := RelixyOpenAPIResourceDefinition{
+				Ref: fmt.Sprintf("testdata/%s/openapi.json", tc.Ref),
+			}
+
+			doc, err := def.Build(ctx)
+			assert.NilError(t, err)
+			assert.Assert(t, doc != nil)
+			assert.Assert(t, doc.Info != nil)
+
+			rawYamlBytes, err := doc.Render()
+			assert.NilError(t, err)
+
+			expectedPath := fmt.Sprintf("testdata/%s/expected.yaml", tc.Ref)
+			// assert.NilError(t, os.WriteFile(expectedPath, rawYamlBytes, 0664))
+
+			newDoc, err := libopenapi.NewDocument(rawYamlBytes)
+			assert.NilError(t, err)
+
+			expectedBytes, err := os.ReadFile(expectedPath)
+			assert.NilError(t, err)
+
+			expectedRawDoc, err := libopenapi.NewDocument(expectedBytes)
+			assert.NilError(t, err)
+
+			changes, err := libopenapi.CompareDocuments(expectedRawDoc, newDoc)
+			assert.NilError(t, err)
+			assert.Assert(t, len(changes.GetAllChanges()) == 0)
+		}
 	})
 }
