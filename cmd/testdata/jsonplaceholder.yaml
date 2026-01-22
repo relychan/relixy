@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../../jsonschema/relixy.schema.json
 version: v1
-kind: OpenAPI3
+kind: OpenAPI
 metadata:
   name: default
 definition:

@@ -66,7 +66,7 @@ func (pc *ProxyClient) Execute(
 	)
 
 	options := &proxyhandler.RelixyHandleOptions{
-		Settings:    &pc.metadata.Settings,
+		Settings:    pc.metadata.Settings,
 		ParamValues: route.ParamValues,
 		NewRequest:  pc.newRequestFunc(route),
 		Path:        requestPath,

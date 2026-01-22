@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -22,10 +23,17 @@ import (
 
 // NewState creates the handler state from config.
 func NewState(
+	parentContext context.Context,
 	conf *RelixyServerConfig,
 	ts *gotel.OTelExporters,
 ) (*types.State, error) {
-	result, err := goutils.ReadJSONOrYAMLFile[openapi.RelixyOpenAPIv3Resource](conf.GetConfigPath())
+	ctx, cancel := context.WithTimeout(parentContext, time.Minute)
+	defer cancel()
+
+	result, err := goutils.ReadJSONOrYAMLFile[openapi.RelixyOpenAPIResource](
+		ctx,
+		conf.GetConfigPath(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +65,7 @@ func NewState(
 
 	proxyClientOptions.HTTPClient = httpClient
 
-	proxyClient, err := proxyc.NewProxyClient(&result.Definition, proxyClientOptions)
+	proxyClient, err := proxyc.NewProxyClient(ctx, &result.Definition, proxyClientOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create proxy client: %w", err)
 	}

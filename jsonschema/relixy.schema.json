@@ -1,7 +1,7 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
- "$id": "https://github.com/relychan/relixy/schema/openapi/relixy-open-ap-iv3-resource",
- "$ref": "#/$defs/RelixyOpenAPIv3Resource",
+ "$id": "https://github.com/relychan/relixy/schema/openapi/relixy-open-api-resource",
+ "$ref": "#/$defs/RelixyOpenAPIResource",
  "$defs": {
   "EnvBool": {
    "anyOf": [
@@ -141,6 +141,52 @@
    "additionalProperties": false,
    "type": "object"
   },
+  "RelixyOpenAPIResource": {
+   "properties": {
+    "version": {
+     "type": "string",
+     "enum": [
+      "v1"
+     ]
+    },
+    "kind": {
+     "type": "string",
+     "const": "OpenAPI",
+     "description": "Kind of the resource which is always OpenAPI."
+    },
+    "metadata": {
+     "$ref": "#/$defs/RelixyResourceMetadata"
+    },
+    "definition": {
+     "$ref": "#/$defs/RelixyOpenAPIResourceDefinition"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "version",
+    "kind",
+    "metadata",
+    "definition"
+   ]
+  },
+  "RelixyOpenAPIResourceDefinition": {
+   "properties": {
+    "settings": {
+     "$ref": "#/$defs/RelixyOpenAPISettings"
+    },
+    "ref": {
+     "type": "string"
+    },
+    "spec": {
+     "$ref": "https://raw.githubusercontent.com/relychan/relixy/refs/heads/main/jsonschema/openapi-3.json",
+     "title": "OpenAPIv3Document",
+     "description": "Specification of the OpenAPI v3 documentation."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
   "RelixyOpenAPISettings": {
    "properties": {
     "expose": {
@@ -167,53 +213,6 @@
    },
    "additionalProperties": false,
    "type": "object"
-  },
-  "RelixyOpenAPIv3Resource": {
-   "properties": {
-    "version": {
-     "type": "string",
-     "enum": [
-      "v1"
-     ]
-    },
-    "kind": {
-     "type": "string",
-     "const": "OpenAPI3",
-     "description": "Kind of the resource which is always OpenAPI3."
-    },
-    "metadata": {
-     "$ref": "#/$defs/RelixyResourceMetadata"
-    },
-    "definition": {
-     "$ref": "#/$defs/RelixyOpenAPIv3ResourceDefinition"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "version",
-    "kind",
-    "metadata",
-    "definition"
-   ]
-  },
-  "RelixyOpenAPIv3ResourceDefinition": {
-   "properties": {
-    "settings": {
-     "$ref": "#/$defs/RelixyOpenAPISettings"
-    },
-    "spec": {
-     "$ref": "https://raw.githubusercontent.com/relychan/relixy/refs/heads/main/jsonschema/openapi-3.json",
-     "title": "OpenAPIv3Document",
-     "description": "Specification of the OpenAPI v3 documentation."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "settings",
-    "spec"
-   ]
   },
   "RelixyResourceMetadata": {
    "properties": {

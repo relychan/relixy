@@ -37,9 +37,13 @@ func NewOpenAPIv3Authenticator(
 		return result, nil
 	}
 
-	for iter := document.Components.SecuritySchemes.First(); iter != nil; iter = iter.Next() {
-		key := iter.Key()
-		security := iter.Value()
+	for iter := document.Components.SecuritySchemes.Oldest(); iter != nil; iter = iter.Next() {
+		if iter.Value == nil {
+			continue
+		}
+
+		key := iter.Key
+		security := iter.Value
 
 		authScheme, err := result.createAuthenticatorFromSecurityScheme(key, security, getEnv)
 		if err != nil {
@@ -89,7 +93,7 @@ func (oaa *OpenAPIAuthenticator) GetAuthenticator(
 			continue
 		}
 
-		name := sec.Requirements.First().Key()
+		name := sec.Requirements.Oldest().Key
 
 		au, ok := oaa.securitySchemes[name]
 		if ok {
