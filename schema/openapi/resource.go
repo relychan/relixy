@@ -3,7 +3,6 @@ package openapi
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 
@@ -15,9 +14,6 @@ import (
 	"github.com/relychan/relixy/schema/base_schema"
 	"go.yaml.in/yaml/v4"
 )
-
-// ErrResourceSpecRequired occurs when the spec field of resource is empty.
-var ErrResourceSpecRequired = errors.New("spec is required in resource")
 
 // RelixyOpenAPIResource represents an OpenAPI resource.
 type RelixyOpenAPIResource struct {
@@ -40,7 +36,7 @@ func (RelixyOpenAPIResource) JSONSchemaExtend(schema *jsonschema.Schema) {
 		Set("kind", &jsonschema.Schema{
 			Description: "Kind of the resource which is always OpenAPI.",
 			Type:        "string",
-			Const:       "OpenAPI",
+			Const:       base_schema.OpenAPIKind,
 		})
 }
 

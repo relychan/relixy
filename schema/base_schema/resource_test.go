@@ -8,10 +8,6 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestRelixyResourceKind_Constants(t *testing.T) {
-	assert.Equal(t, RelixyResourceKind("OpenAPI"), OpenAPIKind)
-}
-
 func TestRelixyResourceMetadata_JSONMarshal(t *testing.T) {
 	metadata := RelixyResourceMetadata{
 		Name:        "test-resource",

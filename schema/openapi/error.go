@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -15,4 +16,6 @@ var (
 		"invalid SecuritySchemeType. Expected one of %v",
 		SupportedSecuritySchemeTypes(),
 	)
+	// ErrResourceSpecRequired occurs when the spec field of resource is empty.
+	ErrResourceSpecRequired = errors.New("spec is required in resource")
 )
