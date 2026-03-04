@@ -8,7 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/hasura/gotel"
-	"github.com/relychan/gohttps"
 	"github.com/relychan/relixy/authn"
 	"github.com/relychan/rely-auth/auth"
 	"github.com/relychan/rely-auth/auth/authmetrics"
@@ -18,7 +17,6 @@ import (
 // SetupMiddlewares sets up default middlewares and the shutdown function for the handler.
 func SetupMiddlewares(
 	ctx context.Context,
-	server *gohttps.ServerConfig,
 	metadata *RelixyMetadata,
 	ts *gotel.OTelExporters,
 ) (chi.Middlewares, *auth.RelyAuthManager, error) {

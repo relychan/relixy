@@ -1,3 +1,4 @@
+// Package schema defines the implementation for relixy resources.
 package schema
 
 import (

@@ -614,14 +614,14 @@ paths:
 	result, err := rawResource.Definition.Build(context.TODO())
 	assert.NilError(t, err)
 
-	resultYamlBytes, err := yaml.Marshal(result)
+	resultYamlBytes, err := yaml.Dump(result)
 	assert.NilError(t, err)
 
 	var resultYaml any
-	assert.NilError(t, yaml.Unmarshal(resultYamlBytes, &resultYaml))
+	assert.NilError(t, yaml.Load(resultYamlBytes, &resultYaml))
 
 	var expectedYaml any
-	assert.NilError(t, yaml.Unmarshal([]byte(expectedData), &expectedYaml))
+	assert.NilError(t, yaml.Load([]byte(expectedData), &expectedYaml))
 
 	assert.DeepEqual(t, resultYaml, expectedYaml)
 }

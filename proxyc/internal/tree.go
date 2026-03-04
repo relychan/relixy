@@ -12,7 +12,6 @@ import (
 
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
-	"github.com/relychan/goutils"
 	"github.com/relychan/relixy/proxyc/handler"
 	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 	"github.com/relychan/relixy/schema/openapi"
@@ -323,7 +322,7 @@ func (r *Route) findRouteRecursive( //nolint:gocognit
 	left, remain, _ := strings.Cut(search, "/")
 
 	for t, nds := range node.children {
-		ntyp := nodeType(t) //nolint:gosec
+		ntyp := nodeType(t)
 
 		if len(nds) == 0 {
 			continue
@@ -726,7 +725,7 @@ func extractParametersFromOperationV3(
 		params = append(params, &highv3.Parameter{
 			Name:     key,
 			In:       openapi.InPath,
-			Required: goutils.ToPtr(true),
+			Required: new(true),
 			Schema: base.CreateSchemaProxy(&base.Schema{
 				Type: []string{"string"},
 			}),

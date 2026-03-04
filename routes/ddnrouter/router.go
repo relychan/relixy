@@ -36,7 +36,7 @@ func SetupRouter(
 		gohttpc.WithTracer(ts.Tracer),
 	)
 
-	middlewares, authManager, err := config.SetupMiddlewares(ctx, &conf.Server, metadata, ts)
+	middlewares, authManager, err := config.SetupMiddlewares(ctx, metadata, ts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -57,7 +57,11 @@ func SetupRouter(
 		if err != nil {
 			shutdown()
 
-			return nil, nil, fmt.Errorf("failed to create proxy client %s: %w", resource.Metadata.Name, err)
+			return nil, nil, fmt.Errorf(
+				"failed to create proxy client %s: %w",
+				resource.Metadata.Name,
+				err,
+			)
 		}
 
 		state.ProxyClients[i] = proxyClient

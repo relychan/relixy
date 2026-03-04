@@ -77,6 +77,7 @@ func LoadMetadata(ctx context.Context, definition RelixyDefinitionConfig) (*Reli
 			result.authResource = rs
 		case *openapi.RelixyOpenAPIResource:
 			result.openapiResources = append(result.openapiResources, rs)
+		default:
 		}
 	}
 

@@ -15,6 +15,11 @@ import (
 	"go.yaml.in/yaml/v4"
 )
 
+const (
+	nullTag = "!!null"
+	strTag  = "!!str"
+)
+
 // RelixyOpenAPIResource represents an OpenAPI resource.
 type RelixyOpenAPIResource struct {
 	base_schema.BaseResourceModel `yaml:",inline"`
@@ -125,51 +130,77 @@ func (j *RelixyOpenAPIResourceDefinition) UnmarshalJSON(b []byte) error {
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (j *RelixyOpenAPIResourceDefinition) UnmarshalYAML(value *yaml.Node) error {
-	rawValue := map[string]yaml.Node{}
-
-	err := value.Decode(&rawValue)
-	if err != nil {
-		return err
+	if value == nil || value.Kind != yaml.MappingNode {
+		return fmt.Errorf(
+			"%w. Expected an object, got %s",
+			ErrInvalidOpenAPIResourceDefinitionYAML,
+			value.Tag,
+		)
 	}
 
-	rawSettings, ok := rawValue["settings"]
-	if ok {
-		err = rawSettings.Decode(&j.Settings)
-		if err != nil {
-			return err
+	contentLength := len(value.Content)
+
+	for i := 0; i < contentLength; i++ {
+		if i == contentLength-1 {
+			break
+		}
+
+		keyNode := value.Content[i]
+		if keyNode.Kind != yaml.ScalarNode && keyNode.Tag != "!!str" {
+			return fmt.Errorf(
+				"%w. Expected a key string, got %s",
+				ErrInvalidOpenAPIResourceDefinitionYAML,
+				keyNode.Tag,
+			)
+		}
+
+		if keyNode.Value == "" {
+			return fmt.Errorf("%w. Object key is empty", ErrInvalidOpenAPIResourceDefinitionYAML)
+		}
+
+		i++
+
+		valueNode := value.Content[i]
+
+		switch keyNode.Value {
+		case "settings":
+			err := valueNode.Decode(&j.Settings)
+			if err != nil {
+				return err
+			}
+		case "ref":
+			switch valueNode.Tag {
+			case strTag:
+				j.Ref = valueNode.Value
+			case nullTag:
+			default:
+				return fmt.Errorf(
+					"%w. Expected ref is a string, got %s",
+					ErrInvalidOpenAPIResourceDefinitionYAML,
+					valueNode.Tag,
+				)
+			}
+		case "spec":
+			// Marshal the YAML node back to bytes for libopenapi
+			specBytes, err := yaml.Dump(valueNode)
+			if err != nil {
+				return err
+			}
+
+			doc, err := libopenapi.NewDocument(specBytes)
+			if err != nil {
+				return err
+			}
+
+			spec, err := doc.BuildV3Model()
+			if err != nil {
+				return err
+			}
+
+			j.Spec = &spec.Model
+		default:
 		}
 	}
-
-	rawRef, ok := rawValue["ref"]
-	if ok {
-		err = rawRef.Decode(&j.Ref)
-		if err != nil {
-			return err
-		}
-	}
-
-	rawSpec, ok := rawValue["spec"]
-	if !ok {
-		return nil
-	}
-
-	// Marshal the YAML node back to bytes for libopenapi
-	specBytes, err := yaml.Marshal(rawSpec)
-	if err != nil {
-		return err
-	}
-
-	doc, err := libopenapi.NewDocument(specBytes)
-	if err != nil {
-		return err
-	}
-
-	spec, err := doc.BuildV3Model()
-	if err != nil {
-		return err
-	}
-
-	j.Spec = &spec.Model
 
 	return nil
 }

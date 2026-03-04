@@ -44,7 +44,10 @@ func (pc *ProxyClient) Execute(
 		if req.URL.Path[0] == '/' {
 			requestPath = strings.TrimPrefix(req.URL.Path, pc.metadata.Definition.Settings.BasePath)
 		} else {
-			requestPath = strings.TrimPrefix(req.URL.Path, pc.metadata.Definition.Settings.BasePath[1:])
+			requestPath = strings.TrimPrefix(
+				req.URL.Path,
+				pc.metadata.Definition.Settings.BasePath[1:],
+			)
 		}
 	}
 

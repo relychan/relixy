@@ -12,7 +12,7 @@ type State struct {
 	ProxyClients []*proxyc.ProxyClient
 }
 
-// Close stops internal processes of the state.
+// FindProxyClient find the suitable proxy client from the request path.
 func (s *State) FindProxyClient(requestPath string) *proxyc.ProxyClient {
 	defaultIndex := -1
 
