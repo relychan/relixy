@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/relychan/goutils"
 	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
 	"github.com/relychan/rely-auth/auth"
@@ -27,13 +28,6 @@ type rawRelixyResourceJSON struct {
 
 	// Definition of the OpenAPI documentation.
 	Definition json.RawMessage `json:"definition"`
-}
-
-type rawRelixyResourceYAML struct {
-	base_schema.BaseResourceModel `yaml:",inline"`
-
-	// Definition of the OpenAPI documentation.
-	Definition yaml.Node `json:"definition"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -83,44 +77,49 @@ func (j *RelixyResource) UnmarshalJSON(b []byte) error {
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (j *RelixyResource) UnmarshalYAML(value *yaml.Node) error {
-	var rawValue rawRelixyResourceYAML
-
-	err := value.Decode(&rawValue)
+	defNode, err := goutils.GetNodeValueFromYAMLMap(value, "definition")
 	if err != nil {
 		return err
 	}
 
-	if rawValue.Definition.IsZero() {
+	if defNode == nil {
 		return ErrRelixyResourceDefinitionRequired
 	}
 
-	switch rawValue.Kind {
+	var baseModel base_schema.BaseResourceModel
+
+	err = value.Decode(&baseModel)
+	if err != nil {
+		return err
+	}
+
+	switch baseModel.Kind {
 	case base_schema.RelyAuthKind:
 		var authDef auth.RelyAuthDefinition
 
-		err = rawValue.Definition.Decode(&authDef)
+		err = defNode.Decode(&authDef)
 		if err != nil {
 			return err
 		}
 
 		j.RelixyResource = &base_schema.RelyAuthResource{
-			BaseResourceModel: rawValue.BaseResourceModel,
+			BaseResourceModel: baseModel,
 			Definition:        authDef,
 		}
 	case base_schema.OpenAPIKind:
 		var oasDef openapi.RelixyOpenAPIResourceDefinition
 
-		err = rawValue.Definition.Decode(&oasDef)
+		err = defNode.Decode(&oasDef)
 		if err != nil {
 			return err
 		}
 
 		j.RelixyResource = &openapi.RelixyOpenAPIResource{
-			BaseResourceModel: rawValue.BaseResourceModel,
+			BaseResourceModel: baseModel,
 			Definition:        oasDef,
 		}
 	default:
-		return fmt.Errorf("%w `%s`", ErrUnsupportedRelixyResourceKind, rawValue.Kind)
+		return fmt.Errorf("%w `%s`", ErrUnsupportedRelixyResourceKind, baseModel.Kind)
 	}
 
 	return nil
