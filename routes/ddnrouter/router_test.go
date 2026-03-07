@@ -20,7 +20,7 @@ import (
 )
 
 func TestRestifiedPlugin_RESTServer(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
@@ -36,7 +36,7 @@ func TestRestifiedPlugin_RESTServer(t *testing.T) {
 		{
 			Name: "getAlbums",
 			Body: PreRoutePluginRequestBody{
-				Path:   "/albums",
+				Path:   "/api/v1/albums",
 				Method: "GET",
 			},
 			StatusCode: 200,
@@ -44,7 +44,7 @@ func TestRestifiedPlugin_RESTServer(t *testing.T) {
 		{
 			Name: "getPostByID",
 			Body: PreRoutePluginRequestBody{
-				Path:   "/posts/1",
+				Path:   "/api/v1/posts/1",
 				Method: "GET",
 			},
 			StatusCode: 200,
@@ -65,7 +65,7 @@ func TestRestifiedPlugin_RESTServer(t *testing.T) {
 }
 
 func TestRestifiedPlugin_GraphQLServer(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/rickandmortyapi.yaml")
+	server, shutdown := initTestServer(t, "../testdata/rickandmortyapi/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
@@ -405,24 +405,6 @@ func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) 
 
 	envVars, err := config.LoadServerConfig(context.Background())
 	assert.NilError(t, err)
-
-	// envVars.a = auth.RelyAuthConfig{
-	// 	Definition: auth.RelyAuthDefinition{
-	// 		Settings: &authmode.RelyAuthSettings{},
-	// 		Modes: []auth.RelyAuthMode{
-	// 			{
-	// 				RelyAuthModeInterface: apikey.NewRelyAuthAPIKeyConfig(
-	// 					authscheme.TokenLocation{
-	// 						In:   authscheme.InHeader,
-	// 						Name: "Authorization",
-	// 					},
-	// 					goenvconf.NewEnvStringValue("test-secret"),
-	// 					map[string]goenvconf.EnvAny{},
-	// 				),
-	// 			},
-	// 		},
-	// 	},
-	// }
 
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),

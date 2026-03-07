@@ -21,7 +21,7 @@ import (
 )
 
 func TestRESTHandler_RESTServer(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
@@ -66,7 +66,7 @@ func TestRESTHandler_RESTServer(t *testing.T) {
 }
 
 func TestRESTHandler_GraphQLServer(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/rickandmortyapi.yaml")
+	server, shutdown := initTestServer(t, "../testdata/rickandmortyapi/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()

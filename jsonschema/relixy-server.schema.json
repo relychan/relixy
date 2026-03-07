@@ -155,6 +155,30 @@
    "additionalProperties": false,
    "type": "object"
   },
+  "RelixyDefinitionConfig": {
+   "properties": {
+    "include": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "description": "List of paths to be included for metadata introspection."
+    },
+    "exclude": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "description": "List of paths to be excluded for metadata introspection."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "include"
+   ],
+   "description": "RelixyDefinitionConfig represents the configurations for relixy definitions."
+  },
   "RelixyServerConfig": {
    "properties": {
     "server": {
@@ -163,97 +187,16 @@
     "telemetry": {
      "$ref": "#/$defs/OTLPConfig"
     },
-    "auth": {
-     "$ref": "#/$defs/RelyAuthConfig"
-    },
-    "configPath": {
-     "type": "string"
+    "definition": {
+     "$ref": "#/$defs/RelixyDefinitionConfig"
     }
    },
    "additionalProperties": false,
    "type": "object",
    "required": [
-    "server",
-    "telemetry",
-    "auth",
-    "configPath"
+    "definition"
    ],
    "description": "RelixyServerConfig holds information of required configurations to run the relixy server."
-  },
-  "RelyAuthConfig": {
-   "properties": {
-    "version": {
-     "type": "string",
-     "enum": [
-      "v1"
-     ]
-    },
-    "kind": {
-     "type": "string",
-     "enum": [
-      "RelyAuth"
-     ]
-    },
-    "definition": {
-     "$ref": "#/$defs/RelyAuthDefinition"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "version",
-    "kind",
-    "definition"
-   ]
-  },
-  "RelyAuthDefinition": {
-   "properties": {
-    "settings": {
-     "$ref": "#/$defs/RelyAuthSettings"
-    },
-    "modes": {
-     "items": {
-      "$ref": "#/$defs/RelyAuthMode"
-     },
-     "type": "array"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "modes"
-   ]
-  },
-  "RelyAuthMode": {
-   "oneOf": [
-    {
-     "$ref": "#/$defs/RelyAuthAPIKeyConfig",
-     "description": "Configurations for HTTP authentication with static secrets"
-    },
-    {
-     "$ref": "#/$defs/RelyAuthJWTConfig",
-     "description": "Configurations to which the incoming JWT will be verified and decoded to extract the session variable claims"
-    },
-    {
-     "$ref": "#/$defs/RelyAuthNoAuthConfig",
-     "description": "The session variables configuration for unauthenticated users"
-    },
-    {
-     "$ref": "#/$defs/RelyAuthWebhookConfig",
-     "description": "Configurations for the webhook authentication mode"
-    }
-   ]
-  },
-  "RelyAuthSettings": {
-   "properties": {
-    "reloadInterval": {
-     "type": "integer",
-     "minimum": 0,
-     "default": 0
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
   },
   "ServerConfig": {
    "properties": {

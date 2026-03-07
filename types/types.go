@@ -1,5 +1,5 @@
 // Package types defines common types for the rely proxy service.
-package types
+package types //nolint:revise
 
 import (
 	"github.com/relychan/relixy/proxyc"

@@ -48,7 +48,10 @@ func SetupRouter(
 	}
 
 	shutdown := func() {
-		goutils.CatchWarnErrorFunc(authManager.Close)
+		if authManager != nil {
+			goutils.CatchWarnErrorFunc(authManager.Close)
+		}
+
 		goutils.CatchWarnErrorFunc(state.Close)
 	}
 
@@ -67,7 +70,7 @@ func SetupRouter(
 		state.ProxyClients[i] = proxyClient
 	}
 
-	router := gohttps.NewRouter(&conf.Server, ts.Logger)
+	router := gohttps.NewRouter(conf.Server, ts.Logger)
 	router.Use(middleware.AllowContentType("application/json"))
 	router.Handle(
 		"/ddn/pre-route",

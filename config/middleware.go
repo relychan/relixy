@@ -42,7 +42,7 @@ func SetupMiddlewares(
 
 		authmetrics.SetRelyAuthMetrics(authMetrics)
 
-		authManager, err := auth.NewRelyAuthManager(
+		authManager, err = auth.NewRelyAuthManager(
 			ctx,
 			&auth.RelyAuthConfig{
 				Version:    metadata.authResource.Version,

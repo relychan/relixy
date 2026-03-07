@@ -63,7 +63,7 @@ var _ RelixyResource = (*RelyAuthResource)(nil)
 func (RelyAuthResource) JSONSchemaExtend(schema *jsonschema.Schema) {
 	schema.Properties.
 		Set("kind", &jsonschema.Schema{
-			Description: "Kind of the resource which is always OpenAPI.",
+			Description: "Kind of the resource which is always RelyAuth.",
 			Type:        "string",
 			Const:       RelyAuthKind,
 		})

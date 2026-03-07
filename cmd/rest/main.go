@@ -38,7 +38,7 @@ func startServer() error {
 		return err
 	}
 
-	ts, err := gotel.SetupOTelExporters(ctx, &envVars.Telemetry, types.BuildVersion, logger)
+	ts, err := gotel.SetupOTelExporters(ctx, envVars.Telemetry, types.BuildVersion, logger)
 	if err != nil {
 		return err
 	}
@@ -52,5 +52,5 @@ func startServer() error {
 
 	defer shutdown()
 
-	return gohttps.ListenAndServe(ctx, router, &envVars.Server)
+	return gohttps.ListenAndServe(ctx, router, envVars.Server)
 }

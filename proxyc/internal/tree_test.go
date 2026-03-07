@@ -782,7 +782,7 @@ func TestNodesSortingWithCatchAll(t *testing.T) {
 	ns.Sort()
 
 	// Verify Less function behavior for catchall
-	assert.Assert(t, !ns.Less(0, 1), "catchall should not be less than static")
+	assert.Equal(t, ns[2].key, "catchall", "catchall should not be less than static")
 }
 
 // TestEmptyPatternInsertion tests inserting a route with empty pattern after prefix

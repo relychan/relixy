@@ -60,7 +60,7 @@ func LoadMetadata(ctx context.Context, definition RelixyDefinitionConfig) (*Reli
 	}
 
 	for _, include := range includes {
-		resource, err := goutils.ReadJSONOrYAMLFile[schema.RelixyResource](
+		resources, err := goutils.ReadMultiFromJSONOrYAMLFile[schema.RelixyResource](
 			ctx,
 			include,
 		)
@@ -68,16 +68,18 @@ func LoadMetadata(ctx context.Context, definition RelixyDefinitionConfig) (*Reli
 			return nil, err
 		}
 
-		switch rs := resource.RelixyResource.(type) {
-		case *base_schema.RelyAuthResource:
-			if result.authResource != nil {
-				return nil, ErrAllowOnlyOneRelyAuthResource
-			}
+		for _, resource := range resources {
+			switch rs := resource.RelixyResource.(type) {
+			case *base_schema.RelyAuthResource:
+				if result.authResource != nil {
+					return nil, ErrAllowOnlyOneRelyAuthResource
+				}
 
-			result.authResource = rs
-		case *openapi.RelixyOpenAPIResource:
-			result.openapiResources = append(result.openapiResources, rs)
-		default:
+				result.authResource = rs
+			case *openapi.RelixyOpenAPIResource:
+				result.openapiResources = append(result.openapiResources, rs)
+			default:
+			}
 		}
 	}
 

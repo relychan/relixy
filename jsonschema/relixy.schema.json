@@ -1,7 +1,7 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
- "$id": "https://github.com/relychan/relixy/schema/openapi/relixy-open-api-resource",
- "$ref": "#/$defs/RelixyOpenAPIResource",
+ "$id": "https://github.com/relychan/relixy/schema/relixy-resource",
+ "$ref": "#/$defs/RelixyResource",
  "$defs": {
   "EnvBool": {
    "anyOf": [
@@ -60,7 +60,32 @@
    "type": "object"
   },
   "HTTPClientConfig": {
-   "$ref": "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json"
+   "properties": {
+    "timeout": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/Duration"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "transport": {
+     "$ref": "#/$defs/HTTPTransportConfig"
+    },
+    "tls": {
+     "$ref": "#/$defs/TLSConfig"
+    },
+    "retry": {
+     "$ref": "#/$defs/HTTPRetryConfig"
+    },
+    "authentication": {
+     "$ref": "#/$defs/HTTPClientAuthConfig"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
   },
   "HTTPHealthCheckConfig": {
    "properties": {
@@ -213,6 +238,18 @@
    },
    "additionalProperties": false,
    "type": "object"
+  },
+  "RelixyResource": {
+   "oneOf": [
+    {
+     "$ref": "#/$defs/RelixyOpenAPIResource",
+     "description": "Definition of an OpenAPI resource"
+    },
+    {
+     "$ref": "https://raw.githubusercontent.com/relychan/rely-auth/refs/heads/main/jsonschema/auth.schema.json",
+     "description": "Definition of a RelyAuth resource"
+    }
+   ]
   },
   "RelixyResourceMetadata": {
    "properties": {

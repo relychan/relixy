@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"regexp"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/pb33f/libopenapi/datamodel/high/base"
@@ -396,18 +395,17 @@ type nodes []*Node
 
 // Sort the list of nodes by label.
 func (ns nodes) Sort() {
-	sort.Sort(ns)
-}
-func (ns nodes) Len() int      { return len(ns) }
-func (ns nodes) Swap(i, j int) { ns[i], ns[j] = ns[j], ns[i] }
+	slices.SortFunc(ns, func(a, b *Node) int {
+		if a.typ == b.typ || (a.typ < 3 && b.typ < 3) {
+			return strings.Compare(a.key, b.key)
+		}
 
-func (ns nodes) Less(i, j int) bool {
-	switch ns[i].typ {
-	case ntStatic, ntParam, ntRegexp:
-		return strings.Compare(ns[i].key, ns[j].key) < 0
-	default:
-		return false
-	}
+		if a.typ >= 3 {
+			return 1
+		}
+
+		return -1
+	})
 }
 
 type patNextSegmentResult struct {

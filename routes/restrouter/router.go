@@ -52,7 +52,7 @@ func SetupRouter(
 		}
 	}
 
-	router := gohttps.NewRouter(&conf.Server, ts.Logger)
+	router := gohttps.NewRouter(conf.Server, ts.Logger)
 
 	for _, resource := range oasResources {
 		proxyClient, err := proxyc.NewProxyClient(ctx, resource, proxyClientOptions)

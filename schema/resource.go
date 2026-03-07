@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/invopop/jsonschema"
 	"github.com/relychan/goutils"
 	"github.com/relychan/relixy/schema/base_schema"
 	"github.com/relychan/relixy/schema/openapi"
@@ -123,4 +124,20 @@ func (j *RelixyResource) UnmarshalYAML(value *yaml.Node) error {
 	}
 
 	return nil
+}
+
+// JSONSchema defines a custom definition for JSON schema.
+func (RelixyResource) JSONSchema() *jsonschema.Schema {
+	return &jsonschema.Schema{
+		OneOf: []*jsonschema.Schema{
+			{
+				Description: "Definition of an OpenAPI resource",
+				Ref:         "#/$defs/RelixyOpenAPIResource",
+			},
+			{
+				Description: "Definition of a RelyAuth resource",
+				Ref:         "https://raw.githubusercontent.com/relychan/rely-auth/refs/heads/main/jsonschema/auth.schema.json",
+			},
+		},
+	}
 }

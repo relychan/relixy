@@ -5,11 +5,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"strings"
 
 	"github.com/invopop/jsonschema"
 	"github.com/relychan/relixy/config"
+	"github.com/relychan/relixy/schema"
 	"github.com/relychan/relixy/schema/openapi"
 )
 
@@ -44,12 +46,15 @@ func genConfigurationSchema() error {
 		}
 	}
 
-	reflectSchema := r.Reflect(openapi.RelixyOpenAPIResource{})
+	reflectSchema := r.Reflect(schema.RelixyResource{})
 
 	// custom schema types
 	reflectSchema.Definitions["HTTPClientConfig"] = &jsonschema.Schema{
 		Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json",
 	}
+
+	openapiSchema := r.Reflect(openapi.RelixyOpenAPIResource{})
+	maps.Copy(reflectSchema.Definitions, openapiSchema.Definitions)
 
 	// delete unused definitions
 	delete(reflectSchema.Definitions, "HTTPTransportConfig")

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/caarlos0/env/v11"
@@ -32,8 +33,8 @@ func (rdc RelixyDefinitionConfig) Validate() error {
 
 // RelixyServerConfig holds information of required configurations to run the relixy server.
 type RelixyServerConfig struct {
-	Server     gohttps.ServerConfig   `json:"server" yaml:"server"`
-	Telemetry  gotel.OTLPConfig       `json:"telemetry" yaml:"telemetry"`
+	Server     *gohttps.ServerConfig  `json:"server,omitempty" yaml:"server,omitempty"`
+	Telemetry  *gotel.OTLPConfig      `json:"telemetry,omitempty" yaml:"telemetry,omitempty"`
 	Definition RelixyDefinitionConfig `json:"definition" yaml:"definition"`
 }
 
@@ -56,6 +57,14 @@ func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, error
 		result = &RelixyServerConfig{}
 	}
 
+	if result.Server == nil {
+		result.Server = new(gohttps.ServerConfig)
+	}
+
+	if result.Telemetry == nil {
+		result.Telemetry = new(gotel.OTLPConfig)
+	}
+
 	err = env.Parse(result)
 	if err != nil {
 		return result, fmt.Errorf("failed to load environment variables for server config: %w", err)
@@ -70,5 +79,42 @@ func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, error
 		result.Telemetry.ServiceName = "relixy"
 	}
 
+	if serverConfigPath != "" && serverConfigPath != "." {
+		basePath := filepath.Dir(serverConfigPath)
+
+		include, err := resolveDefinitionPaths(basePath, result.Definition.Include)
+		if err != nil {
+			return nil, err
+		}
+
+		result.Definition.Include = include
+
+		exclude, err := resolveDefinitionPaths(basePath, result.Definition.Exclude)
+		if err != nil {
+			return nil, err
+		}
+
+		result.Definition.Exclude = exclude
+	}
+
 	return result, nil
+}
+
+func resolveDefinitionPaths(basePath string, paths []string) ([]string, error) {
+	results := make([]string, 0, len(paths))
+
+	for _, p := range paths {
+		pathOrURI, err := goutils.ParsePathOrHTTPURL(p)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve %s: %w", p, err)
+		}
+
+		if pathOrURI.Scheme != "" || filepath.IsAbs(p) {
+			results = append(results, p)
+		} else {
+			results = append(results, filepath.Join(basePath, p))
+		}
+	}
+
+	return results, nil
 }
