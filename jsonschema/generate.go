@@ -111,6 +111,18 @@ func genServerConfigurationSchema() error {
 
 	reflectSchema := r.Reflect(config.RelixyServerConfig{})
 
+	// custom schema types
+	reflectSchema.Definitions["ServerConfig"] = &jsonschema.Schema{
+		Ref: "https://raw.githubusercontent.com/relychan/gohttps/refs/heads/main/jsonschema/server.schema.json",
+	}
+
+	reflectSchema.Definitions["OTLPConfig"] = &jsonschema.Schema{
+		Ref: "https://raw.githubusercontent.com/hasura/gotel/refs/heads/main/jsonschema/gotel.schema.json",
+	}
+
+	// delete unused definitions
+	delete(reflectSchema.Definitions, "CORSConfig")
+
 	buffer := new(bytes.Buffer)
 	enc := json.NewEncoder(buffer)
 	enc.SetEscapeHTML(false)

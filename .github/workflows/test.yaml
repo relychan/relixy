@@ -65,7 +65,7 @@ jobs:
   build-scan:
     name: Build and scan vulnerabilities
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+    # if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -84,7 +84,7 @@ jobs:
           VERSION: ${{ steps.get-version.outputs.ref_version }}
 
       - name: Scan High/Critical Vulnerabilities
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.35
         with:
           scan-type: "image"
           image-ref: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.get-version.outputs.ref_version }}
