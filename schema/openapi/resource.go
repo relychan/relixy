@@ -32,6 +32,10 @@ func (ror RelixyOpenAPIResource) GetMetadata() baseschema.RelixyResourceMetadata
 
 // JSONSchemaExtend modifies the JSON schema afterwards.
 func (RelixyOpenAPIResource) JSONSchemaExtend(schema *jsonschema.Schema) {
+	defSchema, _ := schema.Properties.Get("definition")
+	defSchema.Description = "Definition of the OpenAPI documentation"
+	schema.Properties.Set("definition", defSchema)
+
 	schema.Properties.
 		Set("kind", &jsonschema.Schema{
 			Description: "Kind of the resource which is always OpenAPI.",
@@ -42,7 +46,7 @@ func (RelixyOpenAPIResource) JSONSchemaExtend(schema *jsonschema.Schema) {
 
 // RelixyOpenAPIResourceDefinition defines fields of a relixy OpenAPI resource.
 type RelixyOpenAPIResourceDefinition struct {
-	// Settings of the OpenAPI v3 resource.
+	// Settings of the OpenAPI resource.
 	Settings *RelixyOpenAPISettings `json:"settings,omitempty" yaml:"settings,omitempty"`
 	// Path of URL of the referenced OpenAPI document.
 	// Requires at least one of ref or spec.
@@ -59,6 +63,14 @@ type rawRelixyOpenAPIResourceDefinitionJSON struct {
 
 // JSONSchemaExtend modifies the JSON schema afterwards.
 func (RelixyOpenAPIResourceDefinition) JSONSchemaExtend(schema *jsonschema.Schema) {
+	settingsSchema, _ := schema.Properties.Get("settings")
+	settingsSchema.Description = "Settings of the OpenAPI resource"
+	schema.Properties.Set("settings", settingsSchema)
+
+	refSchema, _ := schema.Properties.Get("ref")
+	refSchema.Description = "Path of URL of the referenced OpenAPI document. Requires at least one of ref or spec. If both fields are configured, the spec will be merged into the reference."
+	schema.Properties.Set("ref", refSchema)
+
 	schema.Properties.
 		Set("spec", &jsonschema.Schema{
 			Title:       "OpenAPIv3Document",

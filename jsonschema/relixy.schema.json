@@ -60,32 +60,7 @@
    "type": "object"
   },
   "HTTPClientConfig": {
-   "properties": {
-    "timeout": {
-     "oneOf": [
-      {
-       "$ref": "#/$defs/Duration"
-      },
-      {
-       "type": "null"
-      }
-     ]
-    },
-    "transport": {
-     "$ref": "#/$defs/HTTPTransportConfig"
-    },
-    "tls": {
-     "$ref": "#/$defs/TLSConfig"
-    },
-    "retry": {
-     "$ref": "#/$defs/HTTPRetryConfig"
-    },
-    "authentication": {
-     "$ref": "#/$defs/HTTPClientAuthConfig"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
+   "$ref": "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json"
   },
   "HTTPHealthCheckConfig": {
    "properties": {
@@ -172,7 +147,8 @@
      "type": "string",
      "enum": [
       "v1"
-     ]
+     ],
+     "description": "Version of the resource"
     },
     "kind": {
      "type": "string",
@@ -180,10 +156,12 @@
      "description": "Kind of the resource which is always OpenAPI."
     },
     "metadata": {
-     "$ref": "#/$defs/RelixyResourceMetadata"
+     "$ref": "#/$defs/RelixyResourceMetadata",
+     "description": "Metadata of the resource"
     },
     "definition": {
-     "$ref": "#/$defs/RelixyOpenAPIResourceDefinition"
+     "$ref": "#/$defs/RelixyOpenAPIResourceDefinition",
+     "description": "Definition of the OpenAPI documentation"
     }
    },
    "additionalProperties": false,
@@ -198,10 +176,12 @@
   "RelixyOpenAPIResourceDefinition": {
    "properties": {
     "settings": {
-     "$ref": "#/$defs/RelixyOpenAPISettings"
+     "$ref": "#/$defs/RelixyOpenAPISettings",
+     "description": "Settings of the OpenAPI resource"
     },
     "ref": {
-     "type": "string"
+     "type": "string",
+     "description": "Path of URL of the referenced OpenAPI document. Requires at least one of ref or spec. If both fields are configured, the spec will be merged into the reference."
     },
     "spec": {
      "$ref": "https://raw.githubusercontent.com/relychan/relixy/refs/heads/main/jsonschema/openapi-3.json",
@@ -255,13 +235,16 @@
    "properties": {
     "name": {
      "type": "string",
+     "description": "Name of the resource",
      "default": "default"
     },
     "description": {
-     "type": "string"
+     "type": "string",
+     "description": "Description of the resource"
     },
     "instruction": {
-     "type": "string"
+     "type": "string",
+     "description": "System instruction for the current resource. It's important to the LLM"
     }
    },
    "additionalProperties": false,

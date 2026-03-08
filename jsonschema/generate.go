@@ -35,7 +35,7 @@ func main() {
 func genConfigurationSchema() error {
 	r := new(jsonschema.Reflector)
 
-	for _, name := range []string{"/schema/openapi", "/schema/baseschema"} {
+	for _, name := range []string{"/schema/openapi", "/schema/baseschema", "/schema/gqlschema"} {
 		err := r.AddGoComments(
 			"github.com/relychan/relixy"+name,
 			".."+name,
@@ -49,12 +49,11 @@ func genConfigurationSchema() error {
 	reflectSchema := r.Reflect(schema.RelixyResource{})
 
 	// custom schema types
+	openapiSchema := r.Reflect(openapi.RelixyOpenAPIResource{})
+	maps.Copy(reflectSchema.Definitions, openapiSchema.Definitions)
 	reflectSchema.Definitions["HTTPClientConfig"] = &jsonschema.Schema{
 		Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json",
 	}
-
-	openapiSchema := r.Reflect(openapi.RelixyOpenAPIResource{})
-	maps.Copy(reflectSchema.Definitions, openapiSchema.Definitions)
 
 	// delete unused definitions
 	delete(reflectSchema.Definitions, "HTTPTransportConfig")
