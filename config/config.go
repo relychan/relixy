@@ -82,7 +82,7 @@ func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, *slog
 			fmt.Errorf("failed to load environment variables for server config: %w", err)
 	}
 
-	logger, _, err := otelutils.NewJSONLogger(result.Server.LogLevel)
+	logger, _, err := otelutils.NewJSONLogger(result.Server.GetLogLevel())
 	if err != nil {
 		return nil, nil, err
 	}
