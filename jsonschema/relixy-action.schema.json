@@ -1,5 +1,6 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://github.com/relychan/relixy/jsonschema/relixy-action-config",
  "$ref": "#/$defs/RelixyActionConfig",
  "$defs": {
   "EnvAny": {

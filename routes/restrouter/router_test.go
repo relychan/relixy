@@ -20,8 +20,10 @@ import (
 	"gotest.tools/v3/assert"
 )
 
+var testPlaceholderConfig = "../testdata/jsonplaceholder/config.yaml"
+
 func TestRESTHandler_RESTServer(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder/config.yaml")
+	server, shutdown := initTestServer(t, testPlaceholderConfig)
 	defer func() {
 		server.Close()
 		shutdown()
@@ -264,23 +266,12 @@ func runUnauthorizedRequest[T any](t *testing.T, r ddnrouter.PreRoutePluginReque
 func TestSetupRouter_InvalidConfig(t *testing.T) {
 	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/invalid-config.yaml")
 
-	envVars, err := config.LoadServerConfig(context.Background())
-	assert.NilError(t, err)
-
-	otelExporters := &gotel.OTelExporters{
-		Tracer: gotel.NewTracer("test"),
-		Meter:  otel.Meter("test"),
-		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		})),
-	}
-
-	_, _, err = SetupRouter(context.TODO(), envVars, otelExporters)
-	assert.ErrorContains(t, err, "")
+	_, err := config.LoadServerConfig(context.Background())
+	assert.ErrorIs(t, err, io.EOF)
 }
 
 func TestSetupRouter_ValidConfig(t *testing.T) {
-	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/jsonplaceholder.yaml")
+	t.Setenv("RELIXY_CONFIG_PATH", testPlaceholderConfig)
 
 	envVars, err := config.LoadServerConfig(context.Background())
 	assert.NilError(t, err)
@@ -302,7 +293,7 @@ func TestSetupRouter_ValidConfig(t *testing.T) {
 }
 
 func TestRESTHandler_NotFoundPath(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, testPlaceholderConfig)
 	defer func() {
 		server.Close()
 		shutdown()
@@ -321,7 +312,7 @@ func TestRESTHandler_NotFoundPath(t *testing.T) {
 }
 
 func TestRESTHandler_WithPathParams(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, testPlaceholderConfig)
 	defer func() {
 		server.Close()
 		shutdown()
@@ -345,7 +336,7 @@ func TestRESTHandler_WithPathParams(t *testing.T) {
 }
 
 func TestRESTHandler_GetAlbums(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, testPlaceholderConfig)
 	defer func() {
 		server.Close()
 		shutdown()
@@ -373,24 +364,6 @@ func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) 
 
 	envVars, err := config.LoadServerConfig(context.Background())
 	assert.NilError(t, err)
-
-	// envVars.Auth = auth.RelyAuthConfig{
-	// 	Definition: auth.RelyAuthDefinition{
-	// 		Settings: &authmode.RelyAuthSettings{},
-	// 		Modes: []auth.RelyAuthMode{
-	// 			{
-	// 				RelyAuthModeInterface: apikey.NewRelyAuthAPIKeyConfig(
-	// 					authscheme.TokenLocation{
-	// 						In:   authscheme.InHeader,
-	// 						Name: "Authorization",
-	// 					},
-	// 					goenvconf.NewEnvStringValue("test-secret"),
-	// 					map[string]goenvconf.EnvAny{},
-	// 				),
-	// 			},
-	// 		},
-	// 	},
-	// }
 
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),

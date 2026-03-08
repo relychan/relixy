@@ -13,6 +13,7 @@ import (
 	"github.com/relychan/relixy/proxyc"
 )
 
+// SetupRouter set up the router and states for rest handlers.
 func SetupRouter(
 	ctx context.Context,
 	conf *config.RelixyServerConfig,
@@ -42,8 +43,9 @@ func SetupRouter(
 
 	oasResources := metadata.GetOpenAPIResources()
 
-	shutdownFuncs := []func() error{
-		authManager.Close,
+	shutdownFuncs := []func() error{}
+	if authManager != nil {
+		shutdownFuncs = append(shutdownFuncs, authManager.Close)
 	}
 
 	shutdown := func() {

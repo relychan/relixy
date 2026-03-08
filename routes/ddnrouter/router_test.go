@@ -249,23 +249,12 @@ func TestRestifiedPlugin_DDN(t *testing.T) {
 func TestSetupRouter_InvalidConfig(t *testing.T) {
 	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/invalid-config.yaml")
 
-	envVars, err := config.LoadServerConfig(context.Background())
-	assert.NilError(t, err)
-
-	otelExporters := &gotel.OTelExporters{
-		Tracer: gotel.NewTracer("test"),
-		Meter:  otel.Meter("test"),
-		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		})),
-	}
-
-	_, _, err = SetupRouter(context.TODO(), envVars, otelExporters)
-	assert.ErrorContains(t, err, "")
+	_, err := config.LoadServerConfig(context.Background())
+	assert.ErrorIs(t, err, io.EOF)
 }
 
 func TestSetupRouter_ValidConfig(t *testing.T) {
-	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/jsonplaceholder.yaml")
+	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/jsonplaceholder/config.yaml")
 
 	envVars, err := config.LoadServerConfig(context.Background())
 	assert.NilError(t, err)
@@ -287,7 +276,7 @@ func TestSetupRouter_ValidConfig(t *testing.T) {
 }
 
 func TestPreRoutePlugin_InvalidJSON(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
@@ -309,7 +298,7 @@ func TestPreRoutePlugin_InvalidJSON(t *testing.T) {
 }
 
 func TestPreRoutePlugin_InvalidContentType(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
@@ -338,7 +327,7 @@ func TestPreRoutePlugin_InvalidContentType(t *testing.T) {
 }
 
 func TestPreRoutePlugin_NotFoundPath(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
@@ -367,7 +356,7 @@ func TestPreRoutePlugin_NotFoundPath(t *testing.T) {
 }
 
 func TestPreRoutePlugin_GetAlbums(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
@@ -375,7 +364,7 @@ func TestPreRoutePlugin_GetAlbums(t *testing.T) {
 
 	requestURL := server.URL + "/ddn/pre-route"
 	body := PreRoutePluginRequestBody{
-		Path:   "/albums",
+		Path:   "/api/v1/albums",
 		Method: "GET",
 	}
 

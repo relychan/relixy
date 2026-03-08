@@ -13,7 +13,6 @@ import (
 	"github.com/relychan/goutils"
 	"github.com/relychan/relixy/config"
 	"github.com/relychan/relixy/routes/ddnrouter"
-	"github.com/relychan/relixy/types"
 )
 
 func main() {
@@ -38,7 +37,7 @@ func startServer() error {
 		return err
 	}
 
-	ts, err := gotel.SetupOTelExporters(ctx, envVars.Telemetry, types.BuildVersion, logger)
+	ts, err := gotel.SetupOTelExporters(ctx, envVars.Telemetry, config.BuildVersion, logger)
 	if err != nil {
 		return err
 	}

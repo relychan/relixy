@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../../jsonschema/relixy-server.schema.json
+# yaml-language-server: $schema=../../../../jsonschema/relixy-server.schema.json
 definition:
   include:
     - openapi.yaml

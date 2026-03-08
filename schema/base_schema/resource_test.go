@@ -175,7 +175,7 @@ func TestBaseResourceModel_JSONUnmarshal(t *testing.T) {
 			expectError: false,
 			checkFunc: func(t *testing.T, model *BaseResourceModel) {
 				assert.Equal(t, "v1", model.Version)
-				assert.Equal(t, "OpenAPI", model.Kind)
+				assert.Equal(t, OpenAPIKind, model.Kind)
 				assert.Equal(t, "test-api", model.Metadata.Name)
 				assert.Equal(t, "Test description", model.Metadata.Description)
 			},
@@ -192,7 +192,7 @@ func TestBaseResourceModel_JSONUnmarshal(t *testing.T) {
 			expectError: false,
 			checkFunc: func(t *testing.T, model *BaseResourceModel) {
 				assert.Equal(t, "v1", model.Version)
-				assert.Equal(t, "OpenAPI", model.Kind)
+				assert.Equal(t, OpenAPIKind, model.Kind)
 				assert.Equal(t, "test-api", model.Metadata.Name)
 			},
 		},
@@ -232,7 +232,7 @@ metadata:
 			expectError: false,
 			checkFunc: func(t *testing.T, model *BaseResourceModel) {
 				assert.Equal(t, "v1", model.Version)
-				assert.Equal(t, "OpenAPI", model.Kind)
+				assert.Equal(t, OpenAPIKind, model.Kind)
 				assert.Equal(t, "test-api", model.Metadata.Name)
 				assert.Equal(t, "Test description", model.Metadata.Description)
 			},
@@ -246,7 +246,7 @@ metadata:
 			expectError: false,
 			checkFunc: func(t *testing.T, model *BaseResourceModel) {
 				assert.Equal(t, "v1", model.Version)
-				assert.Equal(t, "OpenAPI", model.Kind)
+				assert.Equal(t, OpenAPIKind, model.Kind)
 				assert.Equal(t, "test-api", model.Metadata.Name)
 			},
 		},

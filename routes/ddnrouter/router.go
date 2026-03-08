@@ -14,6 +14,7 @@ import (
 	"github.com/relychan/relixy/proxyc"
 )
 
+// SetupRouter set up the router and states for ddn handlers.
 func SetupRouter(
 	ctx context.Context,
 	conf *config.RelixyServerConfig,

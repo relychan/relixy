@@ -14,6 +14,9 @@ import (
 	"github.com/relychan/goutils"
 )
 
+// BuildVersion is set when building the binary.
+var BuildVersion = "dev"
+
 // RelixyDefinitionConfig represents the configurations for relixy definitions.
 type RelixyDefinitionConfig struct {
 	// List of paths to be included for metadata introspection.
