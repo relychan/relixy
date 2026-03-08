@@ -400,7 +400,7 @@ func (ns nodes) Sort() {
 			return strings.Compare(a.key, b.key)
 		}
 
-		return int(a.typ - b.typ)
+		return int(a.typ) - int(b.typ)
 	})
 }
 
