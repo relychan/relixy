@@ -1,4 +1,6 @@
 # yaml-language-server: $schema=../../../jsonschema/relixy-server.schema.json
+server:
+  logLevel: DEBUG
 definition:
   include:
     - openapi.yaml

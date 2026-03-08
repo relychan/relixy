@@ -1,4 +1,7 @@
 # yaml-language-server: $schema=../../../jsonschema/relixy-server.schema.json
+server:
+  port: 8080
+  logLevel: DEBUG
 definition:
   include:
     - auth.yaml
