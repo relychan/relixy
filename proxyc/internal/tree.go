@@ -396,15 +396,11 @@ type nodes []*Node
 // Sort the list of nodes by label.
 func (ns nodes) Sort() {
 	slices.SortFunc(ns, func(a, b *Node) int {
-		if a.typ == b.typ || (a.typ < 3 && b.typ < 3) {
+		if a.typ == b.typ {
 			return strings.Compare(a.key, b.key)
 		}
 
-		if a.typ >= 3 {
-			return 1
-		}
-
-		return -1
+		return int(a.typ - b.typ)
 	})
 }
 

@@ -15,11 +15,6 @@ import (
 	"go.yaml.in/yaml/v4"
 )
 
-const (
-	nullTag = "!!null"
-	strTag  = "!!str"
-)
-
 // RelixyOpenAPIResource represents an OpenAPI resource.
 type RelixyOpenAPIResource struct {
 	baseschema.BaseResourceModel `yaml:",inline"`
@@ -130,7 +125,11 @@ func (j *RelixyOpenAPIResourceDefinition) UnmarshalJSON(b []byte) error {
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (j *RelixyOpenAPIResourceDefinition) UnmarshalYAML(value *yaml.Node) error {
-	if value == nil || value.Kind != yaml.MappingNode {
+	if value == nil {
+		return nil
+	}
+
+	if value.Kind != yaml.MappingNode {
 		return fmt.Errorf(
 			"%w. Expected an object, got %s",
 			ErrInvalidOpenAPIResourceDefinitionYAML,
@@ -170,9 +169,9 @@ func (j *RelixyOpenAPIResourceDefinition) UnmarshalYAML(value *yaml.Node) error 
 			}
 		case "ref":
 			switch valueNode.Tag {
-			case strTag:
+			case goutils.YAMLStrTag:
 				j.Ref = valueNode.Value
-			case nullTag:
+			case goutils.YAMLNullTag:
 			default:
 				return fmt.Errorf(
 					"%w. Expected ref is a string, got %s",

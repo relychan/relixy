@@ -43,7 +43,7 @@ type RelixyServerConfig struct {
 	Definition RelixyDefinitionConfig `json:"definition" yaml:"definition"`
 }
 
-// LoadServerConfig loads and parses configurations for [RelyAuthServerConfig].
+// LoadServerConfig loads and parses configurations for [RelixyServerConfig].
 func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, *slog.Logger, error) {
 	var result *RelixyServerConfig
 

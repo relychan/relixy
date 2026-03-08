@@ -53,7 +53,7 @@ func (ror BaseResourceModel) GetBaseResource() BaseResourceModel {
 type RelyAuthResource struct {
 	BaseResourceModel `yaml:",inline"`
 
-	// Definition of the OpenAPI documentation.
+	// Raw definition of a resource.
 	Definition auth.RelyAuthDefinition `json:"definition" yaml:"definition"`
 }
 

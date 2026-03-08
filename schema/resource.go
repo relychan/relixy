@@ -27,7 +27,6 @@ type RelixyResource struct {
 type rawRelixyResourceJSON struct {
 	baseschema.BaseResourceModel `yaml:",inline"`
 
-	// Definition of the OpenAPI documentation.
 	Definition json.RawMessage `json:"definition"`
 }
 
