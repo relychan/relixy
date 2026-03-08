@@ -113,11 +113,13 @@ func genServerConfigurationSchema() error {
 
 	// custom schema types
 	reflectSchema.Definitions["ServerConfig"] = &jsonschema.Schema{
-		Ref: "https://raw.githubusercontent.com/relychan/gohttps/refs/heads/main/jsonschema/server.schema.json",
+		Description: "Configurations for the HTTP server",
+		Ref:         "https://raw.githubusercontent.com/relychan/gohttps/refs/heads/main/jsonschema/server.schema.json",
 	}
 
 	reflectSchema.Definitions["OTLPConfig"] = &jsonschema.Schema{
-		Ref: "https://raw.githubusercontent.com/hasura/gotel/refs/heads/main/jsonschema/gotel.schema.json",
+		Description: "Configurations for OpenTelemetry exporters",
+		Ref:         "https://raw.githubusercontent.com/hasura/gotel/refs/heads/main/jsonschema/gotel.schema.json",
 	}
 
 	// delete unused definitions

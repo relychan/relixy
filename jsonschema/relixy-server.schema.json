@@ -4,7 +4,8 @@
  "$ref": "#/$defs/RelixyServerConfig",
  "$defs": {
   "OTLPConfig": {
-   "$ref": "https://raw.githubusercontent.com/hasura/gotel/refs/heads/main/jsonschema/gotel.schema.json"
+   "$ref": "https://raw.githubusercontent.com/hasura/gotel/refs/heads/main/jsonschema/gotel.schema.json",
+   "description": "Configurations for OpenTelemetry exporters"
   },
   "RelixyDefinitionConfig": {
    "properties": {
@@ -33,13 +34,16 @@
   "RelixyServerConfig": {
    "properties": {
     "server": {
-     "$ref": "#/$defs/ServerConfig"
+     "$ref": "#/$defs/ServerConfig",
+     "description": "Configurations for the HTTP server."
     },
     "telemetry": {
-     "$ref": "#/$defs/OTLPConfig"
+     "$ref": "#/$defs/OTLPConfig",
+     "description": "Configurations for OpenTelemetry exporters."
     },
     "definition": {
-     "$ref": "#/$defs/RelixyDefinitionConfig"
+     "$ref": "#/$defs/RelixyDefinitionConfig",
+     "description": "Configurations for resource definition files."
     }
    },
    "additionalProperties": false,
@@ -50,7 +54,8 @@
    "description": "RelixyServerConfig holds information of required configurations to run the relixy server."
   },
   "ServerConfig": {
-   "$ref": "https://raw.githubusercontent.com/relychan/gohttps/refs/heads/main/jsonschema/server.schema.json"
+   "$ref": "https://raw.githubusercontent.com/relychan/gohttps/refs/heads/main/jsonschema/server.schema.json",
+   "description": "Configurations for the HTTP server"
   }
  }
 }

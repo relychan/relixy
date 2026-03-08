@@ -38,8 +38,11 @@ func (rdc RelixyDefinitionConfig) Validate() error {
 
 // RelixyServerConfig holds information of required configurations to run the relixy server.
 type RelixyServerConfig struct {
-	Server     *gohttps.ServerConfig  `json:"server,omitempty" yaml:"server,omitempty"`
-	Telemetry  *gotel.OTLPConfig      `json:"telemetry,omitempty" yaml:"telemetry,omitempty"`
+	// Configurations for the HTTP server.
+	Server *gohttps.ServerConfig `json:"server,omitempty" yaml:"server,omitempty"`
+	// Configurations for OpenTelemetry exporters.
+	Telemetry *gotel.OTLPConfig `json:"telemetry,omitempty" yaml:"telemetry,omitempty"`
+	// Configurations for resource definition files.
 	Definition RelixyDefinitionConfig `json:"definition" yaml:"definition"`
 }
 
