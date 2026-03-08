@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -14,5 +15,11 @@ var (
 	ErrInvalidSecuritySchemeType = fmt.Errorf(
 		"invalid SecuritySchemeType. Expected one of %v",
 		SupportedSecuritySchemeTypes(),
+	)
+	// ErrResourceSpecRequired occurs when the spec field of resource is empty.
+	ErrResourceSpecRequired = errors.New("spec is required in resource")
+	// ErrInvalidOpenAPIResourceDefinitionYAML occurs when failing to parse a RelixyOpenAPIResourceDefinition from YAML string.
+	ErrInvalidOpenAPIResourceDefinitionYAML = errors.New(
+		"failed to parse RelixyOpenAPIResourceDefinition from YAML",
 	)
 )

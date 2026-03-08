@@ -1,32 +1,28 @@
-package main
+package restrouter
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"reflect"
 	"testing"
 
-	"github.com/hasura/goenvconf"
 	"github.com/hasura/gotel"
-	"github.com/relychan/gohttpc/authc/authscheme"
 	"github.com/relychan/goutils/httpheader"
 	"github.com/relychan/relixy/config"
-	"github.com/relychan/relixy/routes/ddn"
-	"github.com/relychan/rely-auth/auth"
-	"github.com/relychan/rely-auth/auth/apikey"
-	"github.com/relychan/rely-auth/auth/authmode"
+	"github.com/relychan/relixy/routes/ddnrouter"
 	"go.opentelemetry.io/otel"
 	"gotest.tools/v3/assert"
 )
 
+var testPlaceholderConfig = "../testdata/jsonplaceholder/config.yaml"
+
 func TestRESTHandler_RESTServer(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, testPlaceholderConfig)
 	defer func() {
 		server.Close()
 		shutdown()
@@ -34,13 +30,13 @@ func TestRESTHandler_RESTServer(t *testing.T) {
 
 	testCases := []struct {
 		Name         string
-		Body         ddn.PreRoutePluginRequestBody
+		Body         ddnrouter.PreRoutePluginRequestBody
 		StatusCode   int
 		ResponseBody any
 	}{
 		{
 			Name: "getAlbums",
-			Body: ddn.PreRoutePluginRequestBody{
+			Body: ddnrouter.PreRoutePluginRequestBody{
 				Path:   server.URL + "/api/v1/albums",
 				Method: "GET",
 			},
@@ -48,7 +44,7 @@ func TestRESTHandler_RESTServer(t *testing.T) {
 		},
 		{
 			Name: "getPostByID",
-			Body: ddn.PreRoutePluginRequestBody{
+			Body: ddnrouter.PreRoutePluginRequestBody{
 				Path:   server.URL + "/api/v1/posts/1",
 				Method: "GET",
 			},
@@ -71,7 +67,7 @@ func TestRESTHandler_RESTServer(t *testing.T) {
 }
 
 func TestRESTHandler_GraphQLServer(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/rickandmortyapi.yaml")
+	server, shutdown := initTestServer(t, "../testdata/rickandmortyapi/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
@@ -79,13 +75,13 @@ func TestRESTHandler_GraphQLServer(t *testing.T) {
 
 	testCases := []struct {
 		Name         string
-		Body         ddn.PreRoutePluginRequestBody
+		Body         ddnrouter.PreRoutePluginRequestBody
 		StatusCode   int
 		ResponseBody any
 	}{
 		{
 			Name: "getCharacters",
-			Body: ddn.PreRoutePluginRequestBody{
+			Body: ddnrouter.PreRoutePluginRequestBody{
 				Path:   server.URL + "/characters",
 				Method: "GET",
 			},
@@ -93,7 +89,7 @@ func TestRESTHandler_GraphQLServer(t *testing.T) {
 		},
 		{
 			Name: "getCharacterByID",
-			Body: ddn.PreRoutePluginRequestBody{
+			Body: ddnrouter.PreRoutePluginRequestBody{
 				Path:   server.URL + "/characters/1",
 				Method: "GET",
 			},
@@ -118,6 +114,7 @@ func TestRESTHandler_GraphQLServer(t *testing.T) {
 }
 
 func TestRESTHandler_DDN(t *testing.T) {
+	// os.Setenv("GRAPHQL_SERVER_URL", "http://localhost:3280/graphql")
 	graphqlURL := os.Getenv("GRAPHQL_SERVER_URL")
 	if graphqlURL == "" {
 		return
@@ -131,13 +128,13 @@ func TestRESTHandler_DDN(t *testing.T) {
 
 	testCases := []struct {
 		Name         string
-		Body         ddn.PreRoutePluginRequestBody
+		Body         ddnrouter.PreRoutePluginRequestBody
 		StatusCode   int
 		ResponseBody any
 	}{
 		{
 			Name: "getArtistByName",
-			Body: ddn.PreRoutePluginRequestBody{
+			Body: ddnrouter.PreRoutePluginRequestBody{
 				Path:   server.URL + "/v1/api/rest/artistbyname/Queen",
 				Method: "GET",
 			},
@@ -154,7 +151,7 @@ func TestRESTHandler_DDN(t *testing.T) {
 		},
 		{
 			Name: "getArtists",
-			Body: ddn.PreRoutePluginRequestBody{
+			Body: ddnrouter.PreRoutePluginRequestBody{
 				Path:   server.URL + "/v1/api/rest/artists?limit=10&offset=20",
 				Method: "GET",
 			},
@@ -203,7 +200,7 @@ func TestRESTHandler_DDN(t *testing.T) {
 	}
 }
 
-func runSuccessRequest[T any](t *testing.T, r ddn.PreRoutePluginRequestBody, statusCode int, responseBody T) {
+func runSuccessRequest[T any](t *testing.T, r ddnrouter.PreRoutePluginRequestBody, statusCode int, responseBody T) {
 	t.Helper()
 
 	t.Run("success", func(t *testing.T) {
@@ -243,7 +240,7 @@ func runSuccessRequest[T any](t *testing.T, r ddn.PreRoutePluginRequestBody, sta
 	})
 }
 
-func runUnauthorizedRequest[T any](t *testing.T, r ddn.PreRoutePluginRequestBody, _ int, _ T) {
+func runUnauthorizedRequest[T any](t *testing.T, r ddnrouter.PreRoutePluginRequestBody, _ int, _ T) {
 	t.Helper()
 	// expected unauthorized status
 	t.Run("unauthorized", func(t *testing.T) {
@@ -269,36 +266,23 @@ func runUnauthorizedRequest[T any](t *testing.T, r ddn.PreRoutePluginRequestBody
 func TestSetupRouter_InvalidConfig(t *testing.T) {
 	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/invalid-config.yaml")
 
-	envVars, err := config.LoadServerConfig(context.Background())
-	assert.NilError(t, err)
-
-	otelExporters := &gotel.OTelExporters{
-		Tracer: gotel.NewTracer("test"),
-		Meter:  otel.Meter("test"),
-		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		})),
-	}
-
-	_, _, err = setupRouter(context.TODO(), envVars, otelExporters)
-	assert.ErrorContains(t, err, "")
+	_, _, err := config.LoadServerConfig(context.Background())
+	assert.ErrorIs(t, err, io.EOF)
 }
 
 func TestSetupRouter_ValidConfig(t *testing.T) {
-	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/jsonplaceholder.yaml")
+	t.Setenv("RELIXY_CONFIG_PATH", testPlaceholderConfig)
 
-	envVars, err := config.LoadServerConfig(context.Background())
+	envVars, logger, err := config.LoadServerConfig(context.Background())
 	assert.NilError(t, err)
 
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),
 		Meter:  otel.Meter("test"),
-		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		})),
+		Logger: logger,
 	}
 
-	router, shutdown, err := setupRouter(context.TODO(), envVars, otelExporters)
+	router, shutdown, err := SetupRouter(context.TODO(), envVars, otelExporters)
 	assert.NilError(t, err)
 	assert.Assert(t, router != nil)
 	assert.Assert(t, shutdown != nil)
@@ -307,7 +291,7 @@ func TestSetupRouter_ValidConfig(t *testing.T) {
 }
 
 func TestRESTHandler_NotFoundPath(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, testPlaceholderConfig)
 	defer func() {
 		server.Close()
 		shutdown()
@@ -326,7 +310,7 @@ func TestRESTHandler_NotFoundPath(t *testing.T) {
 }
 
 func TestRESTHandler_WithPathParams(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, testPlaceholderConfig)
 	defer func() {
 		server.Close()
 		shutdown()
@@ -350,7 +334,7 @@ func TestRESTHandler_WithPathParams(t *testing.T) {
 }
 
 func TestRESTHandler_GetAlbums(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, testPlaceholderConfig)
 	defer func() {
 		server.Close()
 		shutdown()
@@ -376,36 +360,16 @@ func TestRESTHandler_GetAlbums(t *testing.T) {
 func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {
 	t.Setenv("RELIXY_CONFIG_PATH", configPath)
 
-	envVars, err := config.LoadServerConfig(context.Background())
+	envVars, logger, err := config.LoadServerConfig(context.Background())
 	assert.NilError(t, err)
-
-	envVars.Auth = auth.RelyAuthConfig{
-		Definition: auth.RelyAuthDefinition{
-			Settings: &authmode.RelyAuthSettings{},
-			Modes: []auth.RelyAuthMode{
-				{
-					RelyAuthModeInterface: apikey.NewRelyAuthAPIKeyConfig(
-						authscheme.TokenLocation{
-							In:   authscheme.InHeader,
-							Name: "Authorization",
-						},
-						goenvconf.NewEnvStringValue("test-secret"),
-						map[string]goenvconf.EnvAny{},
-					),
-				},
-			},
-		},
-	}
 
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),
 		Meter:  otel.Meter("test"),
-		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		})),
+		Logger: logger,
 	}
 
-	router, shutdown, err := setupRouter(context.TODO(), envVars, otelExporters)
+	router, shutdown, err := SetupRouter(context.TODO(), envVars, otelExporters)
 	assert.NilError(t, err)
 
 	server := httptest.NewServer(router)

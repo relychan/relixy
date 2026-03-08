@@ -8,6 +8,7 @@ import (
 	"github.com/hasura/goenvconf"
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/gohttpc"
+	"github.com/relychan/gohttpc/httpconfig"
 	"github.com/relychan/gohttpc/loadbalancer"
 	"github.com/relychan/gohttpc/loadbalancer/roundrobin"
 	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
@@ -19,7 +20,7 @@ import (
 type ProxyClient struct {
 	clientOptions  *gohttpc.ClientOptions
 	lbClient       *loadbalancer.LoadBalancerClient
-	metadata       *openapi.RelixyOpenAPIResourceDefinition
+	metadata       *openapi.RelixyOpenAPIResource
 	node           *internal.Node
 	defaultHeaders map[string]string
 	authenticators *proxyhandler.OpenAPIAuthenticator
@@ -28,7 +29,7 @@ type ProxyClient struct {
 // NewProxyClient creates a proxy client from the API document.
 func NewProxyClient(
 	ctx context.Context,
-	metadata *openapi.RelixyOpenAPIResourceDefinition,
+	metadata *openapi.RelixyOpenAPIResource,
 	clientOptions *gohttpc.ClientOptions,
 ) (*ProxyClient, error) {
 	client := &ProxyClient{
@@ -46,7 +47,7 @@ func NewProxyClient(
 }
 
 // Metadata returns the metadata of the proxy client.
-func (pc *ProxyClient) Metadata() *openapi.RelixyOpenAPIResourceDefinition {
+func (pc *ProxyClient) Metadata() *openapi.RelixyOpenAPIResource {
 	return pc.metadata
 }
 
@@ -64,7 +65,12 @@ func (pc *ProxyClient) Close() error {
 }
 
 func (pc *ProxyClient) init(ctx context.Context) error {
-	spec, err := pc.metadata.Build(ctx)
+	spec, err := pc.metadata.Definition.Build(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = pc.initHTTPClient()
 	if err != nil {
 		return err
 	}
@@ -100,7 +106,7 @@ func (pc *ProxyClient) init(ctx context.Context) error {
 func (pc *ProxyClient) initDefaultHeaders() error {
 	getEnv := pc.clientOptions.GetEnvFunc()
 
-	for key, envValue := range pc.metadata.Settings.Headers {
+	for key, envValue := range pc.metadata.Definition.Settings.Headers {
 		value, err := envValue.GetCustom(getEnv)
 		if err != nil {
 			return fmt.Errorf("failed to load header %s: %w", key, err)
@@ -123,8 +129,9 @@ func (pc *ProxyClient) initServers(spec *highv3.Document) error {
 
 	var healthCheckBuilder *loadbalancer.HTTPHealthCheckPolicyBuilder
 
-	if pc.metadata.Settings.HealthCheck != nil && pc.metadata.Settings.HealthCheck.HTTP != nil {
-		healthCheckBuilder, err = pc.metadata.Settings.HealthCheck.HTTP.ToPolicyBuilder()
+	if pc.metadata.Definition.Settings.HealthCheck != nil &&
+		pc.metadata.Definition.Settings.HealthCheck.HTTP != nil {
+		healthCheckBuilder, err = pc.metadata.Definition.Settings.HealthCheck.HTTP.ToPolicyBuilder()
 		if err != nil {
 			return err
 		}
@@ -250,4 +257,28 @@ func (pc *ProxyClient) initServer( //nolint:cyclop
 	}
 
 	return host, nil
+}
+
+func (pc *ProxyClient) initHTTPClient() error {
+	var httpConfig *httpconfig.HTTPClientConfig
+
+	if pc.metadata.Definition.Settings != nil && pc.metadata.Definition.Settings.HTTP != nil {
+		httpConfig = pc.metadata.Definition.Settings.HTTP
+	} else if pc.clientOptions.HTTPClient == nil {
+		httpConfig = new(httpconfig.HTTPClientConfig)
+	}
+
+	if httpConfig != nil {
+		httpClient, err := httpconfig.NewHTTPClientFromConfig(
+			httpConfig,
+			pc.clientOptions,
+		)
+		if err != nil {
+			return err
+		}
+
+		pc.clientOptions.HTTPClient = httpClient
+	}
+
+	return nil
 }

@@ -1,12 +1,8 @@
-// Package types defines common types for the rely proxy service.
-package types
+package restrouter
 
 import (
 	"github.com/relychan/relixy/proxyc"
 )
-
-// BuildVersion is set when building the binary.
-var BuildVersion = "dev"
 
 // State holds common states of the handler.
 type State struct {

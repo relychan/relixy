@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../jsonschema/relixy.schema.json
+version: v1
+kind: RelyAuth
+definition:
+  settings: {}
+  modes:
+    - mode: apiKey
+      tokenLocation:
+        in: header
+        name: Authorization
+      value:
+        value: "test-secret"

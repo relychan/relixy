@@ -1,11 +1,18 @@
-// Package base_schema define base schema resources.
-package base_schema
+// Package baseschema define base schema resources.
+package baseschema
+
+import (
+	"github.com/invopop/jsonschema"
+	"github.com/relychan/rely-auth/auth"
+)
 
 // RelixyResourceKind represents a kind of the Relixy resource.
 type RelixyResourceKind string
 
 const (
-	// OpenAPIKind represents a kind enum for the OpenAPI 3 specification.
+	// RelyAuthKind represents a kind enum for the RelyAuth specification.
+	RelyAuthKind RelixyResourceKind = "RelyAuth"
+	// OpenAPIKind represents a kind enum for the OpenAPI specification.
 	OpenAPIKind RelixyResourceKind = "OpenAPI"
 )
 
@@ -30,7 +37,7 @@ type BaseResourceModel struct {
 	// Version of the authentication config.
 	Version string `json:"version" yaml:"version" jsonschema:"enum=v1"`
 	// Kind of the resource.
-	Kind string `json:"kind" yaml:"kind"`
+	Kind RelixyResourceKind `json:"kind" yaml:"kind"`
 	// Metadata of the resource.
 	Metadata RelixyResourceMetadata `json:"metadata" yaml:"metadata"`
 }
@@ -40,4 +47,26 @@ var _ RelixyResource = (*BaseResourceModel)(nil)
 // GetBaseResource returns the base resource information of the current resource.
 func (ror BaseResourceModel) GetBaseResource() BaseResourceModel {
 	return ror
+}
+
+// RelyAuthResource represents a RelyAuth resource.
+type RelyAuthResource struct {
+	BaseResourceModel `yaml:",inline"`
+
+	// Raw definition of a resource.
+	Definition auth.RelyAuthDefinition `json:"definition" yaml:"definition"`
+}
+
+var _ RelixyResource = (*RelyAuthResource)(nil)
+
+// JSONSchemaExtend modifies the JSON schema afterwards.
+func (RelyAuthResource) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.Properties.
+		Set("kind", &jsonschema.Schema{
+			Description: "Kind of the resource which is always RelyAuth.",
+			Type:        "string",
+			Const:       RelyAuthKind,
+		})
+
+	schema.Properties.Delete("metadata")
 }

@@ -3,7 +3,6 @@ package openapi
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 
@@ -12,25 +11,22 @@ import (
 	"github.com/pb33f/libopenapi/datamodel"
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/goutils"
-	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/baseschema"
 	"go.yaml.in/yaml/v4"
 )
 
-// ErrResourceSpecRequired occurs when the spec field of resource is empty.
-var ErrResourceSpecRequired = errors.New("spec is required in resource")
-
 // RelixyOpenAPIResource represents an OpenAPI resource.
 type RelixyOpenAPIResource struct {
-	base_schema.BaseResourceModel `yaml:",inline"`
+	baseschema.BaseResourceModel `yaml:",inline"`
 
 	// Definition of the OpenAPI documentation.
 	Definition RelixyOpenAPIResourceDefinition `json:"definition" yaml:"definition"`
 }
 
-var _ base_schema.RelixyResource = (*RelixyOpenAPIResource)(nil)
+var _ baseschema.RelixyResource = (*RelixyOpenAPIResource)(nil)
 
 // GetMetadata returns the metadata of the current resource.
-func (ror RelixyOpenAPIResource) GetMetadata() base_schema.RelixyResourceMetadata {
+func (ror RelixyOpenAPIResource) GetMetadata() baseschema.RelixyResourceMetadata {
 	return ror.Metadata
 }
 
@@ -40,7 +36,7 @@ func (RelixyOpenAPIResource) JSONSchemaExtend(schema *jsonschema.Schema) {
 		Set("kind", &jsonschema.Schema{
 			Description: "Kind of the resource which is always OpenAPI.",
 			Type:        "string",
-			Const:       "OpenAPI",
+			Const:       baseschema.OpenAPIKind,
 		})
 }
 
@@ -129,51 +125,81 @@ func (j *RelixyOpenAPIResourceDefinition) UnmarshalJSON(b []byte) error {
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (j *RelixyOpenAPIResourceDefinition) UnmarshalYAML(value *yaml.Node) error {
-	rawValue := map[string]yaml.Node{}
-
-	err := value.Decode(&rawValue)
-	if err != nil {
-		return err
-	}
-
-	rawSettings, ok := rawValue["settings"]
-	if ok {
-		err = rawSettings.Decode(&j.Settings)
-		if err != nil {
-			return err
-		}
-	}
-
-	rawRef, ok := rawValue["ref"]
-	if ok {
-		err = rawRef.Decode(&j.Ref)
-		if err != nil {
-			return err
-		}
-	}
-
-	rawSpec, ok := rawValue["spec"]
-	if !ok {
+	if value == nil {
 		return nil
 	}
 
-	// Marshal the YAML node back to bytes for libopenapi
-	specBytes, err := yaml.Marshal(rawSpec)
-	if err != nil {
-		return err
+	if value.Kind != yaml.MappingNode {
+		return fmt.Errorf(
+			"%w. Expected an object, got %s",
+			ErrInvalidOpenAPIResourceDefinitionYAML,
+			value.Tag,
+		)
 	}
 
-	doc, err := libopenapi.NewDocument(specBytes)
-	if err != nil {
-		return err
-	}
+	contentLength := len(value.Content)
 
-	spec, err := doc.BuildV3Model()
-	if err != nil {
-		return err
-	}
+	for i := 0; i < contentLength; i++ {
+		if i == contentLength-1 {
+			break
+		}
 
-	j.Spec = &spec.Model
+		keyNode := value.Content[i]
+		if keyNode.Kind != yaml.ScalarNode && keyNode.Tag != "!!str" {
+			return fmt.Errorf(
+				"%w. Expected a key string, got %s",
+				ErrInvalidOpenAPIResourceDefinitionYAML,
+				keyNode.Tag,
+			)
+		}
+
+		if keyNode.Value == "" {
+			return fmt.Errorf("%w. Object key is empty", ErrInvalidOpenAPIResourceDefinitionYAML)
+		}
+
+		i++
+
+		valueNode := value.Content[i]
+
+		switch keyNode.Value {
+		case "settings":
+			err := valueNode.Decode(&j.Settings)
+			if err != nil {
+				return err
+			}
+		case "ref":
+			switch valueNode.Tag {
+			case goutils.YAMLStrTag:
+				j.Ref = valueNode.Value
+			case goutils.YAMLNullTag:
+			default:
+				return fmt.Errorf(
+					"%w. Expected ref is a string, got %s",
+					ErrInvalidOpenAPIResourceDefinitionYAML,
+					valueNode.Tag,
+				)
+			}
+		case "spec":
+			// Marshal the YAML node back to bytes for libopenapi
+			specBytes, err := yaml.Dump(valueNode)
+			if err != nil {
+				return err
+			}
+
+			doc, err := libopenapi.NewDocument(specBytes)
+			if err != nil {
+				return err
+			}
+
+			spec, err := doc.BuildV3Model()
+			if err != nil {
+				return err
+			}
+
+			j.Spec = &spec.Model
+		default:
+		}
+	}
 
 	return nil
 }

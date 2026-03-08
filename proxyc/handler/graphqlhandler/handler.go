@@ -194,7 +194,18 @@ func (ge *GraphQLHandler) Handle( //nolint:funlen
 	for key, header := range ge.headers {
 		value, err := header.EvaluateString(rawRequestData)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to evaluate custom header %s: %w", key, err)
+			respErr := fmt.Errorf("failed to evaluate custom header %s: %w", key, err)
+
+			ge.printLog(
+				ctx, request,
+				"invalid header",
+				append(
+					logAttrs,
+					slog.String("error", respErr.Error()),
+				),
+			)
+
+			return nil, nil, respErr
 		}
 
 		if value != nil && *value != "" {
@@ -443,7 +454,6 @@ func (ge *GraphQLHandler) printLog(
 		slog.String("operation_name", ge.operationName),
 		slog.String("operation_type", string(ge.operation)),
 		slog.String("request_url", request.URL.String()),
-		slog.Any("variable_definitions", ge.variableDefinitions),
 		slog.Any("variables", ge.variables),
 		otelutils.NewHeaderLogGroupAttrs(
 			"request_headers",

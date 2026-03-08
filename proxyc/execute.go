@@ -30,7 +30,7 @@ func (pc *ProxyClient) Execute(
 
 	requestPath := req.URL.Path
 
-	if pc.metadata.Settings.Expose != nil && !*pc.metadata.Settings.Expose {
+	if pc.metadata.Definition.Settings.Expose != nil && !*pc.metadata.Definition.Settings.Expose {
 		// This API isn't exposed. Returns HTTP 404
 		return nil, nil, goutils.RFC9457Error{
 			Status:   http.StatusNotFound,
@@ -39,12 +39,15 @@ func (pc *ProxyClient) Execute(
 		}
 	}
 
-	if pc.metadata.Settings.BasePath != "" && req.URL.Path != "" {
+	if pc.metadata.Definition.Settings.BasePath != "" && req.URL.Path != "" {
 		// The URL path may omit the slash character
 		if req.URL.Path[0] == '/' {
-			requestPath = strings.TrimPrefix(req.URL.Path, pc.metadata.Settings.BasePath)
+			requestPath = strings.TrimPrefix(req.URL.Path, pc.metadata.Definition.Settings.BasePath)
 		} else {
-			requestPath = strings.TrimPrefix(req.URL.Path, pc.metadata.Settings.BasePath[1:])
+			requestPath = strings.TrimPrefix(
+				req.URL.Path,
+				pc.metadata.Definition.Settings.BasePath[1:],
+			)
 		}
 	}
 
@@ -66,7 +69,7 @@ func (pc *ProxyClient) Execute(
 	)
 
 	options := &proxyhandler.RelixyHandleOptions{
-		Settings:    pc.metadata.Settings,
+		Settings:    pc.metadata.Definition.Settings,
 		ParamValues: route.ParamValues,
 		NewRequest:  pc.newRequestFunc(route),
 		Path:        requestPath,
@@ -112,8 +115,8 @@ func (pc *ProxyClient) newRequestFunc(route *internal.Route) proxyhandler.NewReq
 			reqHeader.Set(key, value)
 		}
 
-		if pc.metadata.Settings.ForwardHeaders != nil {
-			for _, key := range pc.metadata.Settings.ForwardHeaders.Request {
+		if pc.metadata.Definition.Settings.ForwardHeaders != nil {
+			for _, key := range pc.metadata.Definition.Settings.ForwardHeaders.Request {
 				value := reqHeader.Get(key)
 				if value != "" {
 					reqHeader.Set(key, value)

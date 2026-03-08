@@ -1,32 +1,25 @@
-package main
+package ddnrouter
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"reflect"
 	"testing"
 
-	"github.com/hasura/goenvconf"
 	"github.com/hasura/gotel"
-	"github.com/relychan/gohttpc/authc/authscheme"
 	"github.com/relychan/goutils/httpheader"
 	"github.com/relychan/relixy/config"
-	"github.com/relychan/relixy/routes/ddn"
-	"github.com/relychan/rely-auth/auth"
-	"github.com/relychan/rely-auth/auth/apikey"
-	"github.com/relychan/rely-auth/auth/authmode"
 	"go.opentelemetry.io/otel"
 	"gotest.tools/v3/assert"
 )
 
 func TestRestifiedPlugin_RESTServer(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
@@ -35,22 +28,22 @@ func TestRestifiedPlugin_RESTServer(t *testing.T) {
 	requestURL := server.URL + "/ddn/pre-route"
 	testCases := []struct {
 		Name         string
-		Body         ddn.PreRoutePluginRequestBody
+		Body         PreRoutePluginRequestBody
 		StatusCode   int
 		ResponseBody any
 	}{
 		{
 			Name: "getAlbums",
-			Body: ddn.PreRoutePluginRequestBody{
-				Path:   "/albums",
+			Body: PreRoutePluginRequestBody{
+				Path:   "/api/v1/albums",
 				Method: "GET",
 			},
 			StatusCode: 200,
 		},
 		{
 			Name: "getPostByID",
-			Body: ddn.PreRoutePluginRequestBody{
-				Path:   "/posts/1",
+			Body: PreRoutePluginRequestBody{
+				Path:   "/api/v1/posts/1",
 				Method: "GET",
 			},
 			StatusCode: 200,
@@ -71,7 +64,7 @@ func TestRestifiedPlugin_RESTServer(t *testing.T) {
 }
 
 func TestRestifiedPlugin_GraphQLServer(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/rickandmortyapi.yaml")
+	server, shutdown := initTestServer(t, "../testdata/rickandmortyapi/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
@@ -80,13 +73,13 @@ func TestRestifiedPlugin_GraphQLServer(t *testing.T) {
 	requestURL := server.URL + "/ddn/pre-route"
 	testCases := []struct {
 		Name         string
-		Body         ddn.PreRoutePluginRequestBody
+		Body         PreRoutePluginRequestBody
 		StatusCode   int
 		ResponseBody any
 	}{
 		{
 			Name: "getCharacters",
-			Body: ddn.PreRoutePluginRequestBody{
+			Body: PreRoutePluginRequestBody{
 				Path:   "/characters",
 				Method: "GET",
 			},
@@ -94,7 +87,7 @@ func TestRestifiedPlugin_GraphQLServer(t *testing.T) {
 		},
 		{
 			Name: "getCharacterByID",
-			Body: ddn.PreRoutePluginRequestBody{
+			Body: PreRoutePluginRequestBody{
 				Path:   "/characters/1",
 				Method: "GET",
 			},
@@ -117,7 +110,7 @@ func TestRestifiedPlugin_GraphQLServer(t *testing.T) {
 	}
 }
 
-func runPreRoute[T any](t *testing.T, requestURL string, body ddn.PreRoutePluginRequestBody, statusCode int, responseBody T) {
+func runPreRoute[T any](t *testing.T, requestURL string, body PreRoutePluginRequestBody, statusCode int, responseBody T) {
 	t.Helper()
 
 	bodyBytes, err := json.Marshal(body)
@@ -169,6 +162,7 @@ func runPreRoute[T any](t *testing.T, requestURL string, body ddn.PreRoutePlugin
 }
 
 func TestRestifiedPlugin_DDN(t *testing.T) {
+	// os.Setenv("DDN_ENGINE_HOST", "http://localhost:3280")
 	engineHost := os.Getenv("DDN_ENGINE_HOST")
 	if engineHost == "" {
 		return
@@ -255,36 +249,23 @@ func TestRestifiedPlugin_DDN(t *testing.T) {
 func TestSetupRouter_InvalidConfig(t *testing.T) {
 	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/invalid-config.yaml")
 
-	envVars, err := config.LoadServerConfig(context.Background())
-	assert.NilError(t, err)
-
-	otelExporters := &gotel.OTelExporters{
-		Tracer: gotel.NewTracer("test"),
-		Meter:  otel.Meter("test"),
-		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		})),
-	}
-
-	_, _, err = setupRouter(context.TODO(), envVars, otelExporters)
-	assert.ErrorContains(t, err, "")
+	_, _, err := config.LoadServerConfig(context.Background())
+	assert.ErrorIs(t, err, io.EOF)
 }
 
 func TestSetupRouter_ValidConfig(t *testing.T) {
-	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/jsonplaceholder.yaml")
+	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/jsonplaceholder/config.yaml")
 
-	envVars, err := config.LoadServerConfig(context.Background())
+	envVars, logger, err := config.LoadServerConfig(context.Background())
 	assert.NilError(t, err)
 
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),
 		Meter:  otel.Meter("test"),
-		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		})),
+		Logger: logger,
 	}
 
-	router, shutdown, err := setupRouter(context.TODO(), envVars, otelExporters)
+	router, shutdown, err := SetupRouter(context.TODO(), envVars, otelExporters)
 	assert.NilError(t, err)
 	assert.Assert(t, router != nil)
 	assert.Assert(t, shutdown != nil)
@@ -293,7 +274,7 @@ func TestSetupRouter_ValidConfig(t *testing.T) {
 }
 
 func TestPreRoutePlugin_InvalidJSON(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
@@ -315,14 +296,14 @@ func TestPreRoutePlugin_InvalidJSON(t *testing.T) {
 }
 
 func TestPreRoutePlugin_InvalidContentType(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
 	}()
 
 	requestURL := server.URL + "/ddn/pre-route"
-	body := ddn.PreRoutePluginRequestBody{
+	body := PreRoutePluginRequestBody{
 		Path:   "/albums",
 		Method: "GET",
 	}
@@ -344,14 +325,14 @@ func TestPreRoutePlugin_InvalidContentType(t *testing.T) {
 }
 
 func TestPreRoutePlugin_NotFoundPath(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
 	}()
 
 	requestURL := server.URL + "/ddn/pre-route"
-	body := ddn.PreRoutePluginRequestBody{
+	body := PreRoutePluginRequestBody{
 		Path:   "/nonexistent",
 		Method: "GET",
 	}
@@ -373,15 +354,15 @@ func TestPreRoutePlugin_NotFoundPath(t *testing.T) {
 }
 
 func TestPreRoutePlugin_GetAlbums(t *testing.T) {
-	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder.yaml")
+	server, shutdown := initTestServer(t, "../testdata/jsonplaceholder/config.yaml")
 	defer func() {
 		server.Close()
 		shutdown()
 	}()
 
 	requestURL := server.URL + "/ddn/pre-route"
-	body := ddn.PreRoutePluginRequestBody{
-		Path:   "/albums",
+	body := PreRoutePluginRequestBody{
+		Path:   "/api/v1/albums",
 		Method: "GET",
 	}
 
@@ -409,36 +390,16 @@ func TestPreRoutePlugin_GetAlbums(t *testing.T) {
 func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {
 	t.Setenv("RELIXY_CONFIG_PATH", configPath)
 
-	envVars, err := config.LoadServerConfig(context.Background())
+	envVars, logger, err := config.LoadServerConfig(context.Background())
 	assert.NilError(t, err)
-
-	envVars.Auth = auth.RelyAuthConfig{
-		Definition: auth.RelyAuthDefinition{
-			Settings: &authmode.RelyAuthSettings{},
-			Modes: []auth.RelyAuthMode{
-				{
-					RelyAuthModeInterface: apikey.NewRelyAuthAPIKeyConfig(
-						authscheme.TokenLocation{
-							In:   authscheme.InHeader,
-							Name: "Authorization",
-						},
-						goenvconf.NewEnvStringValue("test-secret"),
-						map[string]goenvconf.EnvAny{},
-					),
-				},
-			},
-		},
-	}
 
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),
 		Meter:  otel.Meter("test"),
-		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		})),
+		Logger: logger,
 	}
 
-	router, shutdown, err := setupRouter(context.TODO(), envVars, otelExporters)
+	router, shutdown, err := SetupRouter(context.TODO(), envVars, otelExporters)
 	assert.NilError(t, err)
 
 	server := httptest.NewServer(router)

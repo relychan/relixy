@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/relychan/relixy/schema/baseschema"
 	"go.yaml.in/yaml/v4"
 	"gotest.tools/v3/assert"
 )
@@ -270,7 +271,7 @@ func TestRelixyOpenAPIResource_UnmarshalJSON(t *testing.T) {
 			expectError: false,
 			checkFunc: func(t *testing.T, res *RelixyOpenAPIResource) {
 				assert.Equal(t, "v1", res.Version)
-				assert.Equal(t, "OpenAPI", res.Kind)
+				assert.Equal(t, baseschema.OpenAPIKind, res.Kind)
 				assert.Equal(t, "test-api", res.Metadata.Name)
 				assert.Equal(t, "Test API description", res.Metadata.Description)
 				assert.Assert(t, res.Definition.Spec != nil)
@@ -369,7 +370,7 @@ definition:
 			expectError: false,
 			checkFunc: func(t *testing.T, res *RelixyOpenAPIResource) {
 				assert.Equal(t, "v1", res.Version)
-				assert.Equal(t, "OpenAPI", res.Kind)
+				assert.Equal(t, baseschema.OpenAPIKind, res.Kind)
 				assert.Equal(t, "test-api", res.Metadata.Name)
 				assert.Equal(t, "Test API description", res.Metadata.Description)
 				assert.Assert(t, res.Definition.Spec != nil)
@@ -614,14 +615,14 @@ paths:
 	result, err := rawResource.Definition.Build(context.TODO())
 	assert.NilError(t, err)
 
-	resultYamlBytes, err := yaml.Marshal(result)
+	resultYamlBytes, err := yaml.Dump(result)
 	assert.NilError(t, err)
 
 	var resultYaml any
-	assert.NilError(t, yaml.Unmarshal(resultYamlBytes, &resultYaml))
+	assert.NilError(t, yaml.Load(resultYamlBytes, &resultYaml))
 
 	var expectedYaml any
-	assert.NilError(t, yaml.Unmarshal([]byte(expectedData), &expectedYaml))
+	assert.NilError(t, yaml.Load([]byte(expectedData), &expectedYaml))
 
 	assert.DeepEqual(t, resultYaml, expectedYaml)
 }

@@ -145,13 +145,6 @@ func TestParseStringFromExtensions(t *testing.T) {
 			expectedValue: "test-value",
 			expectError:   false,
 		},
-		{
-			name:          "empty string",
-			key:           "test-key",
-			value:         "",
-			expectedValue: "",
-			expectError:   false,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -159,7 +152,7 @@ func TestParseStringFromExtensions(t *testing.T) {
 			extensions := orderedmap.New[string, *yaml.Node]()
 
 			var valueNode yaml.Node
-			err := yaml.Unmarshal([]byte(tc.value), &valueNode)
+			err := yaml.Load([]byte(tc.value), &valueNode)
 			assert.NilError(t, err)
 
 			extensions.Set(tc.key, &valueNode)

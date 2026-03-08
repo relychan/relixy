@@ -7,12 +7,10 @@ import (
 	"net/url"
 	"regexp"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
-	"github.com/relychan/goutils"
 	"github.com/relychan/relixy/proxyc/handler"
 	"github.com/relychan/relixy/proxyc/handler/proxyhandler"
 	"github.com/relychan/relixy/schema/openapi"
@@ -323,7 +321,7 @@ func (r *Route) findRouteRecursive( //nolint:gocognit
 	left, remain, _ := strings.Cut(search, "/")
 
 	for t, nds := range node.children {
-		ntyp := nodeType(t) //nolint:gosec
+		ntyp := nodeType(t)
 
 		if len(nds) == 0 {
 			continue
@@ -397,18 +395,13 @@ type nodes []*Node
 
 // Sort the list of nodes by label.
 func (ns nodes) Sort() {
-	sort.Sort(ns)
-}
-func (ns nodes) Len() int      { return len(ns) }
-func (ns nodes) Swap(i, j int) { ns[i], ns[j] = ns[j], ns[i] }
+	slices.SortFunc(ns, func(a, b *Node) int {
+		if a.typ == b.typ {
+			return strings.Compare(a.key, b.key)
+		}
 
-func (ns nodes) Less(i, j int) bool {
-	switch ns[i].typ {
-	case ntStatic, ntParam, ntRegexp:
-		return strings.Compare(ns[i].key, ns[j].key) < 0
-	default:
-		return false
-	}
+		return int(a.typ) - int(b.typ)
+	})
 }
 
 type patNextSegmentResult struct {
@@ -726,7 +719,7 @@ func extractParametersFromOperationV3(
 		params = append(params, &highv3.Parameter{
 			Name:     key,
 			In:       openapi.InPath,
-			Required: goutils.ToPtr(true),
+			Required: new(true),
 			Schema: base.CreateSchemaProxy(&base.Schema{
 				Type: []string{"string"},
 			}),

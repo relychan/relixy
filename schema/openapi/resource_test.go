@@ -10,15 +10,15 @@ import (
 	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
-	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/baseschema"
 	"gotest.tools/v3/assert"
 )
 
 // TestRelixyOpenAPIResource_GetMetadata tests the GetMetadata method
 func TestRelixyOpenAPIResource_GetMetadata(t *testing.T) {
 	resource := RelixyOpenAPIResource{
-		BaseResourceModel: base_schema.BaseResourceModel{
-			Metadata: base_schema.RelixyResourceMetadata{
+		BaseResourceModel: baseschema.BaseResourceModel{
+			Metadata: baseschema.RelixyResourceMetadata{
 				Name: "test-api",
 			},
 		},

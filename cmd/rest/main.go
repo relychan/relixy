@@ -7,14 +7,11 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/hasura/gotel"
-	"github.com/hasura/gotel/otelutils"
 	"github.com/relychan/gohttps"
 	"github.com/relychan/goutils"
 	"github.com/relychan/relixy/config"
-	"github.com/relychan/relixy/routes/rest"
-	"github.com/relychan/relixy/types"
+	"github.com/relychan/relixy/routes/restrouter"
 )
 
 func main() {
@@ -29,55 +26,24 @@ func startServer() error {
 	ctx, stop := signal.NotifyContext(context.TODO(), os.Interrupt)
 	defer stop()
 
-	envVars, err := config.LoadServerConfig(ctx)
+	envVars, logger, err := config.LoadServerConfig(ctx)
 	if err != nil {
 		return err
 	}
 
-	logger, _, err := otelutils.NewJSONLogger(envVars.Server.LogLevel)
-	if err != nil {
-		return err
-	}
-
-	ts, err := gotel.SetupOTelExporters(ctx, &envVars.Telemetry, types.BuildVersion, logger)
+	ts, err := gotel.SetupOTelExporters(ctx, envVars.Telemetry, config.BuildVersion, logger)
 	if err != nil {
 		return err
 	}
 
 	defer goutils.CatchWarnContextErrorFunc(ts.Shutdown)
 
-	router, shutdown, err := setupRouter(ctx, envVars, ts)
+	router, shutdown, err := restrouter.SetupRouter(ctx, envVars, ts)
 	if err != nil {
 		return err
 	}
 
 	defer shutdown()
 
-	return gohttps.ListenAndServe(ctx, router, &envVars.Server)
-}
-
-func setupRouter(
-	ctx context.Context,
-	conf *config.RelixyServerConfig,
-	ts *gotel.OTelExporters,
-) (*chi.Mux, func(), error) {
-	state, err := config.NewState(ctx, conf, ts)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	middlewares, shutdown, err := config.SetupMiddlewares(ctx, conf, state, ts)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	basePath := "/*"
-
-	router := gohttps.NewRouter(&conf.Server, ts.Logger)
-	router.Handle(
-		basePath,
-		middlewares.Handler(rest.NewRESTHandler(state)),
-	)
-
-	return router, shutdown, nil
+	return gohttps.ListenAndServe(ctx, router, envVars.Server)
 }

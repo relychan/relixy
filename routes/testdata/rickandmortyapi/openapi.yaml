@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../jsonschema/relixy.schema.json
+# yaml-language-server: $schema=../../../jsonschema/relixy.schema.json
 version: v1
 kind: OpenAPI
 metadata:
@@ -61,3 +61,15 @@ definition:
                     name
                   }
                 }
+---
+version: v1
+kind: RelyAuth
+definition:
+  settings: {}
+  modes:
+    - mode: apiKey
+      tokenLocation:
+        in: header
+        name: Authorization
+      value:
+        value: "test-secret"

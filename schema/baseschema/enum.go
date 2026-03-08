@@ -1,4 +1,4 @@
-package base_schema
+package baseschema
 
 import (
 	"github.com/invopop/jsonschema"

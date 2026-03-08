@@ -10,7 +10,6 @@ import (
 	v3high "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/pb33f/libopenapi/orderedmap"
 	"github.com/pb33f/libopenapi/utils"
-	"github.com/relychan/goutils"
 	"go.yaml.in/yaml/v4"
 )
 
@@ -219,7 +218,7 @@ func (sto *swaggerToOpenAPIv3Converter) convertOperation(
 	if formDataProps.Len() > 0 {
 		result.RequestBody = &v3high.RequestBody{
 			Content:  orderedmap.New[string, *v3high.MediaType](),
-			Required: goutils.ToPtr(true),
+			Required: new(true),
 		}
 
 		content := &v3high.MediaType{

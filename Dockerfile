@@ -1,4 +1,4 @@
-FROM golang:1.25 AS builder
+FROM golang:1.26 AS builder
 
 ARG VERSION=dev
 
@@ -9,7 +9,7 @@ RUN go mod download
 COPY . .
 
 RUN CGO_ENABLED=0 go build \
-    -ldflags="-X 'github.com/relychan/relixy/types.BuildVersion=${VERSION}'" \
+    -ldflags="-X 'github.com/relychan/relixy/config.BuildVersion=${VERSION}'" \
     -v -o relixy ./cmd/rest
 
 # stage 2: production image
