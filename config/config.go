@@ -51,7 +51,7 @@ func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, *slog
 
 	serverConfigPath := os.Getenv("RELIXY_CONFIG_PATH")
 	if serverConfigPath != "" {
-		slog.Debug(
+		slog.Debug( //nolint:gosec
 			"Loading configurations from file...",
 			slog.String("path", serverConfigPath),
 		)
