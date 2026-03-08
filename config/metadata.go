@@ -8,7 +8,7 @@ import (
 
 	"github.com/relychan/goutils"
 	"github.com/relychan/relixy/schema"
-	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/baseschema"
 	"github.com/relychan/relixy/schema/openapi"
 )
 
@@ -20,11 +20,14 @@ var (
 // RelixyMetadata represents the evaluated relixy metadata object.
 type RelixyMetadata struct {
 	openapiResources []*openapi.RelixyOpenAPIResource
-	authResource     *base_schema.RelyAuthResource
+	authResource     *baseschema.RelyAuthResource
 }
 
 // LoadMetadata loads metadata resources from definition configurations.
-func LoadMetadata(ctx context.Context, definition RelixyDefinitionConfig) (*RelixyMetadata, error) {
+func LoadMetadata(
+	ctx context.Context,
+	definition RelixyDefinitionConfig,
+) (*RelixyMetadata, error) {
 	result := &RelixyMetadata{}
 	includes := []string{}
 
@@ -70,7 +73,7 @@ func LoadMetadata(ctx context.Context, definition RelixyDefinitionConfig) (*Reli
 
 		for _, resource := range resources {
 			switch rs := resource.RelixyResource.(type) {
-			case *base_schema.RelyAuthResource:
+			case *baseschema.RelyAuthResource:
 				if result.authResource != nil {
 					return nil, ErrAllowOnlyOneRelyAuthResource
 				}
@@ -92,7 +95,7 @@ func (rm *RelixyMetadata) GetOpenAPIResources() []*openapi.RelixyOpenAPIResource
 }
 
 // GetAuthResource returns the RelyAuth resource.
-func (rm *RelixyMetadata) GetAuthResource() *base_schema.RelyAuthResource {
+func (rm *RelixyMetadata) GetAuthResource() *baseschema.RelyAuthResource {
 	return rm.authResource
 }
 

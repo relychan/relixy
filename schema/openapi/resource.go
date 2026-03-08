@@ -11,7 +11,7 @@ import (
 	"github.com/pb33f/libopenapi/datamodel"
 	highv3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"github.com/relychan/goutils"
-	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/baseschema"
 	"go.yaml.in/yaml/v4"
 )
 
@@ -22,16 +22,16 @@ const (
 
 // RelixyOpenAPIResource represents an OpenAPI resource.
 type RelixyOpenAPIResource struct {
-	base_schema.BaseResourceModel `yaml:",inline"`
+	baseschema.BaseResourceModel `yaml:",inline"`
 
 	// Definition of the OpenAPI documentation.
 	Definition RelixyOpenAPIResourceDefinition `json:"definition" yaml:"definition"`
 }
 
-var _ base_schema.RelixyResource = (*RelixyOpenAPIResource)(nil)
+var _ baseschema.RelixyResource = (*RelixyOpenAPIResource)(nil)
 
 // GetMetadata returns the metadata of the current resource.
-func (ror RelixyOpenAPIResource) GetMetadata() base_schema.RelixyResourceMetadata {
+func (ror RelixyOpenAPIResource) GetMetadata() baseschema.RelixyResourceMetadata {
 	return ror.Metadata
 }
 
@@ -41,7 +41,7 @@ func (RelixyOpenAPIResource) JSONSchemaExtend(schema *jsonschema.Schema) {
 		Set("kind", &jsonschema.Schema{
 			Description: "Kind of the resource which is always OpenAPI.",
 			Type:        "string",
-			Const:       base_schema.OpenAPIKind,
+			Const:       baseschema.OpenAPIKind,
 		})
 }
 

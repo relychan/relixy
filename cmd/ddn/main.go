@@ -8,7 +8,6 @@ import (
 	"os/signal"
 
 	"github.com/hasura/gotel"
-	"github.com/hasura/gotel/otelutils"
 	"github.com/relychan/gohttps"
 	"github.com/relychan/goutils"
 	"github.com/relychan/relixy/config"
@@ -27,12 +26,7 @@ func startServer() error {
 	ctx, stop := signal.NotifyContext(context.TODO(), os.Interrupt)
 	defer stop()
 
-	envVars, err := config.LoadServerConfig(ctx)
-	if err != nil {
-		return err
-	}
-
-	logger, _, err := otelutils.NewJSONLogger(envVars.Server.LogLevel)
+	envVars, logger, err := config.LoadServerConfig(ctx)
 	if err != nil {
 		return err
 	}

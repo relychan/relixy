@@ -4,12 +4,14 @@ package config
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/hasura/gotel"
+	"github.com/hasura/gotel/otelutils"
 	"github.com/relychan/gohttps"
 	"github.com/relychan/goutils"
 )
@@ -42,19 +44,24 @@ type RelixyServerConfig struct {
 }
 
 // LoadServerConfig loads and parses configurations for [RelyAuthServerConfig].
-func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, error) {
+func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, *slog.Logger, error) {
 	var result *RelixyServerConfig
 
 	var err error
 
 	serverConfigPath := os.Getenv("RELIXY_CONFIG_PATH")
 	if serverConfigPath != "" {
+		slog.Debug(
+			"Loading configurations from file...",
+			slog.String("path", serverConfigPath),
+		)
+
 		ctx, cancel := context.WithTimeout(parentContext, time.Minute)
 		defer cancel()
 
 		result, err = goutils.ReadJSONOrYAMLFile[RelixyServerConfig](ctx, serverConfigPath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load RELIXY_CONFIG_PATH: %w", err)
+			return nil, nil, fmt.Errorf("failed to load RELIXY_CONFIG_PATH: %w", err)
 		}
 	} else {
 		result = &RelixyServerConfig{}
@@ -70,12 +77,21 @@ func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, error
 
 	err = env.Parse(result)
 	if err != nil {
-		return result, fmt.Errorf("failed to load environment variables for server config: %w", err)
+		return result,
+			nil,
+			fmt.Errorf("failed to load environment variables for server config: %w", err)
 	}
+
+	logger, _, err := otelutils.NewJSONLogger(result.Server.LogLevel)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	logger.Debug("Loaded configurations", slog.Any("config", result))
 
 	err = result.Definition.Validate()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if result.Telemetry.ServiceName == "" {
@@ -87,20 +103,20 @@ func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, error
 
 		include, err := resolveDefinitionPaths(basePath, result.Definition.Include)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		result.Definition.Include = include
 
 		exclude, err := resolveDefinitionPaths(basePath, result.Definition.Exclude)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		result.Definition.Exclude = exclude
 	}
 
-	return result, nil
+	return result, logger, nil
 }
 
 func resolveDefinitionPaths(basePath string, paths []string) ([]string, error) {

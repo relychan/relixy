@@ -31,29 +31,7 @@ services:
       - postgres
       - app_mypostgres
     environment:
-      CONFIG_PATH: "/etc/relixy/config.yaml"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
-      GRAPHQL_SERVER_URL: "http://engine:3000/graphql"
-      HASURA_M_AUTH: ${HASURA_M_AUTH}
-      LOG_LEVEL: debug
-    volumes:
-      - type: bind
-        source: ./config/plugin/
-        target: /etc/relixy
-        read_only: true
-
-  relixy:
-    build:
-      context: ../..
-      dockerfile: Dockerfile
-    ports:
-      - 8080:8080
-    depends_on:
-      - engine
-      - postgres
-      - app_mypostgres
-    environment:
-      CONFIG_PATH: "/etc/relixy/config.yaml"
+      RELIXY_CONFIG_PATH: "/etc/relixy/config.yaml"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
       GRAPHQL_SERVER_URL: "http://engine:3000/graphql"
       HASURA_M_AUTH: ${HASURA_M_AUTH}

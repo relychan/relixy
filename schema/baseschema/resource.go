@@ -1,5 +1,5 @@
-// Package base_schema define base schema resources.
-package base_schema
+// Package baseschema define base schema resources.
+package baseschema
 
 import (
 	"github.com/invopop/jsonschema"

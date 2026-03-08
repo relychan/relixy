@@ -35,7 +35,7 @@ func main() {
 func genConfigurationSchema() error {
 	r := new(jsonschema.Reflector)
 
-	for _, name := range []string{"/schema/openapi", "/schema/base_schema"} {
+	for _, name := range []string{"/schema/openapi", "/schema/baseschema"} {
 		err := r.AddGoComments(
 			"github.com/relychan/relixy"+name,
 			".."+name,

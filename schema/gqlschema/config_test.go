@@ -4,17 +4,17 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/baseschema"
 	"go.yaml.in/yaml/v4"
 	"gotest.tools/v3/assert"
 )
 
 func TestRelixyGraphQLConfig_JSONMarshal(t *testing.T) {
 	config := RelixyGraphQLConfig{
-		ScalarTypeMapping: map[string]base_schema.PrimitiveType{
-			"DateTime": base_schema.String,
-			"UUID":     base_schema.String,
-			"Int64":    base_schema.Integer,
+		ScalarTypeMapping: map[string]baseschema.PrimitiveType{
+			"DateTime": baseschema.String,
+			"UUID":     baseschema.String,
+			"Int64":    baseschema.Integer,
 		},
 	}
 
@@ -25,16 +25,16 @@ func TestRelixyGraphQLConfig_JSONMarshal(t *testing.T) {
 	err = json.Unmarshal(data, &result)
 	assert.NilError(t, err)
 	assert.Equal(t, 3, len(result.ScalarTypeMapping))
-	assert.Equal(t, base_schema.String, result.ScalarTypeMapping["DateTime"])
-	assert.Equal(t, base_schema.String, result.ScalarTypeMapping["UUID"])
-	assert.Equal(t, base_schema.Integer, result.ScalarTypeMapping["Int64"])
+	assert.Equal(t, baseschema.String, result.ScalarTypeMapping["DateTime"])
+	assert.Equal(t, baseschema.String, result.ScalarTypeMapping["UUID"])
+	assert.Equal(t, baseschema.Integer, result.ScalarTypeMapping["Int64"])
 }
 
 func TestRelixyGraphQLConfig_YAMLMarshal(t *testing.T) {
 	config := RelixyGraphQLConfig{
-		ScalarTypeMapping: map[string]base_schema.PrimitiveType{
-			"DateTime": base_schema.String,
-			"UUID":     base_schema.String,
+		ScalarTypeMapping: map[string]baseschema.PrimitiveType{
+			"DateTime": baseschema.String,
+			"UUID":     baseschema.String,
 		},
 	}
 
@@ -45,8 +45,8 @@ func TestRelixyGraphQLConfig_YAMLMarshal(t *testing.T) {
 	err = yaml.Unmarshal(data, &result)
 	assert.NilError(t, err)
 	assert.Equal(t, 2, len(result.ScalarTypeMapping))
-	assert.Equal(t, base_schema.String, result.ScalarTypeMapping["DateTime"])
-	assert.Equal(t, base_schema.String, result.ScalarTypeMapping["UUID"])
+	assert.Equal(t, baseschema.String, result.ScalarTypeMapping["DateTime"])
+	assert.Equal(t, baseschema.String, result.ScalarTypeMapping["UUID"])
 }
 
 func TestRelixyGraphQLConfig_JSONUnmarshal(t *testing.T) {
@@ -70,11 +70,11 @@ func TestRelixyGraphQLConfig_JSONUnmarshal(t *testing.T) {
 			expectError: false,
 			checkFunc: func(t *testing.T, config *RelixyGraphQLConfig) {
 				assert.Equal(t, 5, len(config.ScalarTypeMapping))
-				assert.Equal(t, base_schema.String, config.ScalarTypeMapping["DateTime"])
-				assert.Equal(t, base_schema.String, config.ScalarTypeMapping["UUID"])
-				assert.Equal(t, base_schema.Integer, config.ScalarTypeMapping["Int64"])
-				assert.Equal(t, base_schema.Number, config.ScalarTypeMapping["Float64"])
-				assert.Equal(t, base_schema.Boolean, config.ScalarTypeMapping["Boolean"])
+				assert.Equal(t, baseschema.String, config.ScalarTypeMapping["DateTime"])
+				assert.Equal(t, baseschema.String, config.ScalarTypeMapping["UUID"])
+				assert.Equal(t, baseschema.Integer, config.ScalarTypeMapping["Int64"])
+				assert.Equal(t, baseschema.Number, config.ScalarTypeMapping["Float64"])
+				assert.Equal(t, baseschema.Boolean, config.ScalarTypeMapping["Boolean"])
 			},
 		},
 		{
@@ -132,11 +132,11 @@ func TestRelixyGraphQLConfig_YAMLUnmarshal(t *testing.T) {
 			expectError: false,
 			checkFunc: func(t *testing.T, config *RelixyGraphQLConfig) {
 				assert.Equal(t, 5, len(config.ScalarTypeMapping))
-				assert.Equal(t, base_schema.String, config.ScalarTypeMapping["DateTime"])
-				assert.Equal(t, base_schema.String, config.ScalarTypeMapping["UUID"])
-				assert.Equal(t, base_schema.Integer, config.ScalarTypeMapping["Int64"])
-				assert.Equal(t, base_schema.Number, config.ScalarTypeMapping["Float64"])
-				assert.Equal(t, base_schema.Boolean, config.ScalarTypeMapping["Boolean"])
+				assert.Equal(t, baseschema.String, config.ScalarTypeMapping["DateTime"])
+				assert.Equal(t, baseschema.String, config.ScalarTypeMapping["UUID"])
+				assert.Equal(t, baseschema.Integer, config.ScalarTypeMapping["Int64"])
+				assert.Equal(t, baseschema.Number, config.ScalarTypeMapping["Float64"])
+				assert.Equal(t, baseschema.Boolean, config.ScalarTypeMapping["Boolean"])
 			},
 		},
 		{

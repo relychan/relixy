@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -115,6 +114,7 @@ func TestRESTHandler_GraphQLServer(t *testing.T) {
 }
 
 func TestRESTHandler_DDN(t *testing.T) {
+	// os.Setenv("GRAPHQL_SERVER_URL", "http://localhost:3280/graphql")
 	graphqlURL := os.Getenv("GRAPHQL_SERVER_URL")
 	if graphqlURL == "" {
 		return
@@ -266,22 +266,20 @@ func runUnauthorizedRequest[T any](t *testing.T, r ddnrouter.PreRoutePluginReque
 func TestSetupRouter_InvalidConfig(t *testing.T) {
 	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/invalid-config.yaml")
 
-	_, err := config.LoadServerConfig(context.Background())
+	_, _, err := config.LoadServerConfig(context.Background())
 	assert.ErrorIs(t, err, io.EOF)
 }
 
 func TestSetupRouter_ValidConfig(t *testing.T) {
 	t.Setenv("RELIXY_CONFIG_PATH", testPlaceholderConfig)
 
-	envVars, err := config.LoadServerConfig(context.Background())
+	envVars, logger, err := config.LoadServerConfig(context.Background())
 	assert.NilError(t, err)
 
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),
 		Meter:  otel.Meter("test"),
-		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		})),
+		Logger: logger,
 	}
 
 	router, shutdown, err := SetupRouter(context.TODO(), envVars, otelExporters)
@@ -362,15 +360,13 @@ func TestRESTHandler_GetAlbums(t *testing.T) {
 func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {
 	t.Setenv("RELIXY_CONFIG_PATH", configPath)
 
-	envVars, err := config.LoadServerConfig(context.Background())
+	envVars, logger, err := config.LoadServerConfig(context.Background())
 	assert.NilError(t, err)
 
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),
 		Meter:  otel.Meter("test"),
-		Logger: slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		})),
+		Logger: logger,
 	}
 
 	router, shutdown, err := SetupRouter(context.TODO(), envVars, otelExporters)

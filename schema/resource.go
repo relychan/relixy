@@ -8,7 +8,7 @@ import (
 
 	"github.com/invopop/jsonschema"
 	"github.com/relychan/goutils"
-	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/baseschema"
 	"github.com/relychan/relixy/schema/openapi"
 	"github.com/relychan/rely-auth/auth"
 	"go.yaml.in/yaml/v4"
@@ -21,11 +21,11 @@ var (
 
 // RelixyResource extends the Relixy resource interface to implement the JSON and YAML decoders.
 type RelixyResource struct {
-	base_schema.RelixyResource
+	baseschema.RelixyResource
 }
 
 type rawRelixyResourceJSON struct {
-	base_schema.BaseResourceModel `yaml:",inline"`
+	baseschema.BaseResourceModel `yaml:",inline"`
 
 	// Definition of the OpenAPI documentation.
 	Definition json.RawMessage `json:"definition"`
@@ -45,7 +45,7 @@ func (j *RelixyResource) UnmarshalJSON(b []byte) error {
 	}
 
 	switch rawValue.Kind {
-	case base_schema.RelyAuthKind:
+	case baseschema.RelyAuthKind:
 		var authDef auth.RelyAuthDefinition
 
 		err = json.Unmarshal(rawValue.Definition, &authDef)
@@ -53,11 +53,11 @@ func (j *RelixyResource) UnmarshalJSON(b []byte) error {
 			return err
 		}
 
-		j.RelixyResource = &base_schema.RelyAuthResource{
+		j.RelixyResource = &baseschema.RelyAuthResource{
 			BaseResourceModel: rawValue.BaseResourceModel,
 			Definition:        authDef,
 		}
-	case base_schema.OpenAPIKind:
+	case baseschema.OpenAPIKind:
 		var oasDef openapi.RelixyOpenAPIResourceDefinition
 
 		err = json.Unmarshal(rawValue.Definition, &oasDef)
@@ -87,7 +87,7 @@ func (j *RelixyResource) UnmarshalYAML(value *yaml.Node) error {
 		return ErrRelixyResourceDefinitionRequired
 	}
 
-	var baseModel base_schema.BaseResourceModel
+	var baseModel baseschema.BaseResourceModel
 
 	err = value.Decode(&baseModel)
 	if err != nil {
@@ -95,7 +95,7 @@ func (j *RelixyResource) UnmarshalYAML(value *yaml.Node) error {
 	}
 
 	switch baseModel.Kind {
-	case base_schema.RelyAuthKind:
+	case baseschema.RelyAuthKind:
 		var authDef auth.RelyAuthDefinition
 
 		err = defNode.Decode(&authDef)
@@ -103,11 +103,11 @@ func (j *RelixyResource) UnmarshalYAML(value *yaml.Node) error {
 			return err
 		}
 
-		j.RelixyResource = &base_schema.RelyAuthResource{
+		j.RelixyResource = &baseschema.RelyAuthResource{
 			BaseResourceModel: baseModel,
 			Definition:        authDef,
 		}
-	case base_schema.OpenAPIKind:
+	case baseschema.OpenAPIKind:
 		var oasDef openapi.RelixyOpenAPIResourceDefinition
 
 		err = defNode.Decode(&oasDef)

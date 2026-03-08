@@ -1,4 +1,4 @@
-package base_schema
+package baseschema
 
 import (
 	"encoding/json"

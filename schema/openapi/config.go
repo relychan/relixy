@@ -4,7 +4,7 @@ package openapi
 import (
 	"github.com/hasura/goenvconf"
 	"github.com/relychan/gohttpc/httpconfig"
-	"github.com/relychan/relixy/schema/base_schema"
+	"github.com/relychan/relixy/schema/baseschema"
 )
 
 // RelixyOpenAPISettings hold settings of the rely proxy.
@@ -21,7 +21,7 @@ type RelixyOpenAPISettings struct {
 	// ForwardHeaders define configurations for headers forwarding
 	ForwardHeaders *RelixyOpenAPIForwardHeadersConfig `json:"forwardHeaders,omitempty" yaml:"forwardHeaders,omitempty"`
 	// HealthCheck define the health check policy for load balancer recovery.
-	HealthCheck *base_schema.RelixyHealthCheckConfig `json:"healthCheck,omitempty" yaml:"healthCheck,omitempty"`
+	HealthCheck *baseschema.RelixyHealthCheckConfig `json:"healthCheck,omitempty" yaml:"healthCheck,omitempty"`
 }
 
 // RelixyOpenAPIForwardHeadersConfig contains configurations for headers forwarding,.
