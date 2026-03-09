@@ -7,7 +7,7 @@ require (
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/google/go-cmp v0.7.0
-	github.com/hasura/goenvconf v0.6.1
+	github.com/hasura/goenvconf v0.6.2
 	github.com/hasura/gotel v0.6.2
 	github.com/invopop/jsonschema v0.13.0
 	github.com/pb33f/libopenapi v0.34.0

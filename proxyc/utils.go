@@ -26,6 +26,8 @@ func parseServerURL(server *highv3.Server, getEnv goenvconf.GetEnvFunc) (string,
 		char := rawServerURL[i]
 		if char != '{' {
 			sb.WriteByte(char)
+
+			continue
 		}
 
 		i++
