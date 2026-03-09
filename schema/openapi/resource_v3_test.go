@@ -73,8 +73,12 @@ func TestRelixyOpenAPIResourceDefinition_UnmarshalJSON(t *testing.T) {
 					},
 					"servers": [
 						{
-							"url": "https://api.example.com",
-							"x-rely-url-env": "SERVER_URL"
+							"url": "{SERVER_URL}",
+							"variables": {
+								"SERVER_URL": {
+									"default": "https://api.example.com"
+								}
+							}
 						}
 					],
 					"paths": {}
@@ -84,10 +88,9 @@ func TestRelixyOpenAPIResourceDefinition_UnmarshalJSON(t *testing.T) {
 			checkFunc: func(t *testing.T, def *RelixyOpenAPIResourceDefinition) {
 				assert.Assert(t, def.Spec != nil)
 				assert.Assert(t, def.Spec.Servers != nil)
-				assert.Equal(t, "https://api.example.com", def.Spec.Servers[0].URL)
-				urlFromEnv, exist := def.Spec.Servers[0].Extensions.Get(XRelyURLEnv)
-				assert.Assert(t, exist)
-				assert.Equal(t, "SERVER_URL", urlFromEnv.Value)
+				assert.Equal(t, "{SERVER_URL}", def.Spec.Servers[0].URL)
+				serverVariable, _ := def.Spec.Servers[0].Variables.Get("SERVER_URL")
+				assert.Equal(t, "https://api.example.com", serverVariable.Default)
 			},
 		},
 		{
@@ -161,8 +164,10 @@ func TestRelixyOpenAPIResourceDefinition_UnmarshalYAML(t *testing.T) {
     title: Test API
     version: "1.0.0"
   servers:
-    - url: https://api.example.com
-      x-rely-url-env: SERVER_URL
+    - url: "{SERVER_URL}"
+      variables:
+        SERVER_URL: 
+          default: https://api.example.com
   paths:
     /users:
       get:
@@ -172,10 +177,9 @@ func TestRelixyOpenAPIResourceDefinition_UnmarshalYAML(t *testing.T) {
 				assert.Assert(t, def.Spec != nil)
 				assert.Assert(t, def.Spec.Servers != nil)
 				assert.Assert(t, def.Spec.Paths != nil)
-				assert.Equal(t, "https://api.example.com", def.Spec.Servers[0].URL)
-				urlFromEnv, exist := def.Spec.Servers[0].Extensions.Get(XRelyURLEnv)
-				assert.Assert(t, exist)
-				assert.Equal(t, "SERVER_URL", urlFromEnv.Value)
+				assert.Equal(t, "{SERVER_URL}", def.Spec.Servers[0].URL)
+				serverVariable, _ := def.Spec.Servers[0].Variables.Get("SERVER_URL")
+				assert.Equal(t, "https://api.example.com", serverVariable.Default)
 			},
 		},
 		{

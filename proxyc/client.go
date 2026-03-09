@@ -166,45 +166,24 @@ func (pc *ProxyClient) initServers(spec *highv3.Document) error {
 	return nil
 }
 
-func (pc *ProxyClient) initServer( //nolint:cyclop
+func (pc *ProxyClient) initServer(
 	server *highv3.Server,
 	healthCheckBuilder *loadbalancer.HTTPHealthCheckPolicyBuilder,
 ) (*loadbalancer.Host, error) {
 	getEnv := pc.clientOptions.GetEnvFunc()
-	rawServerURL := server.URL
 
-	rawURLFromEnv, exist := server.Extensions.Get(openapi.XRelyURLEnv)
-	if exist && rawURLFromEnv != nil {
-		var urlFromEnv string
-
-		err := rawURLFromEnv.Decode(&urlFromEnv)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode urlFromEnv from server: %w", err)
-		}
-
-		if urlFromEnv != "" {
-			serverURL, err := getEnv(urlFromEnv)
-			if err != nil {
-				return nil, fmt.Errorf(
-					"failed to decode urlFromEnv %s from server: %w",
-					urlFromEnv,
-					err,
-				)
-			}
-
-			if serverURL != "" {
-				rawServerURL = serverURL
-			}
-		}
+	serverURL, err := parseServerURL(server, getEnv)
+	if err != nil {
+		return nil, err
 	}
 
-	if rawServerURL == "" {
+	if serverURL == "" {
 		return nil, nil
 	}
 
 	host, err := loadbalancer.NewHost(
 		pc.clientOptions.HTTPClient,
-		rawServerURL,
+		serverURL,
 		loadbalancer.WithHTTPHealthCheckPolicyBuilder(healthCheckBuilder),
 	)
 	if err != nil {

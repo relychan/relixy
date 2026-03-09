@@ -5,11 +5,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"maps"
+	"net/http"
 	"os"
 	"strings"
 
 	"github.com/invopop/jsonschema"
+	"github.com/relychan/goutils"
 	"github.com/relychan/relixy/config"
 	"github.com/relychan/relixy/schema"
 	"github.com/relychan/relixy/schema/openapi"
@@ -51,16 +54,11 @@ func genConfigurationSchema() error {
 	// custom schema types
 	openapiSchema := r.Reflect(openapi.RelixyOpenAPIResource{})
 	maps.Copy(reflectSchema.Definitions, openapiSchema.Definitions)
-	reflectSchema.Definitions["HTTPClientConfig"] = &jsonschema.Schema{
-		Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json",
-	}
+
+	httpcSchema := downloadGoHTTPCSchema()
+	maps.Copy(reflectSchema.Definitions, httpcSchema.Definitions)
 
 	// delete unused definitions
-	delete(reflectSchema.Definitions, "HTTPTransportConfig")
-	delete(reflectSchema.Definitions, "HTTPRetryConfig")
-	delete(reflectSchema.Definitions, "HTTPClientAuthConfig")
-	delete(reflectSchema.Definitions, "TLSClientCertificate")
-	delete(reflectSchema.Definitions, "HTTPDialerConfig")
 	delete(reflectSchema.Definitions, "Document")
 	delete(reflectSchema.Definitions, "Contact")
 	delete(reflectSchema.Definitions, "Components")
@@ -71,8 +69,6 @@ func genConfigurationSchema() error {
 	delete(reflectSchema.Definitions, "Paths")
 	delete(reflectSchema.Definitions, "Info")
 	delete(reflectSchema.Definitions, "License")
-	delete(reflectSchema.Definitions, "EnvInt")
-	delete(reflectSchema.Definitions, "TLSConfig")
 
 	for key := range reflectSchema.Definitions {
 		if strings.HasPrefix(key, "Map[") {
@@ -138,4 +134,35 @@ func genServerConfigurationSchema() error {
 		"relixy-server.schema.json",
 		buffer.Bytes(), 0o644,
 	)
+}
+
+func downloadGoHTTPCSchema() *jsonschema.Schema {
+	rawResp, err := http.Get( //nolint:bodyclose,noctx
+		"https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json",
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	if rawResp != nil && rawResp.Body != nil {
+		defer goutils.CatchWarnErrorFunc(rawResp.Body.Close)
+	}
+
+	if rawResp.StatusCode != http.StatusOK {
+		rawBody, err := io.ReadAll(rawResp.Body)
+		if err != nil {
+			panic("failed to download gohttpc schema: " + rawResp.Status)
+		}
+
+		panic("failed to download gohttpc schema" + string(rawBody))
+	}
+
+	jsonSchema := new(jsonschema.Schema)
+
+	err = json.NewDecoder(rawResp.Body).Decode(jsonSchema)
+	if err != nil {
+		panic(fmt.Errorf("failed to decode gohttpc schema: %w", err))
+	}
+
+	return jsonSchema
 }
