@@ -209,10 +209,6 @@
           "type": "string",
           "description": "A URL to the target host. This URL supports Server Variables and MAY be relative, to indicate that the host location is relative to the location where the document containing the Server Object is being served. Query and fragment MUST NOT be part of this URL. Variable substitutions will be made when a variable is named in {braces}."
         },
-        "x-rely-url-env": {
-          "type": "string",
-          "description": "An environment variable of a URL to the target host. Default is url if empty."
-        },
         "x-rely-server-weight": {
           "type": "integer",
           "description": "Defines the weight of the server endpoint for load balancing. Only take effect if there are many servers.",
@@ -256,17 +252,8 @@
           }
         }
       },
-      "anyOf": [
-        {
-          "required": [
-            "url"
-          ]
-        },
-        {
-          "required": [
-            "x-rely-url-env"
-          ]
-        }
+      "required": [
+        "url"
       ],
       "$ref": "#/$defs/specification-extensions",
       "unevaluatedProperties": false
