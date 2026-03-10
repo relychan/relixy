@@ -120,6 +120,8 @@ func TestRESTHandler_DDN(t *testing.T) {
 		return
 	}
 
+	os.Setenv("HASURA_M_AUTH", "test-token")
+
 	server, shutdown := initTestServer(t, "../../tests/ddn/config/plugin/config.yaml")
 	defer func() {
 		server.Close()
