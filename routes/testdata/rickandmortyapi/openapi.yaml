@@ -70,6 +70,6 @@ definition:
     - mode: apiKey
       tokenLocation:
         in: header
-        name: Authorization
+        name: hasura-m-auth
       value:
         value: "test-secret"
