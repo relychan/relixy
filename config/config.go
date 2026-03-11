@@ -53,21 +53,21 @@ func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, *slog
 	var err error
 
 	serverConfigPath := os.Getenv("RELIXY_CONFIG_PATH")
-	if serverConfigPath != "" {
-		slog.Debug( //nolint:gosec
-			"Loading configurations from file...",
-			slog.String("path", serverConfigPath),
-		)
+	if serverConfigPath == "" {
+		serverConfigPath = "/etc/relixy/config.yaml"
+	}
 
-		ctx, cancel := context.WithTimeout(parentContext, time.Minute)
-		defer cancel()
+	slog.Info( //nolint:gosec
+		"Loading configurations from file...",
+		slog.String("path", serverConfigPath),
+	)
 
-		result, err = goutils.ReadJSONOrYAMLFile[RelixyServerConfig](ctx, serverConfigPath)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to load RELIXY_CONFIG_PATH: %w", err)
-		}
-	} else {
-		result = &RelixyServerConfig{}
+	ctx, cancel := context.WithTimeout(parentContext, time.Minute)
+	defer cancel()
+
+	result, err = goutils.ReadJSONOrYAMLFile[RelixyServerConfig](ctx, serverConfigPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load RELIXY_CONFIG_PATH: %w", err)
 	}
 
 	if result.Server == nil {
