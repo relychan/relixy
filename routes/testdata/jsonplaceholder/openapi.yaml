@@ -12,8 +12,7 @@ definition:
       response: []
     http:
       retry:
-        maxAttempts:
-          value: 3
+        maxAttempts: 3
   spec:
     openapi: "3.2.0"
     servers:

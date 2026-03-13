@@ -61,24 +61,6 @@ type rawRelixyOpenAPIResourceDefinitionJSON struct {
 	Spec     json.RawMessage        `json:"spec"`
 }
 
-// JSONSchemaExtend modifies the JSON schema afterwards.
-func (RelixyOpenAPIResourceDefinition) JSONSchemaExtend(schema *jsonschema.Schema) {
-	settingsSchema, _ := schema.Properties.Get("settings")
-	settingsSchema.Description = "Settings of the OpenAPI resource"
-	schema.Properties.Set("settings", settingsSchema)
-
-	refSchema, _ := schema.Properties.Get("ref")
-	refSchema.Description = "Path of URL of the referenced OpenAPI document. Requires at least one of ref or spec. If both fields are configured, the spec will be merged into the reference."
-	schema.Properties.Set("ref", refSchema)
-
-	schema.Properties.
-		Set("spec", &jsonschema.Schema{
-			Title:       "OpenAPIv3Document",
-			Description: "Specification of the OpenAPI v3 documentation.",
-			Ref:         "https://raw.githubusercontent.com/relychan/relixy/refs/heads/main/jsonschema/openapi-3.json",
-		})
-}
-
 // MarshalJSON implements json.Marshaler.
 func (j RelixyOpenAPIResourceDefinition) MarshalJSON() ([]byte, error) {
 	result := map[string]any{}

@@ -233,7 +233,7 @@
           "description": "Global security requirements/roles for the target.\nUse global securities if empty."
         },
         "x-rely-server-tls": {
-          "$ref": "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json#/$defs/TLSConfig",
+          "$ref": "#/$defs/TLSConfig",
           "description": "TLS configuration of the server. Used for mTLS authentication."
         },
         "description": {
@@ -293,7 +293,7 @@
         "schemas": {
           "type": "object",
           "additionalProperties": {
-            "$dynamicRef": "#meta"
+            "$ref": "#/$defs/schema"
           },
           "description": "An object to hold reusable Schema Objects."
         },
@@ -551,7 +551,7 @@
           "description": "An alternative servers array to service this operation. If a servers array is specified at the Path Item Object or OpenAPI Object level, it will be overridden by this value."
         },
         "x-rely-proxy-action": {
-          "$ref": "https://raw.githubusercontent.com/relychan/relixy/refs/heads/main/jsonschema/relixy-action.schema.json",
+          "$ref": "#/$defs/RelixyActionConfig",
           "description": "Defines action information to proxy request to the remote server."
         }
       },
@@ -686,7 +686,7 @@
           "description": "Specifies that a parameter is deprecated and SHOULD be transitioned out of usage. Default value is false."
         },
         "schema": {
-          "$dynamicRef": "#meta",
+          "$ref": "#/$defs/schema",
           "description": "The schema defining the type used for the parameter."
         },
         "content": {
@@ -949,11 +949,11 @@
           "type": "string"
         },
         "schema": {
-          "$dynamicRef": "#meta",
+          "$ref": "#/$defs/schema",
           "description": "The schema defining the content of the request, response, or parameter."
         },
         "itemSchema": {
-          "$dynamicRef": "#meta",
+          "$ref": "#/$defs/schema",
           "description": "A schema describing each item within a sequential media type."
         },
         "encoding": {
@@ -1362,7 +1362,7 @@
           "description": "Specifies that the header is deprecated and SHOULD be transitioned out of usage. Default value is false."
         },
         "schema": {
-          "$dynamicRef": "#meta",
+          "$ref": "#/$defs/schema",
           "description": "The schema defining the type used for the header."
         },
         "content": {
