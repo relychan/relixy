@@ -31,7 +31,7 @@ definition:
   spec:
     openapi: "3.2.0"
     servers:
-      - x-rely-url-env: GRAPHQL_SERVER_URL
+      - url: "{GRAPHQL_SERVER_URL}"
     paths:
       /v1/api/rest/artistbyname/{name}:
         get:

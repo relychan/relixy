@@ -38,8 +38,11 @@ func (rdc RelixyDefinitionConfig) Validate() error {
 
 // RelixyServerConfig holds information of required configurations to run the relixy server.
 type RelixyServerConfig struct {
-	Server     *gohttps.ServerConfig  `json:"server,omitempty" yaml:"server,omitempty"`
-	Telemetry  *gotel.OTLPConfig      `json:"telemetry,omitempty" yaml:"telemetry,omitempty"`
+	// Configurations for the HTTP server.
+	Server *gohttps.ServerConfig `json:"server,omitempty" yaml:"server,omitempty"`
+	// Configurations for OpenTelemetry exporters.
+	Telemetry *gotel.OTLPConfig `json:"telemetry,omitempty" yaml:"telemetry,omitempty"`
+	// Configurations for resource definition files.
 	Definition RelixyDefinitionConfig `json:"definition" yaml:"definition"`
 }
 
@@ -50,21 +53,21 @@ func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, *slog
 	var err error
 
 	serverConfigPath := os.Getenv("RELIXY_CONFIG_PATH")
-	if serverConfigPath != "" {
-		slog.Debug( //nolint:gosec
-			"Loading configurations from file...",
-			slog.String("path", serverConfigPath),
-		)
+	if serverConfigPath == "" {
+		serverConfigPath = "/etc/relixy/config.yaml"
+	}
 
-		ctx, cancel := context.WithTimeout(parentContext, time.Minute)
-		defer cancel()
+	slog.Info( //nolint:gosec
+		"Loading configurations from file...",
+		slog.String("path", serverConfigPath),
+	)
 
-		result, err = goutils.ReadJSONOrYAMLFile[RelixyServerConfig](ctx, serverConfigPath)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to load RELIXY_CONFIG_PATH: %w", err)
-		}
-	} else {
-		result = &RelixyServerConfig{}
+	ctx, cancel := context.WithTimeout(parentContext, time.Minute)
+	defer cancel()
+
+	result, err = goutils.ReadJSONOrYAMLFile[RelixyServerConfig](ctx, serverConfigPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load RELIXY_CONFIG_PATH: %w", err)
 	}
 
 	if result.Server == nil {

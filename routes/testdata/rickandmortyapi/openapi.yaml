@@ -10,13 +10,12 @@ definition:
       request: []
       response: []
     http:
-      timeout: 60s
+      timeout: 60
       transport:
         tlsHandshakeTimeout: 10s
         forceAttemptHTTP2: false
       retry:
-        maxAttempts:
-          value: 3
+        maxAttempts: 3
   spec:
     openapi: "3.2.0"
     jsonSchemaDialect: https://spec.openapis.org/oas/3.2/dialect/2025-09-17
@@ -61,6 +60,7 @@ definition:
                     name
                   }
                 }
+
 ---
 version: v1
 kind: RelyAuth
@@ -70,6 +70,7 @@ definition:
     - mode: apiKey
       tokenLocation:
         in: header
-        name: Authorization
+        name: hasura-m-auth
       value:
         value: "test-secret"
+      sessionVariables: {}

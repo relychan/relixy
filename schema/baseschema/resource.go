@@ -19,11 +19,11 @@ const (
 // RelixyResourceMetadata represents common metadata of the resource.
 type RelixyResourceMetadata struct {
 	// Name of the resource.
-	Name string `json:"name" yaml:"name" jsonschema:"default=default"`
+	Name string `json:"name" yaml:"name" jsonschema:"default=default,description=Name of the resource"`
 	// Description of the resource.
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty" jsonschema:"description=Description of the resource"`
 	// System instruction for the current resource. It's important to the LLM.
-	Instruction string `json:"instruction,omitempty" yaml:"instruction,omitempty"`
+	Instruction string `json:"instruction,omitempty" yaml:"instruction,omitempty" jsonschema:"description=System instruction for the current resource. It's important to the LLM"`
 }
 
 // RelixyResource abstracts an interface for Relixy resource.
@@ -34,12 +34,12 @@ type RelixyResource interface {
 
 // BaseResourceModel defines the base structure of a resource.
 type BaseResourceModel struct {
-	// Version of the authentication config.
-	Version string `json:"version" yaml:"version" jsonschema:"enum=v1"`
+	// Version of the resource.
+	Version string `json:"version" yaml:"version" jsonschema:"enum=v1,description=Version of the resource"`
 	// Kind of the resource.
 	Kind RelixyResourceKind `json:"kind" yaml:"kind"`
 	// Metadata of the resource.
-	Metadata RelixyResourceMetadata `json:"metadata" yaml:"metadata"`
+	Metadata RelixyResourceMetadata `json:"metadata" yaml:"metadata" jsonschema:"description=Metadata of the resource"`
 }
 
 var _ RelixyResource = (*BaseResourceModel)(nil)

@@ -6,8 +6,6 @@ import (
 )
 
 const (
-	// XRelyURLEnv is the extension name enum of the server URL.
-	XRelyURLEnv = "x-rely-url-env"
 	// XRelyServerWeight is the extension name enum for the weight of server if the load balancer is configured.
 	XRelyServerWeight = "x-rely-server-weight"
 	// XRelyServerHeaders is the extension name enum for custom headers for the server.

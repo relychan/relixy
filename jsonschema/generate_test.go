@@ -8,6 +8,5 @@ import (
 
 func TestGenerate(t *testing.T) {
 	assert.NilError(t, genConfigurationSchema())
-	assert.NilError(t, genRelixyActionSchema())
 	assert.NilError(t, genServerConfigurationSchema())
 }

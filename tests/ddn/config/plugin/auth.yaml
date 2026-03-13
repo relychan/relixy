@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../../jsonschema/relixy.schema.json
+# yaml-language-server: $schema=../../../../jsonschema/relixy.schema.json
 version: v1
 kind: RelyAuth
 definition:
@@ -9,4 +9,5 @@ definition:
         in: header
         name: hasura-m-auth
       value:
-        value: "test-secret"
+        env: HASURA_M_AUTH
+      sessionVariables: {}

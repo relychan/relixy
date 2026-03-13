@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/hasura/gotel"
-	"github.com/relychan/goutils/httpheader"
 	"github.com/relychan/relixy/config"
 	"github.com/relychan/relixy/routes/ddnrouter"
 	"go.opentelemetry.io/otel"
@@ -120,6 +119,8 @@ func TestRESTHandler_DDN(t *testing.T) {
 		return
 	}
 
+	os.Setenv("HASURA_M_AUTH", "test-secret")
+
 	server, shutdown := initTestServer(t, "../../tests/ddn/config/plugin/config.yaml")
 	defer func() {
 		server.Close()
@@ -212,7 +213,7 @@ func runSuccessRequest[T any](t *testing.T, r ddnrouter.PreRoutePluginRequestBod
 		req, err := http.NewRequest(r.Method, r.Path, reader)
 		assert.NilError(t, err)
 
-		req.Header.Set(httpheader.Authorization, "test-secret")
+		req.Header.Set("hasura-m-auth", "test-secret")
 
 		resp, err := http.DefaultClient.Do(req)
 		assert.NilError(t, err)
@@ -300,7 +301,7 @@ func TestRESTHandler_NotFoundPath(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, server.URL+"/api/v1/nonexistent", nil)
 	assert.NilError(t, err)
 
-	req.Header.Set(httpheader.Authorization, "test-secret")
+	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
 	assert.NilError(t, err)
@@ -319,7 +320,7 @@ func TestRESTHandler_WithPathParams(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, server.URL+"/api/v1/posts/1", nil)
 	assert.NilError(t, err)
 
-	req.Header.Set(httpheader.Authorization, "test-secret")
+	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
 	assert.NilError(t, err)
@@ -343,7 +344,7 @@ func TestRESTHandler_GetAlbums(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, server.URL+"/api/v1/albums", nil)
 	assert.NilError(t, err)
 
-	req.Header.Set(httpheader.Authorization, "test-secret")
+	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
 	assert.NilError(t, err)
