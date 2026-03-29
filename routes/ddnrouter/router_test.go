@@ -41,6 +41,17 @@ func TestRestifiedPlugin_RESTServer(t *testing.T) {
 			StatusCode: 200,
 		},
 		{
+			Name: "countAlbums",
+			Body: PreRoutePluginRequestBody{
+				Path:   "/api/v1/albums-count",
+				Method: "POST",
+			},
+			StatusCode: 200,
+			ResponseBody: map[string]any{
+				"count": float64(100),
+			},
+		},
+		{
 			Name: "getPostByID",
 			Body: PreRoutePluginRequestBody{
 				Path:   "/api/v1/posts/1",
@@ -121,7 +132,7 @@ func runPreRoute[T any](t *testing.T, requestURL string, body PreRoutePluginRequ
 		assert.NilError(t, err)
 
 		req.Header.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
-		req.Header.Set(httpheader.Authorization, "test-secret")
+		req.Header.Set("hasura-m-auth", "test-secret")
 
 		resp, err := http.DefaultClient.Do(req)
 		assert.NilError(t, err)
@@ -286,7 +297,7 @@ func TestPreRoutePlugin_InvalidJSON(t *testing.T) {
 	assert.NilError(t, err)
 
 	req.Header.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
-	req.Header.Set(httpheader.Authorization, "test-secret")
+	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
 	assert.NilError(t, err)
@@ -315,7 +326,7 @@ func TestPreRoutePlugin_InvalidContentType(t *testing.T) {
 	assert.NilError(t, err)
 
 	req.Header.Set(httpheader.ContentType, "text/plain")
-	req.Header.Set(httpheader.Authorization, "test-secret")
+	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
 	assert.NilError(t, err)
@@ -344,7 +355,7 @@ func TestPreRoutePlugin_NotFoundPath(t *testing.T) {
 	assert.NilError(t, err)
 
 	req.Header.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
-	req.Header.Set(httpheader.Authorization, "test-secret")
+	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
 	assert.NilError(t, err)
@@ -373,7 +384,7 @@ func TestPreRoutePlugin_GetAlbums(t *testing.T) {
 	assert.NilError(t, err)
 
 	req.Header.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
-	req.Header.Set(httpheader.Authorization, "test-secret")
+	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
 	assert.NilError(t, err)

@@ -1,3 +1,17 @@
+// Copyright 2026 RelyChan Pte. Ltd
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Package main generates the JSON schema for the relixy metadata.
 package main
 
@@ -7,23 +21,16 @@ import (
 	"fmt"
 	"maps"
 	"os"
-	"strings"
 
-	"github.com/invopop/jsonschema"
+	"github.com/relychan/jsonschema"
 	"github.com/relychan/relixy/config"
 	"github.com/relychan/relixy/schema"
-	"github.com/relychan/relixy/schema/openapi"
 )
 
 func main() {
-	err := genConfigurationSchema()
+	err := genSchema()
 	if err != nil {
 		panic(fmt.Errorf("failed to write jsonschema for RelixyAPIDocument: %w", err))
-	}
-
-	err = genRelixyActionSchema()
-	if err != nil {
-		panic(fmt.Errorf("failed to write jsonschema for RelixyAction: %w", err))
 	}
 
 	err = genServerConfigurationSchema()
@@ -32,10 +39,10 @@ func main() {
 	}
 }
 
-func genConfigurationSchema() error {
+func genSchema() error {
 	r := new(jsonschema.Reflector)
 
-	for _, name := range []string{"/schema/openapi", "/schema/baseschema"} {
+	for _, name := range []string{"/schema"} {
 		err := r.AddGoComments(
 			"github.com/relychan/relixy"+name,
 			".."+name,
@@ -49,44 +56,19 @@ func genConfigurationSchema() error {
 	reflectSchema := r.Reflect(schema.RelixyResource{})
 
 	// custom schema types
-	reflectSchema.Definitions["HTTPClientConfig"] = &jsonschema.Schema{
-		Ref: "https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json",
+	openapiSchema, err := genOpenAPIResourceSchema()
+	if err != nil {
+		return fmt.Errorf("failed to write jsonschema for RelixyOpenAPIResource: %w", err)
 	}
 
-	openapiSchema := r.Reflect(openapi.RelixyOpenAPIResource{})
 	maps.Copy(reflectSchema.Definitions, openapiSchema.Definitions)
-
-	// delete unused definitions
-	delete(reflectSchema.Definitions, "HTTPTransportConfig")
-	delete(reflectSchema.Definitions, "HTTPRetryConfig")
-	delete(reflectSchema.Definitions, "HTTPClientAuthConfig")
-	delete(reflectSchema.Definitions, "TLSClientCertificate")
-	delete(reflectSchema.Definitions, "HTTPDialerConfig")
-	delete(reflectSchema.Definitions, "Document")
-	delete(reflectSchema.Definitions, "Contact")
-	delete(reflectSchema.Definitions, "Components")
-	delete(reflectSchema.Definitions, "ExternalDoc")
-	delete(reflectSchema.Definitions, "Tag")
-	delete(reflectSchema.Definitions, "SecurityRequirement")
-	delete(reflectSchema.Definitions, "Server")
-	delete(reflectSchema.Definitions, "Paths")
-	delete(reflectSchema.Definitions, "Info")
-	delete(reflectSchema.Definitions, "License")
-	delete(reflectSchema.Definitions, "EnvInt")
-	delete(reflectSchema.Definitions, "TLSConfig")
-
-	for key := range reflectSchema.Definitions {
-		if strings.HasPrefix(key, "Map[") {
-			delete(reflectSchema.Definitions, key)
-		}
-	}
 
 	buffer := new(bytes.Buffer)
 	enc := json.NewEncoder(buffer)
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", " ")
 
-	err := enc.Encode(reflectSchema)
+	err = enc.Encode(reflectSchema)
 	if err != nil {
 		return err
 	}
@@ -110,6 +92,20 @@ func genServerConfigurationSchema() error {
 	}
 
 	reflectSchema := r.Reflect(config.RelixyServerConfig{})
+
+	// custom schema types
+	reflectSchema.Definitions["ServerConfig"] = &jsonschema.Schema{
+		Description: "Configurations for the HTTP server",
+		Ref:         "https://raw.githubusercontent.com/relychan/gohttps/refs/heads/main/jsonschema/server.schema.json",
+	}
+
+	reflectSchema.Definitions["OTLPConfig"] = &jsonschema.Schema{
+		Description: "Configurations for OpenTelemetry exporters",
+		Ref:         "https://raw.githubusercontent.com/hasura/gotel/refs/heads/main/jsonschema/gotel.schema.json",
+	}
+
+	// delete unused definitions
+	delete(reflectSchema.Definitions, "CORSConfig")
 
 	buffer := new(bytes.Buffer)
 	enc := json.NewEncoder(buffer)

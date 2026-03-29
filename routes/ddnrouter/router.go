@@ -10,8 +10,9 @@ import (
 	"github.com/relychan/gohttpc"
 	"github.com/relychan/gohttps"
 	"github.com/relychan/goutils"
+	"github.com/relychan/openapitools/openapiclient"
 	"github.com/relychan/relixy/config"
-	"github.com/relychan/relixy/proxyc"
+	"github.com/relychan/relixy/schema"
 )
 
 // SetupRouter set up the router and states for ddn handlers.
@@ -32,11 +33,6 @@ func SetupRouter(
 
 	gohttpc.SetHTTPClientMetrics(httpMetrics)
 
-	proxyClientOptions := gohttpc.NewClientOptions(
-		gohttpc.WithLogger(ts.Logger),
-		gohttpc.WithTracer(ts.Tracer),
-	)
-
 	middlewares, authManager, err := config.SetupMiddlewares(ctx, metadata, ts)
 	if err != nil {
 		return nil, nil, err
@@ -45,7 +41,7 @@ func SetupRouter(
 	oasResources := metadata.GetOpenAPIResources()
 
 	state := &State{
-		ProxyClients: make([]*proxyc.ProxyClient, len(oasResources)),
+		ProxyClients: make([]*schema.OpenAPIClient, len(oasResources)),
 	}
 
 	shutdown := func() {
@@ -57,7 +53,7 @@ func SetupRouter(
 	}
 
 	for i, resource := range oasResources {
-		proxyClient, err := proxyc.NewProxyClient(ctx, resource, proxyClientOptions)
+		proxyClient, err := openapiclient.NewProxyClient(ctx, &resource.Definition)
 		if err != nil {
 			shutdown()
 
@@ -68,7 +64,10 @@ func SetupRouter(
 			)
 		}
 
-		state.ProxyClients[i] = proxyClient
+		state.ProxyClients[i] = &schema.OpenAPIClient{
+			ProxyClient:      proxyClient,
+			ResourceMetadata: resource.Metadata,
+		}
 	}
 
 	router := gohttps.NewRouter(conf.Server, ts.Logger)
