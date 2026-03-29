@@ -1,3 +1,17 @@
+// Copyright 2026 RelyChan Pte. Ltd
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Package main generates the JSON schema for the relixy metadata.
 package main
 
@@ -8,13 +22,13 @@ import (
 	"maps"
 	"os"
 
-	"github.com/invopop/jsonschema"
+	"github.com/relychan/jsonschema"
 	"github.com/relychan/relixy/config"
 	"github.com/relychan/relixy/schema"
 )
 
 func main() {
-	err := genConfigurationSchema()
+	err := genSchema()
 	if err != nil {
 		panic(fmt.Errorf("failed to write jsonschema for RelixyAPIDocument: %w", err))
 	}
@@ -25,10 +39,10 @@ func main() {
 	}
 }
 
-func genConfigurationSchema() error {
+func genSchema() error {
 	r := new(jsonschema.Reflector)
 
-	for _, name := range []string{"/schema/openapi", "/schema/baseschema", "/schema/gqlschema"} {
+	for _, name := range []string{"/schema"} {
 		err := r.AddGoComments(
 			"github.com/relychan/relixy"+name,
 			".."+name,

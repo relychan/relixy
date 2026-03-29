@@ -10,3 +10,4 @@ definition:
         name: hasura-m-auth
       value:
         value: "test-secret"
+      sessionVariables: {}

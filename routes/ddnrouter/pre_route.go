@@ -12,7 +12,6 @@ import (
 	"github.com/hasura/gotel"
 	"github.com/relychan/gohttps/httputils"
 	"github.com/relychan/goutils"
-	"github.com/relychan/goutils/httpheader"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -76,36 +75,13 @@ func (pr *preRoutePluginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		req.Body = io.NopCloser(bytes.NewReader(input.Body))
 	}
 
-	resp, respBody, err := proxyClient.Execute(ctx, req) //nolint:bodyclose
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		span.RecordError(err)
-
-		logger.Error("failed to execute proxy request", slog.String("error", err.Error()))
-
-		wErr := httputils.WriteResponseError(w, err)
-		if wErr != nil {
-			httputils.SetWriteResponseErrorAttribute(span, wErr)
-		}
-
+	_, err := proxyClient.Stream(w, req) //nolint:bodyclose
+	if err == nil {
 		return
 	}
 
-	respReader, ok := respBody.(io.ReadCloser)
-	if ok {
-		defer goutils.CatchWarnErrorFunc(respReader.Close)
+	span.SetStatus(codes.Error, err.Error())
+	span.RecordError(err)
 
-		w.Header().Set(httpheader.ContentType, resp.Header.Get(httpheader.ContentType))
-		w.WriteHeader(resp.StatusCode)
-		_, err = io.Copy(w, respReader)
-	} else {
-		err = httputils.WriteResponseJSON(w, resp.StatusCode, respBody)
-	}
-
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		span.RecordError(err)
-
-		logger.Error("failed to write response", slog.String("error", err.Error()))
-	}
+	logger.Error("failed to write response", slog.String("error", err.Error()))
 }

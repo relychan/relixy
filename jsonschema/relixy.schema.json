@@ -3,14 +3,23 @@
  "$id": "https://github.com/relychan/relixy/schema/relixy-resource",
  "$ref": "#/$defs/RelixyResource",
  "$defs": {
-  "AuthLocation": {
-   "type": "string",
-   "enum": [
-    "header",
-    "query",
-    "cookie"
-   ],
-   "description": "Defines the location enum for setting authentication value"
+  "AllOrListString": {
+   "oneOf": [
+    {
+     "type": "string",
+     "enum": [
+      "*"
+     ],
+     "description": "The wildcard string means all values are allowed"
+    },
+    {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "description": "An explicit list of allowed string values"
+    }
+   ]
   },
   "BasicAuthConfig": {
    "anyOf": [
@@ -46,10 +55,6 @@
     "password": {
      "$ref": "#/$defs/EnvString",
      "description": "Password to authenticate."
-    },
-    "description": {
-     "type": "string",
-     "description": "A description for security scheme."
     }
    },
    "additionalProperties": false,
@@ -287,6 +292,37 @@
    "additionalProperties": false,
    "type": "object"
   },
+  "EnvStringSlice": {
+   "anyOf": [
+    {
+     "required": [
+      "value"
+     ],
+     "title": "value"
+    },
+    {
+     "required": [
+      "env"
+     ],
+     "title": "env"
+    }
+   ],
+   "properties": {
+    "value": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "description": "Default literal value if the env is empty"
+    },
+    "env": {
+     "type": "string",
+     "description": "Environment variable to be evaluated"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object"
+  },
   "FieldMappingConfig": {
    "oneOf": [
     {
@@ -362,20 +398,25 @@
    ],
    "description": "FieldMappingObjectConfig represents configurations for the object field mapping."
   },
+  "ForwardedIPPosition": {
+   "type": "string",
+   "enum": [
+    "rightmost",
+    "leftmost",
+    "edge"
+   ],
+   "description": "The position of the IP to select if the X-Forwarded-For header has many IPs. Default is rightmost.",
+   "default": "rightmost"
+  },
   "HTTPAuthConfig": {
    "properties": {
-    "in": {
-     "$ref": "#/$defs/AuthLocation",
-     "description": "The location enum for setting authentication value"
+    "tokenLocation": {
+     "$ref": "#/$defs/TokenLocation",
+     "description": "The location where the auth credential will be injected."
     },
-    "name": {
-     "type": "string",
-     "description": "Name of the field to validate, for example, Authorization header.",
-     "default": "Authorization"
-    },
-    "scheme": {
-     "type": "string",
-     "description": "The name of the HTTP Authentication scheme to be used in the Authorization header as defined in RFC7235.\nThe values used SHOULD be registered in the IANA Authentication Scheme registry. https://www.iana.org/assignments/http-authschemes/http-authschemes.xhtml\nThe value is case-insensitive, as defined in RFC7235."
+    "value": {
+     "$ref": "#/$defs/EnvString",
+     "description": "Value of the access token."
     },
     "type": {
      "type": "string",
@@ -383,23 +424,14 @@
       "http"
      ],
      "description": "Type of the http authenticator."
-    },
-    "value": {
-     "$ref": "#/$defs/EnvString",
-     "description": "Value of the access token."
-    },
-    "description": {
-     "type": "string",
-     "description": "A description for security scheme."
     }
    },
    "additionalProperties": false,
    "type": "object",
    "required": [
-    "in",
-    "name",
-    "type",
-    "value"
+    "tokenLocation",
+    "value",
+    "type"
    ],
    "description": "HTTPAuthConfig contains configurations for http authentication\nIf the scheme is [bearer], the authenticator follows OpenAPI 3 specification.\n\n[bearer]: https://swagger.io/docs/specification/authentication/bearer-authentication"
   },
@@ -736,18 +768,134 @@
       }
      ]
     },
-    "disableKeepAlives": {
-     "type": "boolean",
-     "description": "DisableKeepAlives, if true, disables HTTP keep-alives and will only use the connection to the server for a single HTTP request.\nThis is unrelated to the similarly named TCP keep-alives."
-    },
     "forceAttemptHTTP2": {
      "type": "boolean",
      "description": "ForceAttemptHTTP2 controls whether HTTP/2 is enabled when a non-zero Dial, DialTLS, or DialContext func or TLSClientConfig is provided.\nDefault is true."
+    },
+    "disableKeepAlives": {
+     "type": "boolean",
+     "description": "DisableKeepAlives, if true, disables HTTP keep-alives and will only use the connection to the server for a single HTTP request.\nThis is unrelated to the similarly named TCP keep-alives."
     }
    },
    "additionalProperties": false,
    "type": "object",
    "description": "HTTPTransportConfig stores the http.Transport configuration for the http client."
+  },
+  "HealthCheckConfig": {
+   "properties": {
+    "http": {
+     "$ref": "#/$defs/HTTPHealthCheckConfig",
+     "description": "Configurations for health check through HTTP protocol."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "description": "HealthCheckConfig holds health check configurations for server recovery."
+  },
+  "JWTClaimsConfig": {
+   "properties": {
+    "namespace": {
+     "$ref": "#/$defs/JWTClaimsNamespace",
+     "description": "Used when all of JWT claims are present in a single object within the decoded JWT."
+    },
+    "locations": {
+     "additionalProperties": {
+      "$ref": "#/$defs/FieldMappingEntryConfig"
+     },
+     "type": "object",
+     "description": "Can be used when JWT claims are not all present in the single object,\nbut individual claims are provided a JSON pointer within the decoded JWT and optionally a default value."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "description": "JWTClaimsConfig represents the claims config. Either specified via claims mappings or namespace."
+  },
+  "JWTClaimsFormat": {
+   "type": "string",
+   "enum": [
+    "Json",
+    "StringifiedJson"
+   ],
+   "description": "The format in which JWT claims will be present"
+  },
+  "JWTClaimsNamespace": {
+   "properties": {
+    "location": {
+     "type": "string",
+     "description": "Path to lookup the Hasura claims within the decoded claims."
+    },
+    "claimsFormat": {
+     "$ref": "#/$defs/JWTClaimsFormat",
+     "description": "Format in which the Hasura claims will be present."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "location",
+    "claimsFormat"
+   ],
+   "description": "JWTClaimsNamespace is used when all of JWT claims are present in a single object within the decoded JWT."
+  },
+  "JWTKey": {
+   "oneOf": [
+    {
+     "properties": {
+      "algorithm": {
+       "$ref": "#/$defs/JWTSignatureAlgorithm",
+       "description": "Algorithm to be used for verifying the signature"
+      },
+      "key": {
+       "$ref": "#/$defs/EnvString",
+       "description": "Inline value of the key to use for decoding the JWT"
+      }
+     },
+     "type": "object",
+     "required": [
+      "algorithm",
+      "key"
+     ],
+     "title": "JWTFixedKeyConfig",
+     "description": "Configurations for an inline JWT key secret"
+    },
+    {
+     "properties": {
+      "algorithm": {
+       "$ref": "#/$defs/JWTSignatureAlgorithm",
+       "description": "Algorithm to be used for verifying the signature"
+      },
+      "jwkFromUrl": {
+       "$ref": "#/$defs/EnvString",
+       "description": "A URL where a provider publishes their JWKs (JSON Web Keys - which are used for signing the JWTs). The URL must publish the JWKs in the standard format as described in the RFC 7517 specification."
+      }
+     },
+     "type": "object",
+     "required": [
+      "jwkFromUrl"
+     ],
+     "title": "JWTRemoteKeyConfig",
+     "description": "Configurations for a remote URL where publishes JSON Web Keys"
+    }
+   ]
+  },
+  "JWTSignatureAlgorithm": {
+   "type": "string",
+   "enum": [
+    "ES256",
+    "ES384",
+    "ES512",
+    "EdDSA",
+    "HS256",
+    "HS384",
+    "HS512",
+    "PS256",
+    "PS384",
+    "PS512",
+    "RS256",
+    "RS384",
+    "RS512"
+   ],
+   "description": "Specifies the cryptographic signing algorithm which is used to sign the JWTs. This is required only if you are using the key property in the config."
   },
   "OAuth2Config": {
    "properties": {
@@ -761,10 +909,6 @@
     "flows": {
      "$ref": "#/$defs/OAuth2Flows",
      "description": "An object containing configuration information for the flow types supported."
-    },
-    "description": {
-     "type": "string",
-     "description": "A description for security scheme."
     },
     "tokenLocation": {
      "$ref": "#/$defs/TokenLocation",
@@ -793,105 +937,7 @@
    ],
    "description": "OAuth2Flows contain configuration information for the flow types supported."
   },
-  "RelixyActionConfig": {
-   "oneOf": [
-    {
-     "$ref": "#/$defs/RelixyRESTActionConfig",
-     "description": "Proxy configuration to the remote REST service"
-    },
-    {
-     "$ref": "#/$defs/RelixyGraphQLActionConfig",
-     "description": "Configurations for proxying request to the remote GraphQL server"
-    }
-   ]
-  },
-  "RelixyCustomGraphQLResponseConfig": {
-   "properties": {
-    "httpErrorCode": {
-     "type": "integer",
-     "maximum": 599,
-     "minimum": 400,
-     "default": 400
-    },
-    "body": {
-     "$ref": "#/$defs/TemplateTransformerConfig"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
-  },
-  "RelixyCustomRESTResponseConfig": {
-   "properties": {
-    "body": {
-     "$ref": "#/$defs/TemplateTransformerConfig"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object"
-  },
-  "RelixyGraphQLActionConfig": {
-   "properties": {
-    "type": {
-     "type": "string",
-     "enum": [
-      "graphql"
-     ]
-    },
-    "request": {
-     "$ref": "#/$defs/RelixyGraphQLRequestConfig"
-    },
-    "response": {
-     "$ref": "#/$defs/RelixyCustomGraphQLResponseConfig"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "type"
-   ]
-  },
-  "RelixyGraphQLRequestConfig": {
-   "properties": {
-    "headers": {
-     "additionalProperties": {
-      "$ref": "#/$defs/FieldMappingEntryStringConfig"
-     },
-     "type": "object"
-    },
-    "query": {
-     "type": "string"
-    },
-    "variables": {
-     "additionalProperties": {
-      "$ref": "#/$defs/FieldMappingEntryConfig"
-     },
-     "type": "object"
-    },
-    "extensions": {
-     "additionalProperties": {
-      "$ref": "#/$defs/FieldMappingEntryConfig"
-     },
-     "type": "object"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "query"
-   ]
-  },
-  "RelixyHealthCheckConfig": {
-   "properties": {
-    "http": {
-     "$ref": "#/$defs/HTTPHealthCheckConfig",
-     "description": "Configurations for health check through HTTP protocol."
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "description": "RelixyHealthCheckConfig holds health check configurations for server recovery."
-  },
-  "RelixyOpenAPIForwardHeadersConfig": {
+  "OpenAPIForwardHeadersConfig": {
    "properties": {
     "request": {
      "items": {
@@ -910,45 +956,12 @@
    },
    "additionalProperties": false,
    "type": "object",
-   "description": "RelixyOpenAPIForwardHeadersConfig contains configurations for headers forwarding,."
+   "description": "OpenAPIForwardHeadersConfig contains configurations for headers forwarding,."
   },
-  "RelixyOpenAPIResource": {
-   "properties": {
-    "version": {
-     "type": "string",
-     "enum": [
-      "v1"
-     ],
-     "description": "Version of the resource"
-    },
-    "kind": {
-     "type": "string",
-     "const": "OpenAPI",
-     "description": "Kind of the resource which is always OpenAPI."
-    },
-    "metadata": {
-     "$ref": "#/$defs/RelixyResourceMetadata",
-     "description": "Metadata of the resource"
-    },
-    "definition": {
-     "$ref": "#/$defs/RelixyOpenAPIResourceDefinition",
-     "description": "Definition of the OpenAPI documentation"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "version",
-    "kind",
-    "metadata",
-    "definition"
-   ],
-   "description": "RelixyOpenAPIResource represents an OpenAPI resource."
-  },
-  "RelixyOpenAPIResourceDefinition": {
+  "OpenAPIResourceDefinition": {
    "properties": {
     "settings": {
-     "$ref": "#/$defs/RelixyOpenAPISettings",
+     "$ref": "#/$defs/OpenAPIResourceSettings",
      "description": "Settings of the OpenAPI resource."
     },
     "ref": {
@@ -962,9 +975,9 @@
    },
    "additionalProperties": false,
    "type": "object",
-   "description": "RelixyOpenAPIResourceDefinition defines fields of a relixy OpenAPI resource."
+   "description": "OpenAPIResourceDefinition defines fields of an OpenAPI resource."
   },
-  "RelixyOpenAPISettings": {
+  "OpenAPIResourceSettings": {
    "properties": {
     "expose": {
      "type": "boolean",
@@ -986,56 +999,271 @@
      "description": "Headers define custom headers to be injected to the remote server.\nMerged with the global headers."
     },
     "forwardHeaders": {
-     "$ref": "#/$defs/RelixyOpenAPIForwardHeadersConfig",
+     "$ref": "#/$defs/OpenAPIForwardHeadersConfig",
      "description": "ForwardHeaders define configurations for headers forwarding"
     },
     "healthCheck": {
-     "$ref": "#/$defs/RelixyHealthCheckConfig",
+     "$ref": "#/$defs/HealthCheckConfig",
      "description": "HealthCheck define the health check policy for load balancer recovery."
     }
    },
    "additionalProperties": false,
    "type": "object",
-   "description": "RelixyOpenAPISettings hold settings of the rely proxy."
+   "description": "OpenAPIResourceSettings hold settings of the rely proxy."
   },
-  "RelixyRESTActionConfig": {
+  "ProxyActionConfig": {
+   "oneOf": [
+    {
+     "$ref": "#/$defs/ProxyRESTfulActionConfig",
+     "description": "Proxy configuration to the remote RESTful service"
+    },
+    {
+     "$ref": "#/$defs/ProxyGraphQLActionConfig",
+     "description": "Configurations for proxying request to the remote GraphQL server"
+    }
+   ]
+  },
+  "ProxyCustomGraphQLResponseConfig": {
+   "properties": {
+    "httpErrorCode": {
+     "type": "integer",
+     "maximum": 599,
+     "minimum": 400,
+     "description": "HTTP error code will be used if the response body has errors.\nIf not set, forward the HTTP status from the upstream response which is usually 200 OK.",
+     "default": 400
+    },
+    "body": {
+     "$ref": "#/$defs/TemplateTransformerConfig",
+     "description": "Configurations for transforming response data."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "description": "ProxyCustomGraphQLResponseConfig represents configurations for the proxy response."
+  },
+  "ProxyCustomRESTfulResponseConfig": {
+   "properties": {
+    "contentType": {
+     "type": "string",
+     "description": "Content type of the response to be transformed to."
+    },
+    "body": {
+     "$ref": "#/$defs/TemplateTransformerConfig",
+     "description": "Configurations for transforming response data."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "description": "ProxyCustomRESTfulResponseConfig represents configurations for the proxy response."
+  },
+  "ProxyGraphQLActionConfig": {
    "properties": {
     "type": {
      "type": "string",
      "enum": [
-      "rest"
-     ]
+      "graphql"
+     ],
+     "description": "Type of the proxy action which is always graphql."
     },
     "request": {
-     "$ref": "#/$defs/RelixyRESTRequestConfig"
+     "$ref": "#/$defs/ProxyGraphQLRequestConfig",
+     "description": "Configurations for the GraphQL proxy request."
     },
     "response": {
-     "$ref": "#/$defs/RelixyCustomRESTResponseConfig"
+     "$ref": "#/$defs/ProxyCustomGraphQLResponseConfig",
+     "description": "Configurations for evaluating graphql responses."
     }
    },
    "additionalProperties": false,
    "type": "object",
    "required": [
     "type"
-   ]
+   ],
+   "description": "ProxyGraphQLActionConfig represents a proxy action config for GraphQL."
   },
-  "RelixyRESTRequestConfig": {
+  "ProxyGraphQLRequestConfig": {
    "properties": {
-    "path": {
-     "type": "string"
+    "url": {
+     "type": "string",
+     "description": "Overrides the request URL. Use the original request path if empty."
     },
     "headers": {
      "additionalProperties": {
       "$ref": "#/$defs/FieldMappingEntryStringConfig"
      },
-     "type": "object"
+     "type": "object",
+     "description": "The configuration to transform request headers."
     },
-    "body": {
-     "$ref": "#/$defs/TemplateTransformerConfig"
+    "query": {
+     "type": "string",
+     "description": "GraphQL query to be sent."
+    },
+    "variables": {
+     "additionalProperties": {
+      "$ref": "#/$defs/FieldMappingEntryConfig"
+     },
+     "type": "object",
+     "description": "Definition of GraphQL variables."
+    },
+    "extensions": {
+     "additionalProperties": {
+      "$ref": "#/$defs/FieldMappingEntryConfig"
+     },
+     "type": "object",
+     "description": "Definition of GraphQL extensions."
     }
    },
    "additionalProperties": false,
-   "type": "object"
+   "type": "object",
+   "required": [
+    "query"
+   ],
+   "description": "ProxyGraphQLRequestConfig represents configurations for the proxy request."
+  },
+  "ProxyRESTfulActionConfig": {
+   "properties": {
+    "type": {
+     "type": "string",
+     "enum": [
+      "rest"
+     ],
+     "description": "Type of the proxy action which is always rest."
+    },
+    "request": {
+     "$ref": "#/$defs/ProxyRESTfulRequestConfig",
+     "description": "Configurations for the REST proxy request."
+    },
+    "response": {
+     "$ref": "#/$defs/ProxyCustomRESTfulResponseConfig",
+     "description": "Configurations for evaluating REST responses."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "type"
+   ],
+   "description": "ProxyRESTfulActionConfig represents a proxy action config for REST operation."
+  },
+  "ProxyRESTfulParameterConfig": {
+   "properties": {
+    "path": {
+     "type": "string",
+     "description": "JMESPath expression to find a value in the input data"
+    },
+    "default": {
+     "$ref": "#/$defs/EnvAny",
+     "description": "Default value to be used when no value is found"
+    },
+    "name": {
+     "type": "string",
+     "description": "The name of the parameter."
+    },
+    "explode": {
+     "type": "boolean",
+     "description": "When this is true, parameter values of type array or object generate separate parameters for each value of the array or key-value pair of the map."
+    },
+    "allowReserved": {
+     "type": "boolean",
+     "description": "When this is true, parameter values are serialized using reserved expansion."
+    },
+    "in": {
+     "type": "integer",
+     "description": "The location of the parameter."
+    },
+    "style": {
+     "type": "integer",
+     "description": "Describes how the parameter value will be serialized depending on the type of the parameter value."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "name",
+    "in"
+   ],
+   "description": "ProxyRESTfulParameterConfig represents  an object of transformation configurations for a parameter."
+  },
+  "ProxyRESTfulRequestConfig": {
+   "properties": {
+    "url": {
+     "type": "string",
+     "description": "Overrides the request URL. Use the original request path if empty."
+    },
+    "method": {
+     "type": "string",
+     "enum": [
+      "GET",
+      "POST",
+      "PATCH",
+      "PUT",
+      "DELETE"
+     ],
+     "description": "Overrides the request method. Use the original request method if empty."
+    },
+    "parameters": {
+     "oneOf": [
+      {
+       "items": {
+        "$ref": "#/$defs/ProxyRESTfulParameterConfig"
+       },
+       "type": "array",
+       "description": "The configuration to transform query, path, header and cookie parameters."
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "contentType": {
+     "type": "string",
+     "description": "Content type of the body to be transformed to."
+    },
+    "body": {
+     "$ref": "#/$defs/TemplateTransformerConfig",
+     "description": "The configuration to transform request body."
+    },
+    "forwardAllQueryParams": {
+     "type": "boolean",
+     "description": "If this is true, all query parameters will be forwarded.\nThe default value is true if there is no query parameter is configured."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "description": "ProxyRESTfulRequestConfig represents configurations for the proxy request."
+  },
+  "RelixyOpenAPIResource": {
+   "properties": {
+    "version": {
+     "type": "string",
+     "enum": [
+      "v1"
+     ],
+     "description": "Version of the resource"
+    },
+    "kind": {
+     "type": "string",
+     "const": "OpenAPI",
+     "description": "Kind of the resource which is always OpenAPI."
+    },
+    "metadata": {
+     "$ref": "#/$defs/RelixyResourceMetadata",
+     "description": "Metadata of the resource"
+    },
+    "definition": {
+     "$ref": "#/$defs/OpenAPIResourceDefinition",
+     "description": "Definition of the OpenAPI documentation"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "version",
+    "kind",
+    "metadata",
+    "definition"
+   ],
+   "description": "RelixyOpenAPIResource represents an OpenAPI resource."
   },
   "RelixyResource": {
    "oneOf": [
@@ -1044,7 +1272,7 @@
      "description": "Definition of an OpenAPI resource"
     },
     {
-     "$ref": "https://raw.githubusercontent.com/relychan/rely-auth/refs/heads/main/jsonschema/auth.schema.json",
+     "$ref": "#/$defs/RelyAuthConfig",
      "description": "Definition of a RelyAuth resource"
     }
    ]
@@ -1071,6 +1299,376 @@
     "name"
    ],
    "description": "RelixyResourceMetadata represents common metadata of the resource."
+  },
+  "RelyAuthAPIKeyConfig": {
+   "properties": {
+    "id": {
+     "type": "string",
+     "description": "Unique identity of the auth config.\nIf not set, ID will be the index of the array."
+    },
+    "mode": {
+     "type": "string",
+     "enum": [
+      "apiKey"
+     ],
+     "description": "Authentication mode which is always apiKey."
+    },
+    "description": {
+     "type": "string",
+     "description": "Brief description of the auth config."
+    },
+    "tokenLocation": {
+     "$ref": "#/$defs/TokenLocation",
+     "description": "Source of the authentication token."
+    },
+    "sessionVariables": {
+     "additionalProperties": {
+      "$ref": "#/$defs/EnvAny"
+     },
+     "type": "object",
+     "description": "Custom session variables for this auth mode."
+    },
+    "value": {
+     "$ref": "#/$defs/EnvString",
+     "description": "Value of the static API key to be compared."
+    },
+    "securityRules": {
+     "$ref": "#/$defs/RelyAuthSecurityRulesConfig",
+     "description": "Configurations for extra security rules"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "mode",
+    "tokenLocation",
+    "sessionVariables",
+    "value"
+   ],
+   "description": "RelyAuthAPIKeyConfig contains configurations for HTTP authentication with static secrets."
+  },
+  "RelyAuthAllowListConfig": {
+   "properties": {
+    "include": {
+     "$ref": "#/$defs/EnvStringSlice",
+     "description": "List of allowed patterns."
+    },
+    "exclude": {
+     "$ref": "#/$defs/EnvStringSlice",
+     "description": "List of disallowed patterns."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "description": "RelyAuthAllowListConfig represents a common setting for allow list."
+  },
+  "RelyAuthConfig": {
+   "properties": {
+    "version": {
+     "type": "string",
+     "enum": [
+      "v1"
+     ],
+     "description": "Version of the authentication config."
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "RelyAuth"
+     ],
+     "description": "Kind of the resource which is always RelyAuth."
+    },
+    "definition": {
+     "$ref": "#/$defs/RelyAuthDefinition",
+     "description": "List of authenticator configurations."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "version",
+    "kind",
+    "definition"
+   ],
+   "description": "RelyAuthConfig is the data structure for authentication configurations."
+  },
+  "RelyAuthDefinition": {
+   "properties": {
+    "settings": {
+     "$ref": "#/$defs/RelyAuthSettings",
+     "description": "Global settings of the auth config."
+    },
+    "modes": {
+     "items": {
+      "$ref": "#/$defs/RelyAuthMode"
+     },
+     "type": "array",
+     "description": "List of authenticator modes."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "modes"
+   ],
+   "description": "RelyAuthDefinition defines authentication modes and settings."
+  },
+  "RelyAuthIPAllowListConfig": {
+   "properties": {
+    "include": {
+     "$ref": "#/$defs/EnvStringSlice",
+     "description": "List of allowed patterns."
+    },
+    "exclude": {
+     "$ref": "#/$defs/EnvStringSlice",
+     "description": "List of disallowed patterns."
+    },
+    "position": {
+     "$ref": "#/$defs/ForwardedIPPosition",
+     "description": "The position of the IP to select if the X-Forwarded-For header has many IPs. Default is rightmost."
+    },
+    "publicOnly": {
+     "type": "boolean",
+     "description": "Allow public IPs only."
+    },
+    "headers": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "description": "The client IP could be in this header list. Use default client IP headers if empty."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "description": "RelyAuthIPAllowListConfig represents a setting for IP allow list.\nNote that IP headers aren't safe and can be spoofed by the client. Therefore, make sure that the header of origin IPs is trusted.\nRead more details at https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Forwarded-For#security_and_privacy_concerns"
+  },
+  "RelyAuthJWTConfig": {
+   "properties": {
+    "id": {
+     "type": "string",
+     "description": "Unique identity of the auth config.\nIf not set, ID will be the index of the array."
+    },
+    "mode": {
+     "type": "string",
+     "enum": [
+      "jwt"
+     ],
+     "description": "Authentication mode which is always jwt."
+    },
+    "description": {
+     "type": "string",
+     "description": "Brief description of the auth config."
+    },
+    "audience": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "description": "Validation to check that the aud field is a member of the audience received, otherwise will throw error.\nRequired if there are many JWT auth configurations."
+    },
+    "issuer": {
+     "type": "string",
+     "description": "Validation to check that the iss field is a member of the iss received, otherwise will throw error.\nRequired if there are many JWT auth configurations."
+    },
+    "allowedSkew": {
+     "type": "integer",
+     "description": "The allowed leeway (in seconds) to the exp validation to account for clock skew."
+    },
+    "tokenLocation": {
+     "$ref": "#/$defs/TokenLocation",
+     "description": "Source of the JWT authentication token."
+    },
+    "key": {
+     "$ref": "#/$defs/JWTKey",
+     "description": "Information of the JWT key to verify the token."
+    },
+    "claimsConfig": {
+     "$ref": "#/$defs/JWTClaimsConfig",
+     "description": "Configuration to describe how and where the engine should look for the claims within the decoded token.\nYou can vary the format and location of the claims."
+    },
+    "securityRules": {
+     "$ref": "#/$defs/RelyAuthSecurityRulesConfig",
+     "description": "Configurations for extra security rules"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "mode",
+    "tokenLocation",
+    "key",
+    "claimsConfig"
+   ],
+   "description": "RelyAuthJWTConfig holds configurations to which the incoming JWT will be verified and decoded to extract the session variable claims."
+  },
+  "RelyAuthMode": {
+   "oneOf": [
+    {
+     "$ref": "#/$defs/RelyAuthAPIKeyConfig",
+     "description": "Configurations for HTTP authentication with static secrets"
+    },
+    {
+     "$ref": "#/$defs/RelyAuthJWTConfig",
+     "description": "Configurations to which the incoming JWT will be verified and decoded to extract the session variable claims"
+    },
+    {
+     "$ref": "#/$defs/RelyAuthNoAuthConfig",
+     "description": "The session variables configuration for unauthenticated users"
+    },
+    {
+     "$ref": "#/$defs/RelyAuthWebhookConfig",
+     "description": "Configurations for the webhook authentication mode"
+    }
+   ]
+  },
+  "RelyAuthNoAuthConfig": {
+   "properties": {
+    "id": {
+     "type": "string",
+     "description": "Unique identity of the auth config.\nIf not set, ID will be the index of the array."
+    },
+    "mode": {
+     "type": "string",
+     "enum": [
+      "noAuth"
+     ],
+     "description": "Authentication mode which is always noAuth."
+    },
+    "sessionVariables": {
+     "additionalProperties": {
+      "$ref": "#/$defs/EnvAny"
+     },
+     "type": "object",
+     "description": "Custom session variables for this auth mode."
+    },
+    "securityRules": {
+     "$ref": "#/$defs/RelyAuthSecurityRulesConfig",
+     "description": "Configurations for extra security rules"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "mode",
+    "sessionVariables"
+   ],
+   "description": "RelyAuthNoAuthConfig contains the session variables configuration for unauthenticated users."
+  },
+  "RelyAuthSecurityRulesConfig": {
+   "properties": {
+    "allowedIPs": {
+     "$ref": "#/$defs/RelyAuthIPAllowListConfig",
+     "description": "Configure the list of allowed IPs."
+    },
+    "headerRules": {
+     "additionalProperties": {
+      "$ref": "#/$defs/RelyAuthAllowListConfig"
+     },
+     "type": "object",
+     "description": "Configure the map of header rules."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "description": "RelyAuthSecurityRulesConfig defines configurations of security rules."
+  },
+  "RelyAuthSettings": {
+   "properties": {
+    "reloadInterval": {
+     "type": "integer",
+     "minimum": 0,
+     "description": "The interval in seconds to reload JSON web keys from the remote URL.\nIf the value is zero or negative, disables the process.",
+     "default": 0
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "description": "RelyAuthSettings holds global settings for the authenticators."
+  },
+  "RelyAuthWebhookConfig": {
+   "oneOf": [
+    {
+     "properties": {
+      "method": {
+       "type": "string",
+       "enum": [
+        "GET"
+       ],
+       "description": "GET webhook method"
+      },
+      "customRequest": {
+       "properties": {
+        "headers": {
+         "$ref": "#/$defs/WebhookAuthHeadersConfig"
+        }
+       },
+       "type": "object",
+       "description": "Configurations for request headers and transformed request body to be sent to the auth hook"
+      }
+     },
+     "type": "object"
+    },
+    {
+     "properties": {
+      "method": {
+       "type": "string",
+       "enum": [
+        "POST"
+       ],
+       "description": "POST webhook method"
+      },
+      "customRequest": {
+       "properties": {
+        "headers": {
+         "$ref": "#/$defs/WebhookAuthHeadersConfig"
+        },
+        "body": {
+         "$ref": "#/$defs/TemplateTransformerConfig"
+        }
+       },
+       "type": "object",
+       "description": "Configurations for request headers and transformed request body to be sent to the auth hook"
+      }
+     },
+     "type": "object"
+    }
+   ],
+   "properties": {
+    "mode": {
+     "type": "string",
+     "enum": [
+      "webhook"
+     ],
+     "description": "Authentication mode which is always webhook"
+    },
+    "description": {
+     "type": "string",
+     "description": "Brief description of the auth config"
+    },
+    "url": {
+     "$ref": "#/$defs/EnvString",
+     "description": "The URL of the authentication webhook"
+    },
+    "httpClient": {
+     "$ref": "#/$defs/HTTPClientConfig",
+     "description": "Configurations for the HTTP client"
+    },
+    "customResponse": {
+     "$ref": "#/$defs/WebhookAuthCustomResponseConfig",
+     "description": "The configuration for transforming response bodies"
+    },
+    "securityRules": {
+     "$ref": "#/$defs/RelyAuthSecurityRulesConfig",
+     "description": "Configurations for extra security rules"
+    }
+   },
+   "type": "object",
+   "required": [
+    "mode",
+    "url",
+    "method"
+   ]
   },
   "TLSClientCertificate": {
    "properties": {
@@ -1220,8 +1818,14 @@
   "TokenLocation": {
    "properties": {
     "in": {
-     "$ref": "#/$defs/AuthLocation",
-     "description": "The location enum for setting authentication value"
+     "type": "string",
+     "enum": [
+      "header",
+      "query",
+      "cookie"
+     ],
+     "description": "Location where the api key is in.",
+     "default": "header"
     },
     "name": {
      "type": "string",
@@ -1240,6 +1844,35 @@
     "name"
    ],
    "description": "TokenLocation contains the configuration for the location of the access token."
+  },
+  "WebhookAuthCustomResponseConfig": {
+   "properties": {
+    "response": {
+     "$ref": "#/$defs/TemplateTransformerConfig",
+     "description": "The template to transform the response body."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "description": "WebhookAuthCustomResponseConfig is the configuration for transforming response bodies."
+  },
+  "WebhookAuthHeadersConfig": {
+   "properties": {
+    "forward": {
+     "$ref": "#/$defs/AllOrListString",
+     "description": "The headers to be forwarded from the client request."
+    },
+    "additional": {
+     "additionalProperties": {
+      "$ref": "#/$defs/FieldMappingEntryStringConfig"
+     },
+     "type": "object",
+     "description": "The additional headers to be sent to the auth hook."
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "description": "WebhookAuthHeadersConfig is the configuration for the headers to be sent to the auth hook."
   },
   "callbacks": {
    "$ref": "#/$defs/specification-extensions",
@@ -2170,7 +2803,7 @@
      "description": "An alternative servers array to service this operation. If a servers array is specified at the Path Item Object or OpenAPI Object level, it will be overridden by this value."
     },
     "x-rely-proxy-action": {
-     "$ref": "#/$defs/RelixyActionConfig",
+     "$ref": "#/$defs/ProxyActionConfig",
      "description": "Defines action information to proxy request to the remote server."
     }
    },

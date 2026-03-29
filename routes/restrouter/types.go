@@ -1,12 +1,12 @@
 package restrouter
 
 import (
-	"github.com/relychan/relixy/proxyc"
+	"github.com/relychan/openapitools/openapiclient"
 )
 
 // State holds common states of the handler.
 type State struct {
-	ProxyClient *proxyc.ProxyClient
+	ProxyClient *openapiclient.ProxyClient
 }
 
 // Close stops internal processes of the state.

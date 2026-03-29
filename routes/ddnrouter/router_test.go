@@ -41,6 +41,17 @@ func TestRestifiedPlugin_RESTServer(t *testing.T) {
 			StatusCode: 200,
 		},
 		{
+			Name: "countAlbums",
+			Body: PreRoutePluginRequestBody{
+				Path:   "/api/v1/albums-count",
+				Method: "POST",
+			},
+			StatusCode: 200,
+			ResponseBody: map[string]any{
+				"count": float64(100),
+			},
+		},
+		{
 			Name: "getPostByID",
 			Body: PreRoutePluginRequestBody{
 				Path:   "/api/v1/posts/1",

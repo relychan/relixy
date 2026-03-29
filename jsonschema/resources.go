@@ -1,3 +1,17 @@
+// Copyright 2026 RelyChan Pte. Ltd
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package main
 
 import (
@@ -6,85 +20,17 @@ import (
 	"io"
 	"maps"
 	"net/http"
-	"os"
 	"strings"
 
-	"github.com/invopop/jsonschema"
 	"github.com/relychan/goutils"
-	"github.com/relychan/relixy/proxyc/handler/graphqlhandler"
-	"github.com/relychan/relixy/proxyc/handler/resthandler"
-	"github.com/relychan/relixy/schema/openapi"
+	"github.com/relychan/jsonschema"
+	"github.com/relychan/relixy/schema"
 )
 
-type RelixyActionConfig struct{}
-
-// JSONSchema defines a custom definition for JSON schema.
-func (RelixyActionConfig) JSONSchema() *jsonschema.Schema {
-	return &jsonschema.Schema{
-		OneOf: []*jsonschema.Schema{
-			{
-				Description: "Proxy configuration to the remote REST service",
-				Ref:         "#/$defs/RelixyRESTActionConfig",
-			},
-			{
-				Description: "Configurations for proxying request to the remote GraphQL server",
-				Ref:         "#/$defs/RelixyGraphQLActionConfig",
-			},
-		},
-	}
-}
-
-func genRelixyActionSchema() (*jsonschema.Schema, error) {
-	r := new(jsonschema.Reflector)
-
-	for _, name := range []string{
-		"proxyc/handler/graphqlhandler",
-		"proxyc/handler/proxyhandler",
-		"proxyc/handler/resthandler",
-	} {
-		err := r.AddGoComments(
-			"github.com/relychan/relixy/"+name,
-			"../"+name,
-			jsonschema.WithFullComment(),
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	reflectSchema := r.Reflect(RelixyActionConfig{})
-
-	for _, externalType := range []any{
-		graphqlhandler.RelixyGraphQLActionConfig{},
-		resthandler.RelixyRESTActionConfig{},
-	} {
-		externalSchema := r.Reflect(externalType)
-
-		for key, def := range externalSchema.Definitions {
-			if _, ok := reflectSchema.Definitions[key]; !ok {
-				reflectSchema.Definitions[key] = def
-			}
-		}
-	}
-
-	for key := range reflectSchema.Definitions {
-		if strings.HasPrefix(key, "OrderedMap[") {
-			delete(reflectSchema.Definitions, key)
-		}
-	}
-
-	return reflectSchema, nil
-}
-
 func genOpenAPIResourceSchema() (*jsonschema.Schema, error) {
-	actionSchema, err := genRelixyActionSchema()
-	if err != nil {
-		return nil, fmt.Errorf("failed to write jsonschema for RelixyAction: %w", err)
-	}
-
 	r := new(jsonschema.Reflector)
 
-	err = r.AddGoComments(
+	err := r.AddGoComments(
 		"github.com/relychan/relixy/schema",
 		"../schema",
 		jsonschema.WithFullComment(),
@@ -93,16 +39,7 @@ func genOpenAPIResourceSchema() (*jsonschema.Schema, error) {
 		return nil, err
 	}
 
-	reflectSchema := r.Reflect(openapi.RelixyOpenAPIResource{})
-
-	openApiSpec, err := loadOpenAPISchema()
-	if err != nil {
-		return nil, err
-	}
-
-	maps.Copy(reflectSchema.Definitions, openApiSpec.Definitions)
-	openApiSpec.Definitions = nil
-	maps.Copy(reflectSchema.Definitions, actionSchema.Definitions)
+	reflectSchema := r.Reflect(schema.RelixyOpenAPIResource{})
 
 	remoteSchemas, err := downloadRemoteSchemas()
 	if err != nil {
@@ -112,15 +49,6 @@ func genOpenAPIResourceSchema() (*jsonschema.Schema, error) {
 	for _, rs := range remoteSchemas {
 		maps.Copy(reflectSchema.Definitions, rs.Definitions)
 	}
-
-	// custom schema types
-	reflectSchema.Definitions["Duration"] = &jsonschema.Schema{
-		Type:        "string",
-		Description: "Duration string",
-		Pattern:     "^((([0-9]+h)?([0-9]+m)?([0-9]+s))|(([0-9]+h)?([0-9]+m))|([0-9]+h))$",
-	}
-
-	reflectSchema.Definitions["Document"] = openApiSpec
 
 	// delete unused definitions
 	delete(reflectSchema.Definitions, "Contact")
@@ -142,26 +70,10 @@ func genOpenAPIResourceSchema() (*jsonschema.Schema, error) {
 	return reflectSchema, nil
 }
 
-func loadOpenAPISchema() (*jsonschema.Schema, error) {
-	rawBody, err := os.ReadFile("./openapi-3.json")
-	if err != nil {
-		return nil, err
-	}
-
-	jsonSchema := new(jsonschema.Schema)
-
-	err = json.Unmarshal(rawBody, jsonSchema)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode openapi schema: %w", err)
-	}
-
-	return jsonSchema, nil
-}
-
 func downloadRemoteSchemas() ([]*jsonschema.Schema, error) {
 	fileURLs := []string{
-		"https://raw.githubusercontent.com/relychan/gohttpc/refs/heads/main/jsonschema/gohttpc.schema.json",
-		"https://raw.githubusercontent.com/relychan/gotransform/refs/heads/main/jsonschema/gotransform.schema.json",
+		"https://raw.githubusercontent.com/relychan/rely-auth/refs/heads/main/jsonschema/auth.schema.json",
+		"https://raw.githubusercontent.com/relychan/openapitools/refs/heads/main/jsonschema/openapitools.schema.json",
 	}
 
 	results := make([]*jsonschema.Schema, 0, len(fileURLs))

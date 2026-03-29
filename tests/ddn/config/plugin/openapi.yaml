@@ -30,6 +30,7 @@ definition:
                 }
               variables:
                 name:
+                  type: field
                   path: param.name
       /v1/api/rest/artists:
         get:
@@ -45,10 +46,12 @@ definition:
                 }
               variables:
                 limit:
+                  type: field
                   path: query.limit[0]
                   default:
                     value: 19
                 offset:
+                  type: field
                   path: query.offset[0]
                   default:
                     value: 0
