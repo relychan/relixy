@@ -67,6 +67,7 @@ func (pr *preRoutePluginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		Method: input.Method,
 		URL: &url.URL{
 			Path:     input.Path,
+			RawPath:  input.Path,
 			RawQuery: input.Query,
 		},
 	}

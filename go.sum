@@ -78,8 +78,8 @@ github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
 github.com/pb33f/jsonpath v0.8.2 h1:Ou4C7zjYClBm97dfZjDCjdZGusJoynv/vrtiEKNfj2Y=
 github.com/pb33f/jsonpath v0.8.2/go.mod h1:zBV5LJW4OQOPatmQE2QdKpGQJvhDTlE5IEj6ASaRNTo=
-github.com/pb33f/libopenapi v0.34.3 h1:3D1N56ayc7iOeEnKoy85QDe4tFbg5G1sj2J5UISi4Is=
-github.com/pb33f/libopenapi v0.34.3/go.mod h1:sD2REdvz9QSFY9enfFHBCwwwZ41k/86krTM9qtKEBwQ=
+github.com/pb33f/libopenapi v0.34.4 h1:BWWXA3U4SlsHEvfczk+DJHu2O38ktgKw+zBEYaDZ2uI=
+github.com/pb33f/libopenapi v0.34.4/go.mod h1:MsDdUlQ1CdrIDO5v26JfgBxQs7kcaOUEpMP3EqU6bI4=
 github.com/pb33f/ordered-map/v2 v2.3.1 h1:5319HDO0aw4DA4gzi+zv4FXU9UlSs3xGZ40wcP1nBjY=
 github.com/pb33f/ordered-map/v2 v2.3.1/go.mod h1:qxFQgd0PkVUtOMCkTapqotNgzRhMPL7VvaHKbd1HnmQ=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
@@ -106,8 +106,8 @@ github.com/relychan/goutils v0.0.0-20260320085159-a456d46cc0d9 h1:+O99rq2Lu7M+zE
 github.com/relychan/goutils v0.0.0-20260320085159-a456d46cc0d9/go.mod h1:dQsp/ZcUuC5gyzhPaAvtpAdZXo6Qw5THpCjXMCao5Lk=
 github.com/relychan/jsonschema v0.13.1 h1:BBD4msNWwdPwdqhFt/M60kuiAGKbi1o+KAD9n+pMGoQ=
 github.com/relychan/jsonschema v0.13.1/go.mod h1:PIIavxfwrN01Tqngad6gqBzmnekuD0d0gM9/BM3nAMk=
-github.com/relychan/openapitools v0.0.0-20260329090433-e67f3af773e5 h1:c2gFPQzLZgJBJeo9FTFjqYFij9gnEEVFt8XY0YGwI8Y=
-github.com/relychan/openapitools v0.0.0-20260329090433-e67f3af773e5/go.mod h1:Y91J/teYPJt6frEM6QstOxjipiBzpoI4Omoxi4gmNdU=
+github.com/relychan/openapitools v0.0.0-20260330155321-8a155a7fbe79 h1:WOH6dXJ574zTI9iNjdKhUj6bhUZYpMe0DfTDJ6iTfQA=
+github.com/relychan/openapitools v0.0.0-20260330155321-8a155a7fbe79/go.mod h1:uiFrkwwr3VUw/GAFUm/GMn1kvAzcSDe2hhnwYG9gEqY=
 github.com/relychan/rely-auth v0.0.0-20260324171641-2db71330fac1 h1:IwMpOJy4zcNwBe9sToHX6nEldfddlAhpKXgI/z82nR4=
 github.com/relychan/rely-auth v0.0.0-20260324171641-2db71330fac1/go.mod h1:pMkjJhL/YMMvCNeGZ/Vp0RqbV1zXNxYEltKyaXjb6lU=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=

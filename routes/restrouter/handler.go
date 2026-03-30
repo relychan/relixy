@@ -32,10 +32,8 @@ func (rh *restHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		span.RecordError(err)
+	span.SetStatus(codes.Error, err.Error())
+	span.RecordError(err)
 
-		logger.Error("failed to write response", slog.String("error", err.Error()))
-	}
+	logger.Error("failed to write response", slog.String("error", err.Error()))
 }

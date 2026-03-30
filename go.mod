@@ -11,7 +11,7 @@ require (
 	github.com/relychan/gohttps v0.0.0-20260324085512-a759b25e1ac5
 	github.com/relychan/goutils v0.0.0-20260320085159-a456d46cc0d9
 	github.com/relychan/jsonschema v0.13.1
-	github.com/relychan/openapitools v0.0.0-20260329090433-e67f3af773e5
+	github.com/relychan/openapitools v0.0.0-20260330155321-8a155a7fbe79
 	github.com/relychan/rely-auth v0.0.0-20260324171641-2db71330fac1
 	go.opentelemetry.io/otel v1.42.0
 	go.opentelemetry.io/otel/trace v1.42.0
@@ -47,7 +47,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pb33f/jsonpath v0.8.2 // indirect
-	github.com/pb33f/libopenapi v0.34.3 // indirect
+	github.com/pb33f/libopenapi v0.34.4 // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
