@@ -5,7 +5,77 @@ applyTo: "**/*.go,**/go.mod,**/go.sum"
 
 # Go Development Instructions
 
+This is **Relixy**, an API gateway service (module `github.com/relychan/relixy`) that proxies REST and GraphQL services with authentication and telemetry. It runs on **Go 1.26**.
+
 Follow idiomatic Go practices and community standards when writing Go code. These instructions are based on [Effective Go](https://go.dev/doc/effective_go), [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments), and [Google's Go Style Guide](https://google.github.io/styleguide/go/).
+
+## Project Overview
+
+### Structure
+
+```
+cmd/ddn/        # DDN (Hasura DDN) plugin entry point
+cmd/rest/       # REST proxy entry point
+config/         # Config loading, metadata parsing, middleware setup
+routes/
+  ddnrouter/    # DDN pre-route plugin handler (/ddn/pre-route)
+  restrouter/   # REST proxy routing (one ProxyClient per OpenAPI resource)
+  testdata/     # Test fixtures (configs, OpenAPI specs, auth definitions)
+schema/         # RelixyResource interface and concrete resource types
+  baseschema/   # Base schema types
+authn/          # Auth middleware and session variable context helpers
+jsonschema/     # JSON schema generation from Go types
+tests/ddn/      # DDN integration tests (Docker Compose)
+```
+
+### Key Abstractions
+
+- `RelixyResource` interface — base abstraction for all resources (OpenAPI, RelyAuth)
+- `RelixyServerConfig` — top-level server configuration (port, TLS, telemetry, definition paths)
+- `RelixyMetadata` — evaluated metadata containing loaded and parsed resources
+- `ProxyClient` — wraps an OpenAPI HTTP client for request streaming
+
+### Startup Flow
+
+Config loading → metadata parsing → telemetry setup → router creation (ProxyClient per resource) → middleware attachment (tracing, auth) → `gohttps.ListenAndServe`
+
+### Configuration
+
+- Default config path: `/etc/relixy/config.yaml` (overridable via `RELIXY_CONFIG_PATH`)
+- Resource definitions use YAML with `include`/`exclude` glob patterns under `definition:`
+- Supports OpenAPI and RelyAuth resource kinds
+
+### Key Dependencies
+
+| Dependency | Purpose |
+|---|---|
+| `github.com/go-chi/chi/v5` | HTTP router |
+| `github.com/relychan/rely-auth` | Pluggable authentication |
+| `github.com/relychan/gohttpc` | HTTP client utilities |
+| `github.com/relychan/gohttps` | HTTP server with TLS and tracing |
+| `github.com/relychan/openapitools` | OpenAPI parsing and proxy client |
+| `github.com/hasura/gotel` + `go.opentelemetry.io/otel/*` | OpenTelemetry tracing |
+| `github.com/caarlos0/env/v11` | Environment variable config binding |
+| `go.yaml.in/yaml/v4` | YAML parsing |
+| `github.com/relychan/jsonschema` | JSON schema generation |
+| `github.com/relychan/goutils` | Shared HTTP error helpers |
+| `gotest.tools/v3` | Test assertions |
+
+### HTTP Error Helpers
+
+Use `goutils` package helpers for HTTP error responses (e.g., `ServerError`, `UnauthorizedError`, `NotFoundError`). Do not construct raw HTTP error responses manually.
+
+### Routing
+
+Go version is 1.26, so use the enhanced `net/http` `ServeMux` when adding new standalone routes. For routes under the existing Chi router, use `chi.Router` patterns consistent with the surrounding code.
+
+### Testing
+
+- Use `gotest.tools/v3` for assertions (not `testify`)
+- Test fixtures live in `routes/testdata/`
+- Run unit tests: `make test` (includes `-race`)
+- Run DDN integration tests: `make test-ddn` (requires Docker)
+- Use `make build-jsonschema` to regenerate `relixy.schema.json` after changing config types
 
 ## General Instructions
 
