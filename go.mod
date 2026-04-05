@@ -11,7 +11,7 @@ require (
 	github.com/relychan/gohttps v0.0.0-20260324085512-a759b25e1ac5
 	github.com/relychan/goutils v0.0.0-20260404183650-6657ea84ff81
 	github.com/relychan/jsonschema v0.13.1
-	github.com/relychan/openapitools v0.0.0-20260405025230-e62b97351a1b
+	github.com/relychan/openapitools v0.0.0-20260405051814-e98a91741b7d
 	github.com/relychan/rely-auth v0.0.0-20260405031736-2571b95319fa
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.43.0

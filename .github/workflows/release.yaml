@@ -75,7 +75,7 @@ jobs:
 
       - name: Relixy DDN - Extract metadata (tags, labels) for Docker image
         id: docker-metadata-ddn
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@v7
         if: startsWith(github.ref, 'refs/tags/')
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_DDN_NAME }}

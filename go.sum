@@ -104,8 +104,8 @@ github.com/relychan/goutils v0.0.0-20260404183650-6657ea84ff81 h1:ib6/pVBjkF9Tpt
 github.com/relychan/goutils v0.0.0-20260404183650-6657ea84ff81/go.mod h1:dQsp/ZcUuC5gyzhPaAvtpAdZXo6Qw5THpCjXMCao5Lk=
 github.com/relychan/jsonschema v0.13.1 h1:BBD4msNWwdPwdqhFt/M60kuiAGKbi1o+KAD9n+pMGoQ=
 github.com/relychan/jsonschema v0.13.1/go.mod h1:PIIavxfwrN01Tqngad6gqBzmnekuD0d0gM9/BM3nAMk=
-github.com/relychan/openapitools v0.0.0-20260405025230-e62b97351a1b h1:zvfRNEoJEtbEePjimqCwRci74v5VD1sBeJ0ZvrbEgwM=
-github.com/relychan/openapitools v0.0.0-20260405025230-e62b97351a1b/go.mod h1:lW/qWOqq5K+E10Epur7bLCaWa+beGU8sH90TLxUbHeQ=
+github.com/relychan/openapitools v0.0.0-20260405051814-e98a91741b7d h1:BEtjmcRgolVlkiqCz3c4a5pLGoVCF/TGGuj0a0oplwk=
+github.com/relychan/openapitools v0.0.0-20260405051814-e98a91741b7d/go.mod h1:lW/qWOqq5K+E10Epur7bLCaWa+beGU8sH90TLxUbHeQ=
 github.com/relychan/rely-auth v0.0.0-20260405031736-2571b95319fa h1:Lu7AHCK8pgZ8OQHdg9Er1d92/ak8spxMVju94c3gWFQ=
 github.com/relychan/rely-auth v0.0.0-20260405031736-2571b95319fa/go.mod h1:IMwTsylHsIojJ2CDUSaE2Zv4vsnHa6VgIwvbrBlTEvs=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
