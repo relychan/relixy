@@ -63,8 +63,7 @@ definition:
                   }
                 }
             response:
-              httpErrors:
-                "400": 'errors[0].extensions.code == "NOT_FOUND"'
+              httpErrorCode: 400
 
 ---
 # yaml-language-server: $schema=../../../jsonschema/relixy.schema.json

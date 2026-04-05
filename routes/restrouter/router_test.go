@@ -14,7 +14,7 @@ import (
 	"github.com/hasura/gotel"
 	"github.com/relychan/relixy/config"
 	"github.com/relychan/relixy/routes/ddnrouter"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 )
 
@@ -211,17 +211,17 @@ func runSuccessRequest[T any](t *testing.T, r ddnrouter.PreRoutePluginRequestBod
 		}
 
 		req, err := http.NewRequest(r.Method, r.Path, reader)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		req.Header.Set("hasura-m-auth", "test-secret")
 
 		resp, err := http.DefaultClient.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		if resp.StatusCode != statusCode {
 			respBody, err := io.ReadAll(resp.Body)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			t.Errorf("expected status code: %d; got: %d; response body: %s", statusCode, resp.StatusCode, string(respBody))
 			t.FailNow()
@@ -230,14 +230,14 @@ func runSuccessRequest[T any](t *testing.T, r ddnrouter.PreRoutePluginRequestBod
 		var output, empty T
 
 		err = json.NewDecoder(resp.Body).Decode(&output)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// ignore empty expected response.
 		if reflect.DeepEqual(responseBody, empty) {
 			return
 		}
 
-		assert.Equal(t, responseBody, output)
+		require.Equal(t, responseBody, output)
 	})
 }
 
@@ -251,10 +251,10 @@ func runUnauthorizedRequest[T any](t *testing.T, r ddnrouter.PreRoutePluginReque
 		}
 
 		req, err := http.NewRequest(r.Method, r.Path, reader)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		resp, err := http.DefaultClient.Do(req)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusUnauthorized {
@@ -268,14 +268,14 @@ func TestSetupRouter_InvalidConfig(t *testing.T) {
 	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/invalid-config.yaml")
 
 	_, _, err := config.LoadServerConfig(context.Background())
-	assert.ErrorIs(t, err, io.EOF)
+	require.ErrorIs(t, err, io.EOF)
 }
 
 func TestSetupRouter_ValidConfig(t *testing.T) {
 	t.Setenv("RELIXY_CONFIG_PATH", testPlaceholderConfig)
 
 	envVars, logger, err := config.LoadServerConfig(context.Background())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),
@@ -284,9 +284,9 @@ func TestSetupRouter_ValidConfig(t *testing.T) {
 	}
 
 	router, shutdown, err := SetupRouter(context.TODO(), envVars, otelExporters)
-	assert.NoError(t, err)
-	assert.True(t, router != nil)
-	assert.True(t, shutdown != nil)
+	require.NoError(t, err)
+	require.True(t, router != nil)
+	require.True(t, shutdown != nil)
 
 	shutdown()
 }
@@ -299,15 +299,15 @@ func TestRESTHandler_NotFoundPath(t *testing.T) {
 	}()
 
 	req, err := http.NewRequest(http.MethodGet, server.URL+"/api/v1/nonexistent", nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	defer resp.Body.Close()
 
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	require.Equal(t, http.StatusNotFound, resp.StatusCode)
 }
 
 func TestRESTHandler_WithPathParams(t *testing.T) {
@@ -318,20 +318,20 @@ func TestRESTHandler_WithPathParams(t *testing.T) {
 	}()
 
 	req, err := http.NewRequest(http.MethodGet, server.URL+"/api/v1/posts/1", nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	defer resp.Body.Close()
 
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	var result map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&result)
-	assert.NoError(t, err)
-	assert.Equal(t, float64(1), result["id"])
+	require.NoError(t, err)
+	require.Equal(t, float64(1), result["id"])
 }
 
 func TestRESTHandler_GetAlbums(t *testing.T) {
@@ -342,27 +342,27 @@ func TestRESTHandler_GetAlbums(t *testing.T) {
 	}()
 
 	req, err := http.NewRequest(http.MethodGet, server.URL+"/api/v1/albums", nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	defer resp.Body.Close()
 
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	var result []map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&result)
-	assert.NoError(t, err)
-	assert.True(t, len(result) > 0)
+	require.NoError(t, err)
+	require.True(t, len(result) > 0)
 }
 
 func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {
 	t.Setenv("RELIXY_CONFIG_PATH", configPath)
 
 	envVars, logger, err := config.LoadServerConfig(context.Background())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),
@@ -371,7 +371,7 @@ func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) 
 	}
 
 	router, shutdown, err := SetupRouter(context.TODO(), envVars, otelExporters)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	server := httptest.NewServer(router)
 

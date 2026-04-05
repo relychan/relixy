@@ -41,7 +41,7 @@ func SetupRouter(
 	oasResources := metadata.GetOpenAPIResources()
 
 	state := &State{
-		ProxyClients: make([]*schema.OpenAPIClient, len(oasResources)),
+		ProxyClients: make([]*schema.OpenAPIClient, 0, len(oasResources)),
 	}
 
 	shutdown := func() {
@@ -52,7 +52,7 @@ func SetupRouter(
 		goutils.CatchWarnErrorFunc(state.Close)
 	}
 
-	for i, resource := range oasResources {
+	for _, resource := range oasResources {
 		proxyClient, err := openapiclient.NewProxyClient(ctx, &resource.Definition)
 		if err != nil {
 			shutdown()
@@ -64,10 +64,10 @@ func SetupRouter(
 			)
 		}
 
-		state.ProxyClients[i] = &schema.OpenAPIClient{
+		state.ProxyClients = append(state.ProxyClients, &schema.OpenAPIClient{
 			ProxyClient:      proxyClient,
 			ResourceMetadata: resource.Metadata,
-		}
+		})
 	}
 
 	router := gohttps.NewRouter(conf.Server, ts.Logger)
