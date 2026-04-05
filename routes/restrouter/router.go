@@ -9,8 +9,8 @@ import (
 	"github.com/relychan/gohttpc"
 	"github.com/relychan/gohttps"
 	"github.com/relychan/goutils"
+	"github.com/relychan/openapitools/openapiclient"
 	"github.com/relychan/relixy/config"
-	"github.com/relychan/relixy/proxyc"
 )
 
 // SetupRouter set up the router and states for rest handlers.
@@ -30,11 +30,6 @@ func SetupRouter(
 	}
 
 	gohttpc.SetHTTPClientMetrics(httpMetrics)
-
-	proxyClientOptions := gohttpc.NewClientOptions(
-		gohttpc.WithLogger(ts.Logger),
-		gohttpc.WithTracer(ts.Tracer),
-	)
 
 	middlewares, authManager, err := config.SetupMiddlewares(ctx, metadata, ts)
 	if err != nil {
@@ -57,7 +52,7 @@ func SetupRouter(
 	router := gohttps.NewRouter(conf.Server, ts.Logger)
 
 	for _, resource := range oasResources {
-		proxyClient, err := proxyc.NewProxyClient(ctx, resource, proxyClientOptions)
+		proxyClient, err := openapiclient.NewProxyClient(ctx, &resource.Definition)
 		if err != nil {
 			shutdown()
 

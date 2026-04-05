@@ -4,30 +4,30 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/relychan/relixy/proxyc"
+	"github.com/relychan/relixy/schema"
 )
 
 // State holds common states of the handler.
 type State struct {
-	ProxyClients []*proxyc.ProxyClient
+	ProxyClients []*schema.OpenAPIClient
 }
 
 // FindProxyClient find the suitable proxy client from the request path.
-func (s *State) FindProxyClient(requestPath string) *proxyc.ProxyClient {
+func (s *State) FindProxyClient(requestPath string) *schema.OpenAPIClient {
 	defaultIndex := -1
 
 	for i, pc := range s.ProxyClients {
 		metadata := pc.Metadata()
 
-		if metadata.Definition.Settings == nil ||
-			metadata.Definition.Settings.BasePath == "" ||
-			metadata.Definition.Settings.BasePath == "/" {
+		if metadata.Settings == nil ||
+			metadata.Settings.BasePath == "" ||
+			metadata.Settings.BasePath == "/" {
 			defaultIndex = i
 
 			continue
 		}
 
-		if strings.HasPrefix(requestPath, metadata.Definition.Settings.BasePath) {
+		if strings.HasPrefix(requestPath, metadata.Settings.BasePath) {
 			return pc
 		}
 	}

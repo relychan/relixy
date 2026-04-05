@@ -1,8 +1,22 @@
+// Copyright 2026 RelyChan Pte. Ltd
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Package baseschema define base schema resources.
 package baseschema
 
 import (
-	"github.com/invopop/jsonschema"
+	"github.com/relychan/jsonschema"
 	"github.com/relychan/rely-auth/auth"
 )
 
@@ -19,11 +33,11 @@ const (
 // RelixyResourceMetadata represents common metadata of the resource.
 type RelixyResourceMetadata struct {
 	// Name of the resource.
-	Name string `json:"name" yaml:"name" jsonschema:"default=default"`
+	Name string `json:"name" yaml:"name" jsonschema:"default=default,description=Name of the resource"`
 	// Description of the resource.
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty" jsonschema:"description=Description of the resource"`
 	// System instruction for the current resource. It's important to the LLM.
-	Instruction string `json:"instruction,omitempty" yaml:"instruction,omitempty"`
+	Instruction string `json:"instruction,omitempty" yaml:"instruction,omitempty" jsonschema:"description=System instruction for the current resource. It's important to the LLM"`
 }
 
 // RelixyResource abstracts an interface for Relixy resource.
@@ -34,12 +48,12 @@ type RelixyResource interface {
 
 // BaseResourceModel defines the base structure of a resource.
 type BaseResourceModel struct {
-	// Version of the authentication config.
-	Version string `json:"version" yaml:"version" jsonschema:"enum=v1"`
+	// Version of the resource.
+	Version string `json:"version" yaml:"version" jsonschema:"enum=v1,description=Version of the resource"`
 	// Kind of the resource.
 	Kind RelixyResourceKind `json:"kind" yaml:"kind"`
 	// Metadata of the resource.
-	Metadata RelixyResourceMetadata `json:"metadata" yaml:"metadata"`
+	Metadata RelixyResourceMetadata `json:"metadata" yaml:"metadata" jsonschema:"description=Metadata of the resource"`
 }
 
 var _ RelixyResource = (*BaseResourceModel)(nil)

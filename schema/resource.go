@@ -1,3 +1,17 @@
+// Copyright 2026 RelyChan Pte. Ltd
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Package schema defines the implementation for relixy resources.
 package schema
 
@@ -6,10 +20,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/invopop/jsonschema"
 	"github.com/relychan/goutils"
+	"github.com/relychan/jsonschema"
+	"github.com/relychan/openapitools/oaschema"
 	"github.com/relychan/relixy/schema/baseschema"
-	"github.com/relychan/relixy/schema/openapi"
 	"github.com/relychan/rely-auth/auth"
 	"go.yaml.in/yaml/v4"
 )
@@ -57,14 +71,14 @@ func (j *RelixyResource) UnmarshalJSON(b []byte) error {
 			Definition:        authDef,
 		}
 	case baseschema.OpenAPIKind:
-		var oasDef openapi.RelixyOpenAPIResourceDefinition
+		var oasDef oaschema.OpenAPIResourceDefinition
 
 		err = json.Unmarshal(rawValue.Definition, &oasDef)
 		if err != nil {
 			return err
 		}
 
-		j.RelixyResource = &openapi.RelixyOpenAPIResource{
+		j.RelixyResource = &RelixyOpenAPIResource{
 			BaseResourceModel: rawValue.BaseResourceModel,
 			Definition:        oasDef,
 		}
@@ -107,14 +121,14 @@ func (j *RelixyResource) UnmarshalYAML(value *yaml.Node) error {
 			Definition:        authDef,
 		}
 	case baseschema.OpenAPIKind:
-		var oasDef openapi.RelixyOpenAPIResourceDefinition
+		var oasDef oaschema.OpenAPIResourceDefinition
 
 		err = defNode.Decode(&oasDef)
 		if err != nil {
 			return err
 		}
 
-		j.RelixyResource = &openapi.RelixyOpenAPIResource{
+		j.RelixyResource = &RelixyOpenAPIResource{
 			BaseResourceModel: baseModel,
 			Definition:        oasDef,
 		}
@@ -135,7 +149,7 @@ func (RelixyResource) JSONSchema() *jsonschema.Schema {
 			},
 			{
 				Description: "Definition of a RelyAuth resource",
-				Ref:         "https://raw.githubusercontent.com/relychan/rely-auth/refs/heads/main/jsonschema/auth.schema.json",
+				Ref:         "#/$defs/RelyAuthConfig",
 			},
 		},
 	}
