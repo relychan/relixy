@@ -18,8 +18,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"go.yaml.in/yaml/v4"
-	"gotest.tools/v3/assert"
 )
 
 func TestRelixyResource_UnmarshalYAML_OpenAPI(t *testing.T) {
@@ -156,12 +156,12 @@ definition:
 			err := yaml.Load([]byte(tc.yamlData), &r)
 
 			if tc.expectError != nil {
-				assert.Assert(t, errors.Is(err, tc.expectError), "expected error %v, got %v", tc.expectError, err)
+				assert.True(t, errors.Is(err, tc.expectError), "expected error %v, got %v", tc.expectError, err)
 				return
 			}
 
-			assert.NilError(t, err)
-			assert.Assert(t, r.RelixyResource != nil)
+			assert.NoError(t, err)
+			assert.True(t, r.RelixyResource != nil)
 
 			if tc.checkFunc != nil {
 				tc.checkFunc(t, &r)
@@ -224,12 +224,12 @@ metadata:
 			err := yaml.Load([]byte(tc.yamlData), &r)
 
 			if tc.expectError != nil {
-				assert.Assert(t, errors.Is(err, tc.expectError), "expected error %v, got %v", tc.expectError, err)
+				assert.True(t, errors.Is(err, tc.expectError), "expected error %v, got %v", tc.expectError, err)
 				return
 			}
 
-			assert.NilError(t, err)
-			assert.Assert(t, r.RelixyResource != nil)
+			assert.NoError(t, err)
+			assert.True(t, r.RelixyResource != nil)
 
 			if tc.checkFunc != nil {
 				tc.checkFunc(t, &r)

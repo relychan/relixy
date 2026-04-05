@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/relychan/relixy/schema/baseschema"
-	"gotest.tools/v3/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestRelixyOpenAPIResource_GetMetadata tests the GetMetadata method

@@ -14,8 +14,8 @@ import (
 	"github.com/hasura/gotel"
 	"github.com/relychan/goutils/httpheader"
 	"github.com/relychan/relixy/config"
+	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel"
-	"gotest.tools/v3/assert"
 )
 
 func TestRestifiedPlugin_RESTServer(t *testing.T) {
@@ -125,22 +125,22 @@ func runPreRoute[T any](t *testing.T, requestURL string, body PreRoutePluginRequ
 	t.Helper()
 
 	bodyBytes, err := json.Marshal(body)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	t.Run("success", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewReader(bodyBytes))
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 
 		req.Header.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
 		req.Header.Set("hasura-m-auth", "test-secret")
 
 		resp, err := http.DefaultClient.Do(req)
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 
 		if resp.StatusCode != statusCode {
 			respBody, err := io.ReadAll(resp.Body)
-			assert.NilError(t, err)
+			assert.NoError(t, err)
 
 			t.Errorf("expected status code: %d; got: %d; response body: %s", statusCode, resp.StatusCode, string(respBody))
 			t.FailNow()
@@ -149,20 +149,20 @@ func runPreRoute[T any](t *testing.T, requestURL string, body PreRoutePluginRequ
 		var output, empty T
 
 		err = json.NewDecoder(resp.Body).Decode(&output)
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 
 		// ignore empty expected response.
 		if reflect.DeepEqual(responseBody, empty) {
 			return
 		}
 
-		assert.DeepEqual(t, responseBody, output)
+		assert.Equal(t, responseBody, output)
 	})
 
 	// expected unauthorized status
 	t.Run("unauthorized", func(t *testing.T) {
 		resp, err := http.DefaultClient.Post(requestURL, httpheader.ContentTypeJSON, bytes.NewReader(bodyBytes))
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusUnauthorized {
@@ -242,18 +242,18 @@ func TestRestifiedPlugin_DDN(t *testing.T) {
 
 	for _, tc := range testCases {
 		req, err := http.NewRequest(tc.Method, engineHost+tc.Path, nil)
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 
 		resp, err := http.DefaultClient.Do(req)
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 
 		defer resp.Body.Close()
 
 		var respBody any
 
 		err = json.NewDecoder(resp.Body).Decode(&respBody)
-		assert.NilError(t, err)
-		assert.DeepEqual(t, tc.Expected, respBody)
+		assert.NoError(t, err)
+		assert.Equal(t, tc.Expected, respBody)
 	}
 }
 
@@ -268,7 +268,7 @@ func TestSetupRouter_ValidConfig(t *testing.T) {
 	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/jsonplaceholder/config.yaml")
 
 	envVars, logger, err := config.LoadServerConfig(context.Background())
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),
@@ -277,9 +277,9 @@ func TestSetupRouter_ValidConfig(t *testing.T) {
 	}
 
 	router, shutdown, err := SetupRouter(context.TODO(), envVars, otelExporters)
-	assert.NilError(t, err)
-	assert.Assert(t, router != nil)
-	assert.Assert(t, shutdown != nil)
+	assert.NoError(t, err)
+	assert.True(t, router != nil)
+	assert.True(t, shutdown != nil)
 
 	shutdown()
 }
@@ -294,13 +294,13 @@ func TestPreRoutePlugin_InvalidJSON(t *testing.T) {
 	requestURL := server.URL + "/ddn/pre-route"
 
 	req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewBufferString("invalid json"))
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	req.Header.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
 	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
@@ -320,16 +320,16 @@ func TestPreRoutePlugin_InvalidContentType(t *testing.T) {
 	}
 
 	bodyBytes, err := json.Marshal(body)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewReader(bodyBytes))
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	req.Header.Set(httpheader.ContentType, "text/plain")
 	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusUnsupportedMediaType, resp.StatusCode)
@@ -349,16 +349,16 @@ func TestPreRoutePlugin_NotFoundPath(t *testing.T) {
 	}
 
 	bodyBytes, err := json.Marshal(body)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewReader(bodyBytes))
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	req.Header.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
 	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -378,31 +378,31 @@ func TestPreRoutePlugin_GetAlbums(t *testing.T) {
 	}
 
 	bodyBytes, err := json.Marshal(body)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewReader(bodyBytes))
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	req.Header.Set(httpheader.ContentType, httpheader.ContentTypeJSON)
 	req.Header.Set("hasura-m-auth", "test-secret")
 
 	resp, err := http.DefaultClient.Do(req)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	var result []map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&result)
-	assert.NilError(t, err)
-	assert.Assert(t, len(result) > 0)
+	assert.NoError(t, err)
+	assert.True(t, len(result) > 0)
 }
 
 func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {
 	t.Setenv("RELIXY_CONFIG_PATH", configPath)
 
 	envVars, logger, err := config.LoadServerConfig(context.Background())
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	otelExporters := &gotel.OTelExporters{
 		Tracer: gotel.NewTracer("test"),
@@ -411,7 +411,7 @@ func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) 
 	}
 
 	router, shutdown, err := SetupRouter(context.TODO(), envVars, otelExporters)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	server := httptest.NewServer(router)
 

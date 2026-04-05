@@ -17,10 +17,10 @@ package main
 import (
 	"testing"
 
-	"gotest.tools/v3/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGenerate(t *testing.T) {
-	assert.NilError(t, genSchema())
-	assert.NilError(t, genServerConfigurationSchema())
+	assert.NoError(t, genSchema())
+	assert.NoError(t, genServerConfigurationSchema())
 }

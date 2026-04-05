@@ -56,7 +56,7 @@ definition:
             type: graphql
             request:
               query: |
-                query Character($id: ID! = "1") {
+                query Character($id: ID!) {
                   character(id: $id) {
                     id
                     name

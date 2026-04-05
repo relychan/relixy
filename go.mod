@@ -9,14 +9,14 @@ require (
 	github.com/hasura/gotel v0.7.2
 	github.com/relychan/gohttpc v0.0.0-20260402045657-59c0214cec37
 	github.com/relychan/gohttps v0.0.0-20260324085512-a759b25e1ac5
-	github.com/relychan/goutils v0.0.0-20260320085159-a456d46cc0d9
+	github.com/relychan/goutils v0.0.0-20260404183650-6657ea84ff81
 	github.com/relychan/jsonschema v0.13.1
-	github.com/relychan/openapitools v0.0.0-20260403175306-458c00bb99f2
-	github.com/relychan/rely-auth v0.0.0-20260324171641-2db71330fac1
+	github.com/relychan/openapitools v0.0.0-20260405025230-e62b97351a1b
+	github.com/relychan/rely-auth v0.0.0-20260405031736-2571b95319fa
+	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/trace v1.43.0
 	go.yaml.in/yaml/v4 v4.0.0-rc.4.0.20260316011301-aadd5c28b882
-	gotest.tools/v3 v3.5.2
 )
 
 require (
@@ -30,12 +30,12 @@ require (
 	github.com/buger/jsonparser v1.1.2 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/failsafe-go/failsafe-go v0.9.6 // indirect
 	github.com/go-chi/cors v1.2.2 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
 	github.com/hasura/goenvconf v0.7.0 // indirect
@@ -47,18 +47,19 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pb33f/jsonpath v0.8.2 // indirect
-	github.com/pb33f/libopenapi v0.35.0 // indirect
+	github.com/pb33f/libopenapi v0.35.1 // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect
 	github.com/relychan/gocompress v0.1.2 // indirect
-	github.com/relychan/gotransform v0.0.0-20260324093131-a79b1f2fda47 // indirect
+	github.com/relychan/gotransform v0.0.0-20260404192235-bcef8d71746d // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
-	github.com/vektah/gqlparser v1.3.1 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.32 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/bridges/otelslog v0.17.0 // indirect
 	go.opentelemetry.io/contrib/propagators/b3 v1.42.0 // indirect
@@ -88,4 +89,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/grpc v1.80.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
