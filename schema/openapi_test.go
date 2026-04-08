@@ -12,15 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package schema
 
 import (
 	"testing"
 
+	"github.com/relychan/relixy/schema/baseschema"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGenerate(t *testing.T) {
-	assert.NoError(t, genSchema())
-	assert.NoError(t, genServerConfigurationSchema())
+// TestRelixyOpenAPIResource_GetMetadata tests the GetMetadata method
+func TestRelixyOpenAPIResource_GetMetadata(t *testing.T) {
+	resource := RelixyOpenAPIResource{
+		BaseResourceModel: baseschema.BaseResourceModel{
+			Metadata: baseschema.RelixyResourceMetadata{
+				Name: "test-api",
+			},
+		},
+	}
+
+	metadata := resource.GetMetadata()
+	assert.Equal(t, "test-api", metadata.Name)
 }

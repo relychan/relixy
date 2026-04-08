@@ -1,11 +1,25 @@
+// Copyright 2026 RelyChan Pte. Ltd
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package baseschema
 
 import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"go.yaml.in/yaml/v4"
-	"gotest.tools/v3/assert"
 )
 
 func TestRelixyResourceMetadata_JSONMarshal(t *testing.T) {
@@ -16,11 +30,11 @@ func TestRelixyResourceMetadata_JSONMarshal(t *testing.T) {
 	}
 
 	data, err := json.Marshal(metadata)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	var result RelixyResourceMetadata
 	err = json.Unmarshal(data, &result)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, metadata.Name, result.Name)
 	assert.Equal(t, metadata.Description, result.Description)
 	assert.Equal(t, metadata.Instruction, result.Instruction)
@@ -34,11 +48,11 @@ func TestRelixyResourceMetadata_YAMLMarshal(t *testing.T) {
 	}
 
 	data, err := yaml.Marshal(metadata)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	var result RelixyResourceMetadata
 	err = yaml.Unmarshal(data, &result)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, metadata.Name, result.Name)
 	assert.Equal(t, metadata.Description, result.Description)
 	assert.Equal(t, metadata.Instruction, result.Instruction)
@@ -85,9 +99,9 @@ func TestRelixyResourceMetadata_JSONUnmarshal(t *testing.T) {
 			err := json.Unmarshal([]byte(tc.jsonData), &meta)
 
 			if tc.expectError {
-				assert.Assert(t, err != nil)
+				assert.True(t, err != nil)
 			} else {
-				assert.NilError(t, err)
+				assert.NoError(t, err)
 				if tc.checkFunc != nil {
 					tc.checkFunc(t, &meta)
 				}
@@ -124,11 +138,11 @@ func TestBaseResourceModel_JSONMarshal(t *testing.T) {
 	}
 
 	data, err := json.Marshal(model)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	var result BaseResourceModel
 	err = json.Unmarshal(data, &result)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, model.Version, result.Version)
 	assert.Equal(t, model.Kind, result.Kind)
 	assert.Equal(t, model.Metadata.Name, result.Metadata.Name)
@@ -145,11 +159,11 @@ func TestBaseResourceModel_YAMLMarshal(t *testing.T) {
 	}
 
 	data, err := yaml.Marshal(model)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	var result BaseResourceModel
 	err = yaml.Unmarshal(data, &result)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, model.Version, result.Version)
 	assert.Equal(t, model.Kind, result.Kind)
 	assert.Equal(t, model.Metadata.Name, result.Metadata.Name)
@@ -204,9 +218,9 @@ func TestBaseResourceModel_JSONUnmarshal(t *testing.T) {
 			err := json.Unmarshal([]byte(tc.jsonData), &model)
 
 			if tc.expectError {
-				assert.Assert(t, err != nil)
+				assert.True(t, err != nil)
 			} else {
-				assert.NilError(t, err)
+				assert.NoError(t, err)
 				if tc.checkFunc != nil {
 					tc.checkFunc(t, &model)
 				}
@@ -258,9 +272,9 @@ metadata:
 			err := yaml.Unmarshal([]byte(tc.yamlData), &model)
 
 			if tc.expectError {
-				assert.Assert(t, err != nil)
+				assert.True(t, err != nil)
 			} else {
-				assert.NilError(t, err)
+				assert.NoError(t, err)
 				if tc.checkFunc != nil {
 					tc.checkFunc(t, &model)
 				}

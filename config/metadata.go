@@ -1,3 +1,17 @@
+// Copyright 2026 RelyChan Pte. Ltd
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package config
 
 import (
@@ -9,7 +23,6 @@ import (
 	"github.com/relychan/goutils"
 	"github.com/relychan/relixy/schema"
 	"github.com/relychan/relixy/schema/baseschema"
-	"github.com/relychan/relixy/schema/openapi"
 )
 
 var (
@@ -19,7 +32,7 @@ var (
 
 // RelixyMetadata represents the evaluated relixy metadata object.
 type RelixyMetadata struct {
-	openapiResources []*openapi.RelixyOpenAPIResource
+	openapiResources []*schema.RelixyOpenAPIResource
 	authResource     *baseschema.RelyAuthResource
 }
 
@@ -79,7 +92,7 @@ func LoadMetadata(
 				}
 
 				result.authResource = rs
-			case *openapi.RelixyOpenAPIResource:
+			case *schema.RelixyOpenAPIResource:
 				result.openapiResources = append(result.openapiResources, rs)
 			default:
 			}
@@ -90,7 +103,7 @@ func LoadMetadata(
 }
 
 // GetOpenAPIResources returns OpenAPI resources.
-func (rm *RelixyMetadata) GetOpenAPIResources() []*openapi.RelixyOpenAPIResource {
+func (rm *RelixyMetadata) GetOpenAPIResources() []*schema.RelixyOpenAPIResource {
 	return rm.openapiResources
 }
 

@@ -54,7 +54,7 @@ jobs:
           output: both
           thresholds: "50 80"
       - name: Add Coverage PR Comment
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
         with:
           path: code-coverage-results.md
@@ -84,7 +84,7 @@ jobs:
           VERSION: ${{ steps.get-version.outputs.ref_version }}
 
       - name: Scan High/Critical Vulnerabilities
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: "image"
           image-ref: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.get-version.outputs.ref_version }}
