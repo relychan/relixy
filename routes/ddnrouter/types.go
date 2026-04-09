@@ -17,17 +17,17 @@ func (s *State) FindProxyClient(requestPath string) *schema.OpenAPIClient {
 	defaultIndex := -1
 
 	for i, pc := range s.ProxyClients {
-		metadata := pc.Metadata()
+		settings := pc.Settings()
 
-		if metadata.Settings == nil ||
-			metadata.Settings.BasePath == "" ||
-			metadata.Settings.BasePath == "/" {
+		if settings == nil ||
+			settings.BasePath == "" ||
+			settings.BasePath == "/" {
 			defaultIndex = i
 
 			continue
 		}
 
-		if strings.HasPrefix(requestPath, metadata.Settings.BasePath) {
+		if strings.HasPrefix(requestPath, settings.BasePath) {
 			return pc
 		}
 	}
