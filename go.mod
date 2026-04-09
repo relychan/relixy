@@ -7,11 +7,11 @@ require (
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/hasura/gotel v0.7.2
-	github.com/relychan/gohttpc v0.0.0-20260402045657-59c0214cec37
+	github.com/relychan/gohttpc v0.0.0-20260408163431-cd354060d46a
 	github.com/relychan/gohttps v0.0.0-20260324085512-a759b25e1ac5
 	github.com/relychan/goutils v0.0.0-20260404183650-6657ea84ff81
 	github.com/relychan/jsonschema v0.13.1
-	github.com/relychan/openapitools v0.0.0-20260406051143-73c94b061263
+	github.com/relychan/openapitools v0.0.0-20260409170200-ad9b89af524f
 	github.com/relychan/rely-auth v0.0.0-20260405031736-2571b95319fa
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel v1.43.0
@@ -83,7 +83,7 @@ require (
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260406210006-6f92a3bedf2d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // indirect

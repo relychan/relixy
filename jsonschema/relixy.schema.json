@@ -107,23 +107,6 @@
    "$schema": "https://json-schema.org/draft/2020-12/schema",
    "$id": "https://spec.openapis.org/oas/3.2/schema/2025-09-17",
    "$ref": "#/$defs/specification-extensions",
-   "anyOf": [
-    {
-     "required": [
-      "paths"
-     ]
-    },
-    {
-     "required": [
-      "components"
-     ]
-    },
-    {
-     "required": [
-      "webhooks"
-     ]
-    }
-   ],
    "properties": {
     "openapi": {
      "type": "string",
@@ -1024,7 +1007,6 @@
   "OpenAPIResourceDefinition": {
    "oneOf": [
     {
-     "title": "OpenAPIResourceRef",
      "properties": {
       "ref": {
        "type": "string",
@@ -1035,10 +1017,10 @@
      "required": [
       "ref"
      ],
+     "title": "OpenAPIResourceRef",
      "description": "Definition of an OpenAPI resource"
     },
     {
-     "title": "OpenAPIResourceSpec",
      "properties": {
       "spec": {
        "$ref": "#/$defs/Document",
@@ -1049,6 +1031,7 @@
      "required": [
       "spec"
      ],
+     "title": "OpenAPIResourceSpec",
      "description": "Definition of an OpenAPI resource"
     }
    ],
@@ -1101,32 +1084,32 @@
   "OverlayActionObject": {
    "oneOf": [
     {
-     "title": "OverlayActionUpdateObject",
+     "oneOf": [
+      {
+       "required": [
+        "update"
+       ]
+      },
+      {
+       "required": [
+        "copy"
+       ]
+      }
+     ],
      "properties": {
       "update": {
+       "$ref": "#/$defs/Document",
        "description": "If the target selects object nodes, the value of this field MUST be an object with the properties and values to merge with each selected object. If the target selects array nodes, the value of this field MUST be an array to concatenate with each selected array, or an object or primitive value to append to each selected array. If the target selects primitive nodes, the value of this field MUST be a primitive value to replace each selected node. This field has no impact if the remove field of this action object is true or if the copy field contains a value."
-      }
-     },
-     "type": "object",
-     "required": [
-      "update"
-     ]
-    },
-    {
-     "title": "OverlayActionCopyObject",
-     "properties": {
+      },
       "copy": {
        "type": "string",
        "description": "A JSONPath expression selecting a single node to copy into the target nodes. If the target selects object nodes, the value of this field MUST be an object with the properties and values to merge with each selected object. If the target selects array nodes, the value of this field MUST be an array to concatenate with each selected array, or an object or primitive value to append to each selected array. If the target selects primitive nodes, the value of this field MUST be a primitive value to replace each selected node. This field has no impact if the remove field of this action object is true or if the update field contains a value."
       }
      },
      "type": "object",
-     "required": [
-      "copy"
-     ]
+     "title": "OverlayActionUpdateCopyObject"
     },
     {
-     "title": "OverlayActionRemoveObject",
      "properties": {
       "remove": {
        "type": "boolean",
@@ -1137,7 +1120,8 @@
      "type": "object",
      "required": [
       "remove"
-     ]
+     ],
+     "title": "OverlayActionRemoveObject"
     }
    ],
    "properties": {
@@ -4119,17 +4103,6 @@
      },
      "type": "object",
      "description": "Defines custom headers to be injected to the remote server.\nMerged with the global headers."
-    },
-    "x-rely-server-security-schemes": {
-     "additionalProperties": {
-      "$ref": "#/$defs/security-scheme"
-     },
-     "type": "object",
-     "description": "Security schemes that can be used by the operations.\nUse global security schemes if empty."
-    },
-    "x-rely-server-security": {
-     "$ref": "#/$defs/security-requirement",
-     "description": "Global security requirements/roles for the target.\nUse global securities if empty."
     },
     "x-rely-server-tls": {
      "$ref": "#/$defs/TLSConfig",
