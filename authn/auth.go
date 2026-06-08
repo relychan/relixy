@@ -21,6 +21,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/relychan/gohttps/httputils"
 	"github.com/relychan/goutils"
+	"github.com/relychan/goutils/httperror"
 	"github.com/relychan/rely-auth/auth"
 	"github.com/relychan/rely-auth/auth/authmode"
 	"go.opentelemetry.io/otel/trace"
@@ -50,8 +51,9 @@ type authMiddleware[T any] struct {
 // ServeHTTP implements the http.Handler interface to authenticate the request.
 func (am *authMiddleware[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	authRequest := &authmode.AuthenticateRequestData{
-		URL:     r.URL.String(),
-		Headers: goutils.ExtractHeaders(r.Header),
+		URL:        r.URL.String(),
+		Headers:    goutils.ExtractHeaders(r.Header),
+		RemoteAddr: r.RemoteAddr,
 	}
 
 	ctx := r.Context()
@@ -79,7 +81,7 @@ func (am *authMiddleware[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// use mapstructure to map session variables to the custom structure.
 	err = mapstructure.Decode(sessionVariables, &result)
 	if err != nil {
-		respBody := goutils.NewServerError()
+		respBody := httperror.NewServerError()
 		respBody.Detail = err.Error()
 		respBody.Instance = r.URL.Path
 

@@ -71,7 +71,7 @@ func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, *slog
 		serverConfigPath = "/etc/relixy/config.yaml"
 	}
 
-	slog.Info( //nolint:gosec
+	slog.Info(
 		"Loading configurations from file...",
 		slog.String("path", serverConfigPath),
 	)

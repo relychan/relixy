@@ -1,3 +1,4 @@
+// Package restrouter implements REST API gateway routers.
 package restrouter
 
 import (
@@ -75,14 +76,10 @@ func SetupRouter(
 			basePath += "*"
 		}
 
-		state := &State{
-			ProxyClient: proxyClient,
-		}
-
-		shutdownFuncs = append(shutdownFuncs, state.Close)
+		shutdownFuncs = append(shutdownFuncs, proxyClient.Close)
 		router.Handle(
 			basePath,
-			middlewares.Handler(NewRESTHandler(state)),
+			middlewares.Handler(proxyClient),
 		)
 	}
 

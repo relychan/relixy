@@ -10,15 +10,15 @@ COPY . .
 
 RUN CGO_ENABLED=0 go build \
     -ldflags="-X 'github.com/relychan/relixy/config.BuildVersion=${VERSION}'" \
-    -v -o relixy ./cmd/rest
+    -v -o rely-rest ./cmd/rest
 
 # stage 2: production image
 FROM gcr.io/distroless/static-debian13:nonroot
 
 # Copy the binary to the production image from the builder stage.
-COPY --from=builder /app/relixy /relixy
+COPY --from=builder /app/rely-rest /rely-rest
 
 USER 65532
 
 # Run the web service on container startup.
-ENTRYPOINT ["/relixy"]
+ENTRYPOINT ["/rely-rest"]

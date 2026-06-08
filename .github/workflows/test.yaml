@@ -9,7 +9,7 @@ on:
 
 env:
   DOCKER_REGISTRY: ghcr.io
-  DOCKER_IMAGE_NAME: relychan/relixy
+  DOCKER_IMAGE_NAME: relychan/rely-rest
 
 permissions:
   pull-requests: write

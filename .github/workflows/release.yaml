@@ -6,8 +6,8 @@ on:
 
 env:
   DOCKER_REGISTRY: ghcr.io
-  DOCKER_IMAGE_NAME: relychan/relixy
-  DOCKER_IMAGE_DDN_NAME: relychan/relixy-ddn
+  DOCKER_IMAGE_NAME: relychan/rely-rest
+  DOCKER_IMAGE_DDN_NAME: relychan/rely-rest-ddn
 
 permissions:
   pull-requests: write
