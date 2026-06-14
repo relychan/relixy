@@ -57,13 +57,13 @@ jobs:
           tags: ${{ steps.docker-metadata.outputs.tags }}
           labels: ${{ steps.docker-metadata.outputs.labels }}
           platforms: linux/amd64,linux/arm64
-          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest
-          cache-to: type=inline
+          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:main-cache
+          cache-to: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:main-cache
           build-args: |
             VERSION=${{ steps.get-version.outputs.tagged_version }}
 
       - name: Scan High/Critical Vulnerabilities
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           scan-type: "image"
           image-ref: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.get-version.outputs.tagged_version }}
@@ -85,10 +85,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           push: true
+          file: Dockerfile.ddn
           tags: ${{ steps.docker-metadata-ddn.outputs.tags }}
           labels: ${{ steps.docker-metadata-ddn.outputs.labels }}
           platforms: linux/amd64,linux/arm64
-          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_DDN_NAME }}:latest
-          cache-to: type=inline
+          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_DDN_NAME }}:main-cache
+          cache-to: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_DDN_NAME }}:main-cache
           build-args: |
             VERSION=${{ steps.get-version.outputs.tagged_version }}

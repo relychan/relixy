@@ -1,0 +1,25 @@
+name: Security scan
+on:
+  schedule:
+    - cron: "0 0 */5 * *" # Run daily at midnight UTC
+  workflow_dispatch: # Allow manual triggering
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  DOCKER_IMAGE_NAME: relychan/rely-rest
+
+jobs:
+  vulnerability-scan:
+    name: Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan High/Critical Vulnerabilities
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          scan-type: "image"
+          image-ref: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+          format: table
+          severity: "CRITICAL,HIGH"
+          scanners: vuln
+          ignore-unfixed: true
+          exit-code: 1

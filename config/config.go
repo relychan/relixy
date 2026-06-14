@@ -145,7 +145,7 @@ func resolveDefinitionPaths(basePath string, paths []string) ([]string, error) {
 			return nil, fmt.Errorf("failed to resolve %s: %w", p, err)
 		}
 
-		if pathOrURI.Scheme != "" || filepath.IsAbs(p) {
+		if pathOrURI != nil || filepath.IsAbs(p) {
 			results = append(results, p)
 		} else {
 			results = append(results, filepath.Join(basePath, p))
