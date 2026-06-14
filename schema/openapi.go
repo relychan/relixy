@@ -15,7 +15,7 @@
 package schema
 
 import (
-	"github.com/relychan/jsonschema"
+	"github.com/invopop/jsonschema"
 	"github.com/relychan/openapitools/oaschema"
 	"github.com/relychan/openapitools/openapiclient"
 	"github.com/relychan/relixy/schema/baseschema"

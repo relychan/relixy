@@ -22,8 +22,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/invopop/jsonschema"
 	"github.com/relychan/goutils"
-	"github.com/relychan/jsonschema"
 	"github.com/relychan/relixy/schema"
 )
 

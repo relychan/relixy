@@ -16,7 +16,7 @@
 package baseschema
 
 import (
-	"github.com/relychan/jsonschema"
+	"github.com/invopop/jsonschema"
 	"github.com/relychan/rely-auth/auth"
 )
 

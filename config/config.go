@@ -140,7 +140,7 @@ func resolveDefinitionPaths(basePath string, paths []string) ([]string, error) {
 	results := make([]string, 0, len(paths))
 
 	for _, p := range paths {
-		pathOrURI, err := goutils.ParsePathOrHTTPURL(p)
+		pathOrURI, err := goutils.ParseFilePathOrHTTPURL(p)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve %s: %w", p, err)
 		}

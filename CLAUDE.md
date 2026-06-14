@@ -47,19 +47,19 @@ Config loading → metadata parsing → telemetry setup → router creation (Pro
 
 ### Key Dependencies
 
-| Dependency | Purpose |
-|---|---|
-| `github.com/go-chi/chi/v5` | HTTP router |
-| `github.com/relychan/rely-auth` | Pluggable authentication |
-| `github.com/relychan/gohttpc` | HTTP client utilities |
-| `github.com/relychan/gohttps` | HTTP server with TLS and tracing |
-| `github.com/relychan/openapitools` | OpenAPI parsing and proxy client |
-| `github.com/hasura/gotel` + `go.opentelemetry.io/otel/*` | OpenTelemetry tracing |
-| `github.com/caarlos0/env/v11` | Environment variable config binding |
-| `go.yaml.in/yaml/v4` | YAML parsing |
-| `github.com/relychan/jsonschema` | JSON schema generation |
-| `github.com/relychan/goutils` | Shared HTTP error helpers |
-| `gotest.tools/v3` | Test assertions |
+| Dependency                                               | Purpose                             |
+| -------------------------------------------------------- | ----------------------------------- |
+| `github.com/go-chi/chi/v5`                               | HTTP router                         |
+| `github.com/relychan/rely-auth`                          | Pluggable authentication            |
+| `github.com/relychan/gohttpc`                            | HTTP client utilities               |
+| `github.com/relychan/gohttps`                            | HTTP server with TLS and tracing    |
+| `github.com/relychan/openapitools`                       | OpenAPI parsing and proxy client    |
+| `github.com/hasura/gotel` + `go.opentelemetry.io/otel/*` | OpenTelemetry tracing               |
+| `github.com/caarlos0/env/v11`                            | Environment variable config binding |
+| `go.yaml.in/yaml/v4`                                     | YAML parsing                        |
+| `github.com/invopop/jsonschema`                          | JSON schema generation              |
+| `github.com/relychan/goutils`                            | Shared HTTP error helpers           |
+| `gotest.tools/v3`                                        | Test assertions                     |
 
 ### HTTP Error Helpers
 

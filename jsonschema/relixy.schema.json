@@ -103,6 +103,16 @@
    "type": "object",
    "description": "ClientCredentialsOAuthFlow contains flow configurations for OAuth 2.0 client credential flow."
   },
+  "ClientIPLocation": {
+   "type": "string",
+   "enum": [
+    "x_forwarded_for",
+    "header",
+    "remote_addr"
+   ],
+   "description": "The position of the IP to select. Default is the X-Forwarded-For header.",
+   "default": "x_forwarded_for"
+  },
   "Document": {
    "$schema": "https://json-schema.org/draft/2020-12/schema",
    "$id": "https://spec.openapis.org/oas/3.2/schema/2025-09-17",
@@ -380,16 +390,6 @@
     "type"
    ],
    "description": "FieldMappingObjectConfig represents configurations for the object field mapping."
-  },
-  "ForwardedIPPosition": {
-   "type": "string",
-   "enum": [
-    "rightmost",
-    "leftmost",
-    "edge"
-   ],
-   "description": "The position of the IP to select if the X-Forwarded-For header has many IPs. Default is rightmost.",
-   "default": "rightmost"
   },
   "HTTPAuthConfig": {
    "properties": {
@@ -1075,6 +1075,10 @@
     "healthCheck": {
      "$ref": "#/$defs/HealthCheckConfig",
      "description": "HealthCheck define the health check policy for load balancer recovery."
+    },
+    "strict": {
+     "type": "boolean",
+     "description": "Enable or disable the strict validation mode."
     }
    },
    "additionalProperties": false,
@@ -1155,6 +1159,11 @@
   },
   "ProxyCustomGraphQLResponseConfig": {
    "properties": {
+    "contentType": {
+     "type": "string",
+     "pattern": "^((text/[a-z]+)|(application/json))$",
+     "description": "Content type of the response to be transformed to. Default is application/json."
+    },
     "httpErrorCode": {
      "type": "integer",
      "maximum": 599,
@@ -1283,9 +1292,9 @@
   },
   "ProxyGraphQLRequestConfig": {
    "properties": {
-    "url": {
+    "path": {
      "type": "string",
-     "description": "Overrides the request URL. Use the original request path if empty."
+     "description": "Overrides the request path. Use the original request path if empty."
     },
     "method": {
      "type": "string",
@@ -1374,6 +1383,10 @@
      "type": "boolean",
      "description": "When this is true, parameter values are serialized using reserved expansion."
     },
+    "required": {
+     "type": "boolean",
+     "description": "Whether the parameter is required."
+    },
     "in": {
      "type": "string",
      "enum": [
@@ -1399,9 +1412,9 @@
   },
   "ProxyRESTfulRequestConfig": {
    "properties": {
-    "url": {
+    "path": {
      "type": "string",
-     "description": "Overrides the request URL. Use the original request path if empty."
+     "description": "Overrides the request path. Use the original request path if empty."
     },
     "method": {
      "type": "string",
@@ -1627,6 +1640,78 @@
    "description": "RelyAuthDefinition defines authentication modes and settings."
   },
   "RelyAuthIPAllowListConfig": {
+   "oneOf": [
+    {
+     "properties": {
+      "location": {
+       "type": "string",
+       "enum": [
+        "x_forwarded_for"
+       ],
+       "description": "The location of the IP to select."
+      },
+      "numTrustedProxies": {
+       "type": "integer",
+       "description": "The exact number of trusted reverse proxies between this server and the public internet. Required if location=x_forwarded_for."
+      },
+      "trustedProxyIpPrefixes": {
+       "items": {
+        "type": "string",
+        "pattern": "^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\\\/([0-9]+))|((([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))\\\\/([0-9]+)))$"
+       },
+       "type": "array",
+       "description": "Proxy IPs must be in these trusted proxy prefixes. Ignore if empty. This configuration is available if location=x_forwarded_for."
+      }
+     },
+     "type": "object",
+     "required": [
+      "location"
+     ],
+     "title": "ClientIPFromXForwardedFor"
+    },
+    {
+     "properties": {
+      "location": {
+       "type": "string",
+       "enum": [
+        "header"
+       ],
+       "description": "The location of the IP to select."
+      },
+      "headers": {
+       "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9!#\\$%\u0026'*+\\-.^_|~]+$"
+       },
+       "type": "array",
+       "minItems": 1,
+       "description": "The client IP could be in this header list. Required if location=header."
+      }
+     },
+     "type": "object",
+     "required": [
+      "location",
+      "headers"
+     ],
+     "title": "ClientIPFromHeader"
+    },
+    {
+     "properties": {
+      "location": {
+       "type": "string",
+       "enum": [
+        "remote_addr"
+       ],
+       "description": "The location of the IP to select."
+      }
+     },
+     "type": "object",
+     "required": [
+      "location"
+     ],
+     "title": "ClientIPFromRemoteAddr"
+    }
+   ],
    "properties": {
     "include": {
      "$ref": "#/$defs/EnvStringSlice",
@@ -1636,20 +1721,9 @@
      "$ref": "#/$defs/EnvStringSlice",
      "description": "List of disallowed patterns."
     },
-    "position": {
-     "$ref": "#/$defs/ForwardedIPPosition",
-     "description": "The position of the IP to select if the X-Forwarded-For header has many IPs. Default is rightmost."
-    },
     "publicOnly": {
      "type": "boolean",
      "description": "Allow public IPs only."
-    },
-    "headers": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array",
-     "description": "The client IP could be in this header list. Use default client IP headers if empty."
     }
    },
    "additionalProperties": false,
@@ -1820,7 +1894,8 @@
        "description": "Configurations for request headers and transformed request body to be sent to the auth hook"
       }
      },
-     "type": "object"
+     "type": "object",
+     "title": "RelyAuthWebhookGETConfig"
     },
     {
      "properties": {
@@ -1844,7 +1919,8 @@
        "description": "Configurations for request headers and transformed request body to be sent to the auth hook"
       }
      },
-     "type": "object"
+     "type": "object",
+     "title": "RelyAuthWebhookPOSTConfig"
     }
    ],
    "properties": {
