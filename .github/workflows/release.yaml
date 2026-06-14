@@ -63,7 +63,7 @@ jobs:
             VERSION=${{ steps.get-version.outputs.tagged_version }}
 
       - name: Scan High/Critical Vulnerabilities
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "image"
           image-ref: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.get-version.outputs.tagged_version }}
@@ -75,7 +75,7 @@ jobs:
 
       - name: Relixy DDN - Extract metadata (tags, labels) for Docker image
         id: docker-metadata-ddn
-        uses: docker/metadata-action@v7
+        uses: docker/metadata-action@v6
         if: startsWith(github.ref, 'refs/tags/')
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_DDN_NAME }}
