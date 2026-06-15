@@ -3,6 +3,33 @@
  "$id": "https://github.com/relychan/relixy/config/relixy-server-config",
  "$ref": "#/$defs/RelixyServerConfig",
  "$defs": {
+  "ClientIPConfig": {
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "headers": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "trustedIpPrefixes": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "numTrustedProxies": {
+     "type": "integer"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "type"
+   ]
+  },
   "OTLPConfig": {
    "$ref": "https://raw.githubusercontent.com/hasura/gotel/refs/heads/main/jsonschema/gotel.schema.json",
    "description": "Configurations for OpenTelemetry exporters"

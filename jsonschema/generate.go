@@ -22,7 +22,7 @@ import (
 	"maps"
 	"os"
 
-	"github.com/relychan/jsonschema"
+	"github.com/invopop/jsonschema"
 	"github.com/relychan/relixy/config"
 	"github.com/relychan/relixy/schema"
 )

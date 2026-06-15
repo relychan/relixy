@@ -20,8 +20,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/invopop/jsonschema"
 	"github.com/relychan/goutils"
-	"github.com/relychan/jsonschema"
 	"github.com/relychan/openapitools/oaschema"
 	"github.com/relychan/relixy/schema/baseschema"
 	"github.com/relychan/rely-auth/auth"

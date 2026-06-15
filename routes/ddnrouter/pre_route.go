@@ -11,7 +11,8 @@ import (
 
 	"github.com/hasura/gotel"
 	"github.com/relychan/gohttps/httputils"
-	"github.com/relychan/goutils"
+	"github.com/relychan/goutils/httperror"
+	"github.com/relychan/openapitools/openapiclient/handler/proxyhandler"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -48,7 +49,7 @@ func (pr *preRoutePluginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	proxyClient := pr.state.FindProxyClient(input.Path)
 	if proxyClient == nil {
-		err := goutils.NewNotFoundError()
+		err := httperror.NewNotFoundError()
 
 		span.SetStatus(codes.Error, err.Error())
 		span.RecordError(err)
@@ -63,20 +64,17 @@ func (pr *preRoutePluginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	req := &http.Request{
-		Method: input.Method,
-		URL: &url.URL{
-			Path:     input.Path,
-			RawPath:  input.Path,
-			RawQuery: input.Query,
-		},
-	}
+	req := proxyhandler.NewRequest(input.Method, &url.URL{
+		Path:     input.Path,
+		RawPath:  input.Path,
+		RawQuery: input.Query,
+	}, r.Header, nil)
 
 	if len(input.Body) > 0 {
-		req.Body = io.NopCloser(bytes.NewReader(input.Body))
+		req.SetBody(io.NopCloser(bytes.NewReader(input.Body)))
 	}
 
-	_, err := proxyClient.Stream(w, req) //nolint:bodyclose
+	_, err := proxyClient.Stream(ctx, w, req) //nolint:bodyclose
 	if err == nil {
 		return
 	}

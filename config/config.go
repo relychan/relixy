@@ -71,7 +71,7 @@ func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, *slog
 		serverConfigPath = "/etc/relixy/config.yaml"
 	}
 
-	slog.Info( //nolint:gosec
+	slog.Info(
 		"Loading configurations from file...",
 		slog.String("path", serverConfigPath),
 	)
@@ -140,14 +140,20 @@ func resolveDefinitionPaths(basePath string, paths []string) ([]string, error) {
 	results := make([]string, 0, len(paths))
 
 	for _, p := range paths {
-		pathOrURI, err := goutils.ParsePathOrHTTPURL(p)
+		pathOrURI, err := goutils.ParseFilePathOrHTTPURL(p)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve %s: %w", p, err)
 		}
 
-		if pathOrURI.Scheme != "" || filepath.IsAbs(p) {
+		switch {
+		case pathOrURI != nil:
 			results = append(results, p)
-		} else {
+		case filepath.IsAbs(p):
+			_, err := filepath.Rel(basePath, p)
+			if err != nil {
+				return nil, err
+			}
+		default:
 			results = append(results, filepath.Join(basePath, p))
 		}
 	}

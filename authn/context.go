@@ -17,7 +17,7 @@ package authn
 import (
 	"context"
 
-	"github.com/relychan/goutils"
+	"github.com/relychan/goutils/httperror"
 )
 
 // contextKey is a value for use with context.WithValue. It's used as
@@ -42,12 +42,12 @@ func GetAuthContext[T any](ctx context.Context) (T, error) { //nolint:ireturn
 	if rawValue == nil {
 		var zeroValue T
 
-		return zeroValue, goutils.NewUnauthorizedError()
+		return zeroValue, httperror.NewUnauthorizedError()
 	}
 
 	value, ok := rawValue.(T)
 	if !ok {
-		return value, goutils.NewServerError(goutils.ErrorDetail{
+		return value, httperror.NewServerError(httperror.ValidationError{
 			Detail: "unexpected authenticated context type",
 		})
 	}
