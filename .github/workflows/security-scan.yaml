@@ -1,5 +1,6 @@
 name: Security scan
 on:
+  push:
   schedule:
     - cron: "0 0 */5 * *" # Run daily at midnight UTC
   workflow_dispatch: # Allow manual triggering
