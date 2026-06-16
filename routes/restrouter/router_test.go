@@ -265,16 +265,16 @@ func runUnauthorizedRequest[T any](t *testing.T, r ddnrouter.PreRoutePluginReque
 }
 
 func TestSetupRouter_InvalidConfig(t *testing.T) {
-	t.Setenv(config.EnvNameConfigPath, "../testdata/invalid-config.yaml")
+	t.Setenv(config.ConfigPathEnvName, "../testdata/invalid-config.yaml")
 
-	_, _, err := config.LoadServerConfig(context.Background(), config.EnvNameConfigPath, "test")
+	_, _, err := config.LoadServerConfig(context.Background(), "test")
 	require.ErrorIs(t, err, io.EOF)
 }
 
 func TestSetupRouter_ValidConfig(t *testing.T) {
-	t.Setenv(config.EnvNameConfigPath, testPlaceholderConfig)
+	t.Setenv(config.ConfigPathEnvName, testPlaceholderConfig)
 
-	envVars, logger, err := config.LoadServerConfig(context.Background(), config.EnvNameConfigPath, "test")
+	envVars, logger, err := config.LoadServerConfig(context.Background(), "test")
 	require.NoError(t, err)
 
 	otelExporters := &gotel.OTelExporters{
@@ -359,9 +359,9 @@ func TestRESTHandler_GetAlbums(t *testing.T) {
 }
 
 func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {
-	t.Setenv(config.EnvNameConfigPath, configPath)
+	t.Setenv(config.ConfigPathEnvName, configPath)
 
-	envVars, logger, err := config.LoadServerConfig(context.Background(), config.EnvNameConfigPath, "test")
+	envVars, logger, err := config.LoadServerConfig(context.Background(), "test")
 	require.NoError(t, err)
 
 	otelExporters := &gotel.OTelExporters{

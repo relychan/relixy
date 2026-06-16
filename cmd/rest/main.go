@@ -40,7 +40,7 @@ func startServer() error {
 	ctx, stop := signal.NotifyContext(context.TODO(), os.Interrupt)
 	defer stop()
 
-	envVars, logger, err := config.LoadServerConfig(ctx, config.EnvNameConfigPath, "rely-rest")
+	envVars, logger, err := config.LoadServerConfig(ctx, "rely-rest")
 	if err != nil {
 		return err
 	}

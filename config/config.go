@@ -33,8 +33,8 @@ import (
 // BuildVersion is set when building the binary.
 var BuildVersion = "dev"
 
-// EnvNameConfigPath is the constant name of the config path environment variable.
-const EnvNameConfigPath = "RELY_CONFIG_PATH"
+// ConfigPathEnvName is the constant name of the config path environment variable.
+const ConfigPathEnvName = "RELY_CONFIG_PATH"
 
 // RelyDefinitionFileConfig represents the configurations for definition files.
 type RelyDefinitionFileConfig struct {
@@ -66,14 +66,13 @@ type RelyServerConfig struct {
 // LoadServerConfig loads and parses configurations for [RelyServerConfig].
 func LoadServerConfig(
 	parentContext context.Context,
-	configEnvName string,
 	serviceName string,
 ) (*RelyServerConfig, *slog.Logger, error) {
 	var result *RelyServerConfig
 
 	var err error
 
-	serverConfigPath := os.Getenv("RELY_CONFIG_PATH")
+	serverConfigPath := os.Getenv(ConfigPathEnvName)
 	if serverConfigPath == "" {
 		serverConfigPath = "/etc/rely/config.yaml"
 	}
