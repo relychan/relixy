@@ -258,16 +258,16 @@ func TestRestifiedPlugin_DDN(t *testing.T) {
 }
 
 func TestSetupRouter_InvalidConfig(t *testing.T) {
-	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/invalid-config.yaml")
+	t.Setenv(config.EnvNameConfigPath, "../testdata/invalid-config.yaml")
 
-	_, _, err := config.LoadServerConfig(context.Background())
+	_, _, err := config.LoadServerConfig(context.Background(), config.EnvNameConfigPath, "test")
 	require.ErrorIs(t, err, io.EOF)
 }
 
 func TestSetupRouter_ValidConfig(t *testing.T) {
-	t.Setenv("RELIXY_CONFIG_PATH", "../testdata/jsonplaceholder/config.yaml")
+	t.Setenv(config.EnvNameConfigPath, "../testdata/jsonplaceholder/config.yaml")
 
-	envVars, logger, err := config.LoadServerConfig(context.Background())
+	envVars, logger, err := config.LoadServerConfig(context.Background(), config.EnvNameConfigPath, "test")
 	require.NoError(t, err)
 
 	otelExporters := &gotel.OTelExporters{
@@ -399,9 +399,9 @@ func TestPreRoutePlugin_GetAlbums(t *testing.T) {
 }
 
 func initTestServer(t *testing.T, configPath string) (*httptest.Server, func()) {
-	t.Setenv("RELIXY_CONFIG_PATH", configPath)
+	t.Setenv(config.EnvNameConfigPath, configPath)
 
-	envVars, logger, err := config.LoadServerConfig(context.Background())
+	envVars, logger, err := config.LoadServerConfig(context.Background(), config.EnvNameConfigPath, "test")
 	require.NoError(t, err)
 
 	otelExporters := &gotel.OTelExporters{

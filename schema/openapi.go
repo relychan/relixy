@@ -25,26 +25,26 @@ import (
 type OpenAPIClient struct {
 	*openapiclient.ProxyClient
 
-	ResourceMetadata baseschema.RelixyResourceMetadata
+	ResourceMetadata baseschema.RelyResourceMetadata
 }
 
-// RelixyOpenAPIResource represents an OpenAPI resource.
-type RelixyOpenAPIResource struct {
+// RelyOpenAPIResource represents an OpenAPI resource.
+type RelyOpenAPIResource struct {
 	baseschema.BaseResourceModel `yaml:",inline"`
 
 	// Definition of the OpenAPI documentation.
 	Definition oaschema.OpenAPIResourceDefinition `json:"definition" yaml:"definition"`
 }
 
-var _ baseschema.RelixyResource = (*RelixyOpenAPIResource)(nil)
+var _ baseschema.RelyResource = (*RelyOpenAPIResource)(nil)
 
 // GetMetadata returns the metadata of the current resource.
-func (ror RelixyOpenAPIResource) GetMetadata() baseschema.RelixyResourceMetadata {
+func (ror RelyOpenAPIResource) GetMetadata() baseschema.RelyResourceMetadata {
 	return ror.Metadata
 }
 
 // JSONSchemaExtend modifies the JSON schema afterwards.
-func (RelixyOpenAPIResource) JSONSchemaExtend(schema *jsonschema.Schema) {
+func (RelyOpenAPIResource) JSONSchemaExtend(schema *jsonschema.Schema) {
 	defSchema, _ := schema.Properties.Get("definition")
 	defSchema.Description = "Definition of the OpenAPI documentation"
 	schema.Properties.Set("definition", defSchema)

@@ -31,7 +31,7 @@ import (
 // SetupMiddlewares sets up default middlewares and the shutdown function for the handler.
 func SetupMiddlewares(
 	ctx context.Context,
-	metadata *RelixyMetadata,
+	metadata *RelyMetadata,
 	ts *gotel.OTelExporters,
 ) (chi.Middlewares, *auth.RelyAuthManager, error) {
 	middlewares := chi.Middlewares{

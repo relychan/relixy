@@ -39,7 +39,7 @@ func genOpenAPIResourceSchema() (*jsonschema.Schema, error) {
 		return nil, err
 	}
 
-	reflectSchema := r.Reflect(schema.RelixyOpenAPIResource{})
+	reflectSchema := r.Reflect(schema.RelyOpenAPIResource{})
 
 	remoteSchemas, err := downloadRemoteSchemas()
 	if err != nil {

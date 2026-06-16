@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../../jsonschema/relixy.schema.json
+# yaml-language-server: $schema=../../../jsonschema/rely-resources.schema.json
 version: v1
 kind: OpenAPI
 metadata:
@@ -66,7 +66,7 @@ definition:
               httpErrorCode: 400
 
 ---
-# yaml-language-server: $schema=../../../jsonschema/relixy.schema.json
+# yaml-language-server: $schema=../../../jsonschema/rely-resources.schema.json
 version: v1
 kind: RelyAuth
 definition:

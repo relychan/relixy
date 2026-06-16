@@ -22,12 +22,12 @@ import (
 	"go.yaml.in/yaml/v4"
 )
 
-func TestRelixyResource_UnmarshalYAML_OpenAPI(t *testing.T) {
+func TestRelyResource_UnmarshalYAML_OpenAPI(t *testing.T) {
 	testCases := []struct {
 		name        string
 		yamlData    string
 		expectError error
-		checkFunc   func(*testing.T, *RelixyResource)
+		checkFunc   func(*testing.T, *RelyResource)
 	}{
 		{
 			name: "valid OpenAPI resource with inline spec",
@@ -85,7 +85,7 @@ definition:
                   path: query.offset[0]
                   default:
                     value: 0`,
-			checkFunc: func(t *testing.T, r *RelixyResource) {
+			checkFunc: func(t *testing.T, r *RelyResource) {
 				base := r.GetBaseResource()
 				assert.Equal(t, "v1", base.Version)
 				assert.Equal(t, "test-api", base.Metadata.Name)
@@ -105,7 +105,7 @@ definition:
       title: Minimal API
       version: "1.0.0"
     paths: {}`,
-			checkFunc: func(t *testing.T, r *RelixyResource) {
+			checkFunc: func(t *testing.T, r *RelyResource) {
 				base := r.GetBaseResource()
 				assert.Equal(t, "v1", base.Version)
 				assert.Equal(t, "minimal-api", base.Metadata.Name)
@@ -120,7 +120,7 @@ metadata:
   name: ref-api
 definition:
   ref: https://example.com/openapi.yaml`,
-			checkFunc: func(t *testing.T, r *RelixyResource) {
+			checkFunc: func(t *testing.T, r *RelyResource) {
 				base := r.GetBaseResource()
 				assert.Equal(t, "ref-api", base.Metadata.Name)
 			},
@@ -131,7 +131,7 @@ definition:
 kind: OpenAPI
 metadata:
   name: test-api`,
-			expectError: ErrRelixyResourceDefinitionRequired,
+			expectError: ErrRelyResourceDefinitionRequired,
 		},
 		{
 			name: "unsupported kind",
@@ -146,13 +146,13 @@ definition:
       title: Test
       version: "1.0.0"
     paths: {}`,
-			expectError: ErrUnsupportedRelixyResourceKind,
+			expectError: ErrUnsupportedRelyResourceKind,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var r RelixyResource
+			var r RelyResource
 			err := yaml.Load([]byte(tc.yamlData), &r)
 
 			if tc.expectError != nil {
@@ -161,7 +161,7 @@ definition:
 			}
 
 			assert.NoError(t, err)
-			assert.True(t, r.RelixyResource != nil)
+			assert.True(t, r.RelyResource != nil)
 
 			if tc.checkFunc != nil {
 				tc.checkFunc(t, &r)
@@ -170,12 +170,12 @@ definition:
 	}
 }
 
-func TestRelixyResource_UnmarshalYAML_RelyAuth(t *testing.T) {
+func TestRelyResource_UnmarshalYAML_RelyAuth(t *testing.T) {
 	testCases := []struct {
 		name        string
 		yamlData    string
 		expectError error
-		checkFunc   func(*testing.T, *RelixyResource)
+		checkFunc   func(*testing.T, *RelyResource)
 	}{
 		{
 			name: "valid RelyAuth resource with noAuth mode",
@@ -184,7 +184,7 @@ kind: RelyAuth
 definition:
   modes:
     - mode: noAuth`,
-			checkFunc: func(t *testing.T, r *RelixyResource) {
+			checkFunc: func(t *testing.T, r *RelyResource) {
 				base := r.GetBaseResource()
 				assert.Equal(t, "v1", base.Version)
 				assert.Equal(t, "RelyAuth", string(base.Kind))
@@ -203,7 +203,7 @@ definition:
       value:
         value: secret-token
       sessionVariables: {}`,
-			checkFunc: func(t *testing.T, r *RelixyResource) {
+			checkFunc: func(t *testing.T, r *RelyResource) {
 				base := r.GetBaseResource()
 				assert.Equal(t, "RelyAuth", string(base.Kind))
 			},
@@ -214,13 +214,13 @@ definition:
 kind: RelyAuth
 metadata:
   name: auth-resource`,
-			expectError: ErrRelixyResourceDefinitionRequired,
+			expectError: ErrRelyResourceDefinitionRequired,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var r RelixyResource
+			var r RelyResource
 			err := yaml.Load([]byte(tc.yamlData), &r)
 
 			if tc.expectError != nil {
@@ -229,7 +229,7 @@ metadata:
 			}
 
 			assert.NoError(t, err)
-			assert.True(t, r.RelixyResource != nil)
+			assert.True(t, r.RelyResource != nil)
 
 			if tc.checkFunc != nil {
 				tc.checkFunc(t, &r)

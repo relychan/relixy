@@ -22,8 +22,8 @@ import (
 	"go.yaml.in/yaml/v4"
 )
 
-func TestRelixyResourceMetadata_JSONMarshal(t *testing.T) {
-	metadata := RelixyResourceMetadata{
+func TestRelyResourceMetadata_JSONMarshal(t *testing.T) {
+	metadata := RelyResourceMetadata{
 		Name:        "test-resource",
 		Description: "Test description",
 		Instruction: "Test instruction",
@@ -32,7 +32,7 @@ func TestRelixyResourceMetadata_JSONMarshal(t *testing.T) {
 	data, err := json.Marshal(metadata)
 	assert.NoError(t, err)
 
-	var result RelixyResourceMetadata
+	var result RelyResourceMetadata
 	err = json.Unmarshal(data, &result)
 	assert.NoError(t, err)
 	assert.Equal(t, metadata.Name, result.Name)
@@ -40,8 +40,8 @@ func TestRelixyResourceMetadata_JSONMarshal(t *testing.T) {
 	assert.Equal(t, metadata.Instruction, result.Instruction)
 }
 
-func TestRelixyResourceMetadata_YAMLMarshal(t *testing.T) {
-	metadata := RelixyResourceMetadata{
+func TestRelyResourceMetadata_YAMLMarshal(t *testing.T) {
+	metadata := RelyResourceMetadata{
 		Name:        "test-resource",
 		Description: "Test description",
 		Instruction: "Test instruction",
@@ -50,7 +50,7 @@ func TestRelixyResourceMetadata_YAMLMarshal(t *testing.T) {
 	data, err := yaml.Marshal(metadata)
 	assert.NoError(t, err)
 
-	var result RelixyResourceMetadata
+	var result RelyResourceMetadata
 	err = yaml.Unmarshal(data, &result)
 	assert.NoError(t, err)
 	assert.Equal(t, metadata.Name, result.Name)
@@ -58,12 +58,12 @@ func TestRelixyResourceMetadata_YAMLMarshal(t *testing.T) {
 	assert.Equal(t, metadata.Instruction, result.Instruction)
 }
 
-func TestRelixyResourceMetadata_JSONUnmarshal(t *testing.T) {
+func TestRelyResourceMetadata_JSONUnmarshal(t *testing.T) {
 	testCases := []struct {
 		name        string
 		jsonData    string
 		expectError bool
-		checkFunc   func(*testing.T, *RelixyResourceMetadata)
+		checkFunc   func(*testing.T, *RelyResourceMetadata)
 	}{
 		{
 			name: "complete metadata",
@@ -73,7 +73,7 @@ func TestRelixyResourceMetadata_JSONUnmarshal(t *testing.T) {
 				"instruction": "Test instruction"
 			}`,
 			expectError: false,
-			checkFunc: func(t *testing.T, meta *RelixyResourceMetadata) {
+			checkFunc: func(t *testing.T, meta *RelyResourceMetadata) {
 				assert.Equal(t, "test-api", meta.Name)
 				assert.Equal(t, "Test API description", meta.Description)
 				assert.Equal(t, "Test instruction", meta.Instruction)
@@ -85,7 +85,7 @@ func TestRelixyResourceMetadata_JSONUnmarshal(t *testing.T) {
 				"name": "test-api"
 			}`,
 			expectError: false,
-			checkFunc: func(t *testing.T, meta *RelixyResourceMetadata) {
+			checkFunc: func(t *testing.T, meta *RelyResourceMetadata) {
 				assert.Equal(t, "test-api", meta.Name)
 				assert.Equal(t, "", meta.Description)
 				assert.Equal(t, "", meta.Instruction)
@@ -95,7 +95,7 @@ func TestRelixyResourceMetadata_JSONUnmarshal(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var meta RelixyResourceMetadata
+			var meta RelyResourceMetadata
 			err := json.Unmarshal([]byte(tc.jsonData), &meta)
 
 			if tc.expectError {
@@ -114,7 +114,7 @@ func TestBaseResourceModel_GetBaseResource(t *testing.T) {
 	model := BaseResourceModel{
 		Version: "v1",
 		Kind:    "OpenAPI",
-		Metadata: RelixyResourceMetadata{
+		Metadata: RelyResourceMetadata{
 			Name:        "test-resource",
 			Description: "Test description",
 		},
@@ -131,7 +131,7 @@ func TestBaseResourceModel_JSONMarshal(t *testing.T) {
 	model := BaseResourceModel{
 		Version: "v1",
 		Kind:    "OpenAPI",
-		Metadata: RelixyResourceMetadata{
+		Metadata: RelyResourceMetadata{
 			Name:        "test-resource",
 			Description: "Test description",
 		},
@@ -152,7 +152,7 @@ func TestBaseResourceModel_YAMLMarshal(t *testing.T) {
 	model := BaseResourceModel{
 		Version: "v1",
 		Kind:    "OpenAPI",
-		Metadata: RelixyResourceMetadata{
+		Metadata: RelyResourceMetadata{
 			Name:        "test-resource",
 			Description: "Test description",
 		},
