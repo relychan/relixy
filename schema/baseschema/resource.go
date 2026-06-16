@@ -20,18 +20,18 @@ import (
 	"github.com/relychan/rely-auth/auth"
 )
 
-// RelixyResourceKind represents a kind of the Relixy resource.
-type RelixyResourceKind string
+// RelyResourceKind represents a kind of the Rely resource.
+type RelyResourceKind string
 
 const (
 	// RelyAuthKind represents a kind enum for the RelyAuth specification.
-	RelyAuthKind RelixyResourceKind = "RelyAuth"
+	RelyAuthKind RelyResourceKind = "RelyAuth"
 	// OpenAPIKind represents a kind enum for the OpenAPI specification.
-	OpenAPIKind RelixyResourceKind = "OpenAPI"
+	OpenAPIKind RelyResourceKind = "OpenAPI"
 )
 
-// RelixyResourceMetadata represents common metadata of the resource.
-type RelixyResourceMetadata struct {
+// RelyResourceMetadata represents common metadata of the resource.
+type RelyResourceMetadata struct {
 	// Name of the resource.
 	Name string `json:"name" yaml:"name" jsonschema:"default=default,description=Name of the resource"`
 	// Description of the resource.
@@ -40,8 +40,8 @@ type RelixyResourceMetadata struct {
 	Instruction string `json:"instruction,omitempty" yaml:"instruction,omitempty" jsonschema:"description=System instruction for the current resource. It's important to the LLM"`
 }
 
-// RelixyResource abstracts an interface for Relixy resource.
-type RelixyResource interface {
+// RelyResource abstracts an interface for a rely resource.
+type RelyResource interface {
 	// GetBaseResource returns the base resource information of the current resource.
 	GetBaseResource() BaseResourceModel
 }
@@ -51,12 +51,12 @@ type BaseResourceModel struct {
 	// Version of the resource.
 	Version string `json:"version" yaml:"version" jsonschema:"enum=v1,description=Version of the resource"`
 	// Kind of the resource.
-	Kind RelixyResourceKind `json:"kind" yaml:"kind"`
+	Kind RelyResourceKind `json:"kind" yaml:"kind"`
 	// Metadata of the resource.
-	Metadata RelixyResourceMetadata `json:"metadata" yaml:"metadata" jsonschema:"description=Metadata of the resource"`
+	Metadata RelyResourceMetadata `json:"metadata" yaml:"metadata" jsonschema:"description=Metadata of the resource"`
 }
 
-var _ RelixyResource = (*BaseResourceModel)(nil)
+var _ RelyResource = (*BaseResourceModel)(nil)
 
 // GetBaseResource returns the base resource information of the current resource.
 func (ror BaseResourceModel) GetBaseResource() BaseResourceModel {
@@ -71,7 +71,7 @@ type RelyAuthResource struct {
 	Definition auth.RelyAuthDefinition `json:"definition" yaml:"definition"`
 }
 
-var _ RelixyResource = (*RelyAuthResource)(nil)
+var _ RelyResource = (*RelyAuthResource)(nil)
 
 // JSONSchemaExtend modifies the JSON schema afterwards.
 func (RelyAuthResource) JSONSchemaExtend(schema *jsonschema.Schema) {

@@ -1,7 +1,7 @@
 {
  "$schema": "https://json-schema.org/draft/2020-12/schema",
- "$id": "https://github.com/relychan/relixy/schema/relixy-resource",
- "$ref": "#/$defs/RelixyResource",
+ "$id": "https://github.com/relychan/relixy/schema/rely-resource",
+ "$ref": "#/$defs/RelyResource",
  "$defs": {
   "AllOrListString": {
    "oneOf": [
@@ -1458,74 +1458,6 @@
    "type": "object",
    "description": "ProxyRESTfulRequestConfig represents configurations for the proxy request."
   },
-  "RelixyOpenAPIResource": {
-   "properties": {
-    "version": {
-     "type": "string",
-     "enum": [
-      "v1"
-     ],
-     "description": "Version of the resource"
-    },
-    "kind": {
-     "type": "string",
-     "const": "OpenAPI",
-     "description": "Kind of the resource which is always OpenAPI."
-    },
-    "metadata": {
-     "$ref": "#/$defs/RelixyResourceMetadata",
-     "description": "Metadata of the resource"
-    },
-    "definition": {
-     "$ref": "#/$defs/OpenAPIResourceDefinition",
-     "description": "Definition of the OpenAPI documentation"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "version",
-    "kind",
-    "metadata",
-    "definition"
-   ],
-   "description": "RelixyOpenAPIResource represents an OpenAPI resource."
-  },
-  "RelixyResource": {
-   "oneOf": [
-    {
-     "$ref": "#/$defs/RelixyOpenAPIResource",
-     "description": "Definition of an OpenAPI resource"
-    },
-    {
-     "$ref": "#/$defs/RelyAuthConfig",
-     "description": "Definition of a RelyAuth resource"
-    }
-   ]
-  },
-  "RelixyResourceMetadata": {
-   "properties": {
-    "name": {
-     "type": "string",
-     "description": "Name of the resource",
-     "default": "default"
-    },
-    "description": {
-     "type": "string",
-     "description": "Description of the resource"
-    },
-    "instruction": {
-     "type": "string",
-     "description": "System instruction for the current resource. It's important to the LLM"
-    }
-   },
-   "additionalProperties": false,
-   "type": "object",
-   "required": [
-    "name"
-   ],
-   "description": "RelixyResourceMetadata represents common metadata of the resource."
-  },
   "RelyAuthAPIKeyConfig": {
    "properties": {
     "id": {
@@ -1958,6 +1890,74 @@
     "url",
     "method"
    ]
+  },
+  "RelyOpenAPIResource": {
+   "properties": {
+    "version": {
+     "type": "string",
+     "enum": [
+      "v1"
+     ],
+     "description": "Version of the resource"
+    },
+    "kind": {
+     "type": "string",
+     "const": "OpenAPI",
+     "description": "Kind of the resource which is always OpenAPI."
+    },
+    "metadata": {
+     "$ref": "#/$defs/RelyResourceMetadata",
+     "description": "Metadata of the resource"
+    },
+    "definition": {
+     "$ref": "#/$defs/OpenAPIResourceDefinition",
+     "description": "Definition of the OpenAPI documentation"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "version",
+    "kind",
+    "metadata",
+    "definition"
+   ],
+   "description": "RelyOpenAPIResource represents an OpenAPI resource."
+  },
+  "RelyResource": {
+   "oneOf": [
+    {
+     "$ref": "#/$defs/RelyOpenAPIResource",
+     "description": "Definition of an OpenAPI resource"
+    },
+    {
+     "$ref": "#/$defs/RelyAuthConfig",
+     "description": "Definition of a RelyAuth resource"
+    }
+   ]
+  },
+  "RelyResourceMetadata": {
+   "properties": {
+    "name": {
+     "type": "string",
+     "description": "Name of the resource",
+     "default": "default"
+    },
+    "description": {
+     "type": "string",
+     "description": "Description of the resource"
+    },
+    "instruction": {
+     "type": "string",
+     "description": "System instruction for the current resource. It's important to the LLM"
+    }
+   },
+   "additionalProperties": false,
+   "type": "object",
+   "required": [
+    "name"
+   ],
+   "description": "RelyResourceMetadata represents common metadata of the resource."
   },
   "Stream": {
    "properties": {

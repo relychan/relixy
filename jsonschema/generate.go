@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package main generates the JSON schema for the relixy metadata.
+// Package main generates the JSON schema for the rely metadata.
 package main
 
 import (
@@ -30,12 +30,12 @@ import (
 func main() {
 	err := genSchema()
 	if err != nil {
-		panic(fmt.Errorf("failed to write jsonschema for RelixyAPIDocument: %w", err))
+		panic(fmt.Errorf("failed to write jsonschema for RelyResource: %w", err))
 	}
 
 	err = genServerConfigurationSchema()
 	if err != nil {
-		panic(fmt.Errorf("failed to write jsonschema for RelixyServerConfig: %w", err))
+		panic(fmt.Errorf("failed to write jsonschema for RelyServerConfig: %w", err))
 	}
 }
 
@@ -53,12 +53,12 @@ func genSchema() error {
 		}
 	}
 
-	reflectSchema := r.Reflect(schema.RelixyResource{})
+	reflectSchema := r.Reflect(schema.RelyResource{})
 
 	// custom schema types
 	openapiSchema, err := genOpenAPIResourceSchema()
 	if err != nil {
-		return fmt.Errorf("failed to write jsonschema for RelixyOpenAPIResource: %w", err)
+		return fmt.Errorf("failed to write jsonschema for RelyResource: %w", err)
 	}
 
 	maps.Copy(reflectSchema.Definitions, openapiSchema.Definitions)
@@ -74,7 +74,7 @@ func genSchema() error {
 	}
 
 	return os.WriteFile( //nolint:gosec
-		"relixy.schema.json",
+		"rely-resources.schema.json",
 		buffer.Bytes(), 0o644,
 	)
 }
@@ -91,7 +91,7 @@ func genServerConfigurationSchema() error {
 		return err
 	}
 
-	reflectSchema := r.Reflect(config.RelixyServerConfig{})
+	reflectSchema := r.Reflect(config.RelyServerConfig{})
 
 	// custom schema types
 	reflectSchema.Definitions["ServerConfig"] = &jsonschema.Schema{
@@ -118,7 +118,7 @@ func genServerConfigurationSchema() error {
 	}
 
 	return os.WriteFile( //nolint:gosec
-		"relixy-server.schema.json",
+		"rely-server.schema.json",
 		buffer.Bytes(), 0o644,
 	)
 }

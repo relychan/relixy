@@ -31,7 +31,7 @@ services:
       - postgres
       - app_mypostgres
     environment:
-      RELIXY_CONFIG_PATH: "/etc/relixy/config.yaml"
+      RELY_CONFIG_PATH: "/etc/rely/config.yaml"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
       GRAPHQL_SERVER_URL: "http://engine:3000/graphql"
       HASURA_M_AUTH: ${HASURA_M_AUTH}
@@ -39,7 +39,7 @@ services:
     volumes:
       - type: bind
         source: ./config/plugin/
-        target: /etc/relixy
+        target: /etc/rely
         read_only: true
 
   jaeger:

@@ -21,11 +21,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestRelixyOpenAPIResource_GetMetadata tests the GetMetadata method
-func TestRelixyOpenAPIResource_GetMetadata(t *testing.T) {
-	resource := RelixyOpenAPIResource{
+// TestRelyOpenAPIResource_GetMetadata tests the GetMetadata method
+func TestRelyOpenAPIResource_GetMetadata(t *testing.T) {
+	resource := RelyOpenAPIResource{
 		BaseResourceModel: baseschema.BaseResourceModel{
-			Metadata: baseschema.RelixyResourceMetadata{
+			Metadata: baseschema.RelyResourceMetadata{
 				Name: "test-api",
 			},
 		},

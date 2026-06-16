@@ -30,18 +30,18 @@ var (
 	ErrAllowOnlyOneRelyAuthResource = errors.New("allow only one RelyAuth resource")
 )
 
-// RelixyMetadata represents the evaluated relixy metadata object.
-type RelixyMetadata struct {
-	openapiResources []*schema.RelixyOpenAPIResource
+// RelyMetadata represents the evaluated rely metadata object.
+type RelyMetadata struct {
+	openapiResources []*schema.RelyOpenAPIResource
 	authResource     *baseschema.RelyAuthResource
 }
 
 // LoadMetadata loads metadata resources from definition configurations.
 func LoadMetadata(
 	ctx context.Context,
-	definition RelixyDefinitionConfig,
-) (*RelixyMetadata, error) {
-	result := &RelixyMetadata{}
+	definition RelyDefinitionFileConfig,
+) (*RelyMetadata, error) {
+	result := &RelyMetadata{}
 	includes := []string{}
 
 	for _, include := range definition.Include {
@@ -76,7 +76,7 @@ func LoadMetadata(
 	}
 
 	for _, include := range includes {
-		resources, err := goutils.ReadMultiFromJSONOrYAMLFile[schema.RelixyResource](
+		resources, err := goutils.ReadMultiFromJSONOrYAMLFile[schema.RelyResource](
 			ctx,
 			include,
 		)
@@ -85,14 +85,14 @@ func LoadMetadata(
 		}
 
 		for _, resource := range resources {
-			switch rs := resource.RelixyResource.(type) {
+			switch rs := resource.RelyResource.(type) {
 			case *baseschema.RelyAuthResource:
 				if result.authResource != nil {
 					return nil, ErrAllowOnlyOneRelyAuthResource
 				}
 
 				result.authResource = rs
-			case *schema.RelixyOpenAPIResource:
+			case *schema.RelyOpenAPIResource:
 				result.openapiResources = append(result.openapiResources, rs)
 			default:
 			}
@@ -103,12 +103,12 @@ func LoadMetadata(
 }
 
 // GetOpenAPIResources returns OpenAPI resources.
-func (rm *RelixyMetadata) GetOpenAPIResources() []*schema.RelixyOpenAPIResource {
+func (rm *RelyMetadata) GetOpenAPIResources() []*schema.RelyOpenAPIResource {
 	return rm.openapiResources
 }
 
 // GetAuthResource returns the RelyAuth resource.
-func (rm *RelixyMetadata) GetAuthResource() *baseschema.RelyAuthResource {
+func (rm *RelyMetadata) GetAuthResource() *baseschema.RelyAuthResource {
 	return rm.authResource
 }
 

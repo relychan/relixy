@@ -18,7 +18,7 @@ import (
 // SetupRouter set up the router and states for ddn handlers.
 func SetupRouter(
 	ctx context.Context,
-	conf *config.RelixyServerConfig,
+	conf *config.RelyServerConfig,
 	ts *gotel.OTelExporters,
 ) (*chi.Mux, func(), error) {
 	metadata, err := config.LoadMetadata(ctx, conf.Definition)

@@ -33,8 +33,11 @@ import (
 // BuildVersion is set when building the binary.
 var BuildVersion = "dev"
 
-// RelixyDefinitionConfig represents the configurations for relixy definitions.
-type RelixyDefinitionConfig struct {
+// ConfigPathEnvName is the constant name of the config path environment variable.
+const ConfigPathEnvName = "RELY_CONFIG_PATH"
+
+// RelyDefinitionFileConfig represents the configurations for definition files.
+type RelyDefinitionFileConfig struct {
 	// List of paths to be included for metadata introspection.
 	Include []string `json:"include" yaml:"include"`
 	// List of paths to be excluded for metadata introspection.
@@ -42,7 +45,7 @@ type RelixyDefinitionConfig struct {
 }
 
 // Validate checks if the definition config is valid.
-func (rdc RelixyDefinitionConfig) Validate() error {
+func (rdc RelyDefinitionFileConfig) Validate() error {
 	if len(rdc.Include) == 0 {
 		return ErrDefinitionIncludeRequired
 	}
@@ -50,25 +53,28 @@ func (rdc RelixyDefinitionConfig) Validate() error {
 	return nil
 }
 
-// RelixyServerConfig holds information of required configurations to run the relixy server.
-type RelixyServerConfig struct {
+// RelyServerConfig holds information of required configurations to run the Rely API server.
+type RelyServerConfig struct {
 	// Configurations for the HTTP server.
 	Server *gohttps.ServerConfig `json:"server,omitempty" yaml:"server,omitempty"`
 	// Configurations for OpenTelemetry exporters.
 	Telemetry *gotel.OTLPConfig `json:"telemetry,omitempty" yaml:"telemetry,omitempty"`
 	// Configurations for resource definition files.
-	Definition RelixyDefinitionConfig `json:"definition" yaml:"definition"`
+	Definition RelyDefinitionFileConfig `json:"definition" yaml:"definition"`
 }
 
-// LoadServerConfig loads and parses configurations for [RelixyServerConfig].
-func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, *slog.Logger, error) {
-	var result *RelixyServerConfig
+// LoadServerConfig loads and parses configurations for [RelyServerConfig].
+func LoadServerConfig(
+	parentContext context.Context,
+	serviceName string,
+) (*RelyServerConfig, *slog.Logger, error) {
+	var result *RelyServerConfig
 
 	var err error
 
-	serverConfigPath := os.Getenv("RELIXY_CONFIG_PATH")
+	serverConfigPath := os.Getenv(ConfigPathEnvName)
 	if serverConfigPath == "" {
-		serverConfigPath = "/etc/relixy/config.yaml"
+		serverConfigPath = "/etc/rely/config.yaml"
 	}
 
 	slog.Info(
@@ -79,9 +85,9 @@ func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, *slog
 	ctx, cancel := context.WithTimeout(parentContext, time.Minute)
 	defer cancel()
 
-	result, err = goutils.ReadJSONOrYAMLFile[RelixyServerConfig](ctx, serverConfigPath)
+	result, err = goutils.ReadJSONOrYAMLFile[RelyServerConfig](ctx, serverConfigPath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load RELIXY_CONFIG_PATH: %w", err)
+		return nil, nil, fmt.Errorf("failed to load RELY_CONFIG_PATH: %w", err)
 	}
 
 	if result.Server == nil {
@@ -112,7 +118,7 @@ func LoadServerConfig(parentContext context.Context) (*RelixyServerConfig, *slog
 	}
 
 	if result.Telemetry.ServiceName == "" {
-		result.Telemetry.ServiceName = "relixy"
+		result.Telemetry.ServiceName = serviceName
 	}
 
 	if serverConfigPath != "" && serverConfigPath != "." {

@@ -5,7 +5,7 @@ applyTo: "**/*.go,**/go.mod,**/go.sum"
 
 # Go Development Instructions
 
-This is **Relixy**, an API gateway service (module `github.com/relychan/relixy`) that proxies REST and GraphQL services with authentication and telemetry. It runs on **Go 1.26**.
+This is **Rely**, an API gateway service (module `github.com/relychan/relixy`) that proxies REST and GraphQL services with authentication and telemetry. It runs on **Go 1.26**.
 
 Follow idiomatic Go practices and community standards when writing Go code. These instructions are based on [Effective Go](https://go.dev/doc/effective_go), [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments), and [Google's Go Style Guide](https://google.github.io/styleguide/go/).
 
@@ -21,7 +21,7 @@ routes/
   ddnrouter/    # DDN pre-route plugin handler (/ddn/pre-route)
   restrouter/   # REST proxy routing (one ProxyClient per OpenAPI resource)
   testdata/     # Test fixtures (configs, OpenAPI specs, auth definitions)
-schema/         # RelixyResource interface and concrete resource types
+schema/         # RelyResource interface and concrete resource types
   baseschema/   # Base schema types
 authn/          # Auth middleware and session variable context helpers
 jsonschema/     # JSON schema generation from Go types
@@ -30,9 +30,9 @@ tests/ddn/      # DDN integration tests (Docker Compose)
 
 ### Key Abstractions
 
-- `RelixyResource` interface — base abstraction for all resources (OpenAPI, RelyAuth)
-- `RelixyServerConfig` — top-level server configuration (port, TLS, telemetry, definition paths)
-- `RelixyMetadata` — evaluated metadata containing loaded and parsed resources
+- `RelyResource` interface — base abstraction for all resources (OpenAPI, RelyAuth)
+- `RelyServerConfig` — top-level server configuration (port, TLS, telemetry, definition paths)
+- `RelyMetadata` — evaluated metadata containing loaded and parsed resources
 - `ProxyClient` — wraps an OpenAPI HTTP client for request streaming
 
 ### Startup Flow
@@ -41,7 +41,7 @@ Config loading → metadata parsing → telemetry setup → router creation (Pro
 
 ### Configuration
 
-- Default config path: `/etc/relixy/config.yaml` (overridable via `RELIXY_CONFIG_PATH`)
+- Default config path: `/etc/rely/config.yaml` (overridable via `RELY_CONFIG_PATH`)
 - Resource definitions use YAML with `include`/`exclude` glob patterns under `definition:`
 - Supports OpenAPI and RelyAuth resource kinds
 
@@ -75,7 +75,6 @@ Go version is 1.26, so use the enhanced `net/http` `ServeMux` when adding new st
 - Test fixtures live in `routes/testdata/`
 - Run unit tests: `make test` (includes `-race`)
 - Run DDN integration tests: `make test-ddn` (requires Docker)
-- Use `make build-jsonschema` to regenerate `relixy.schema.json` after changing config types
 
 ## General Instructions
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package schema defines the implementation for relixy resources.
+// Package schema defines the implementation for rely resources.
 package schema
 
 import (
@@ -29,24 +29,24 @@ import (
 )
 
 var (
-	ErrUnsupportedRelixyResourceKind    = errors.New("unsupported Relixy resource kind")
-	ErrRelixyResourceDefinitionRequired = errors.New("require definition in Relixy resource")
+	ErrUnsupportedRelyResourceKind    = errors.New("unsupported rely resource kind")
+	ErrRelyResourceDefinitionRequired = errors.New("require definition in rely resource")
 )
 
-// RelixyResource extends the Relixy resource interface to implement the JSON and YAML decoders.
-type RelixyResource struct {
-	baseschema.RelixyResource
+// RelyResource extends the rely resource interface to implement the JSON and YAML decoders.
+type RelyResource struct {
+	baseschema.RelyResource
 }
 
-type rawRelixyResourceJSON struct {
+type rawRelyResourceJSON struct {
 	baseschema.BaseResourceModel `yaml:",inline"`
 
 	Definition json.RawMessage `json:"definition"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *RelixyResource) UnmarshalJSON(b []byte) error {
-	var rawValue rawRelixyResourceJSON
+func (j *RelyResource) UnmarshalJSON(b []byte) error {
+	var rawValue rawRelyResourceJSON
 
 	err := json.Unmarshal(b, &rawValue)
 	if err != nil {
@@ -54,7 +54,7 @@ func (j *RelixyResource) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(rawValue.Definition) == 0 {
-		return ErrRelixyResourceDefinitionRequired
+		return ErrRelyResourceDefinitionRequired
 	}
 
 	switch rawValue.Kind {
@@ -66,7 +66,7 @@ func (j *RelixyResource) UnmarshalJSON(b []byte) error {
 			return err
 		}
 
-		j.RelixyResource = &baseschema.RelyAuthResource{
+		j.RelyResource = &baseschema.RelyAuthResource{
 			BaseResourceModel: rawValue.BaseResourceModel,
 			Definition:        authDef,
 		}
@@ -78,26 +78,26 @@ func (j *RelixyResource) UnmarshalJSON(b []byte) error {
 			return err
 		}
 
-		j.RelixyResource = &RelixyOpenAPIResource{
+		j.RelyResource = &RelyOpenAPIResource{
 			BaseResourceModel: rawValue.BaseResourceModel,
 			Definition:        oasDef,
 		}
 	default:
-		return fmt.Errorf("%w `%s`", ErrUnsupportedRelixyResourceKind, rawValue.Kind)
+		return fmt.Errorf("%w `%s`", ErrUnsupportedRelyResourceKind, rawValue.Kind)
 	}
 
 	return nil
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
-func (j *RelixyResource) UnmarshalYAML(value *yaml.Node) error {
+func (j *RelyResource) UnmarshalYAML(value *yaml.Node) error {
 	defNode, err := goutils.GetNodeValueFromYAMLMap(value, "definition")
 	if err != nil {
 		return err
 	}
 
 	if defNode == nil {
-		return ErrRelixyResourceDefinitionRequired
+		return ErrRelyResourceDefinitionRequired
 	}
 
 	var baseModel baseschema.BaseResourceModel
@@ -116,7 +116,7 @@ func (j *RelixyResource) UnmarshalYAML(value *yaml.Node) error {
 			return err
 		}
 
-		j.RelixyResource = &baseschema.RelyAuthResource{
+		j.RelyResource = &baseschema.RelyAuthResource{
 			BaseResourceModel: baseModel,
 			Definition:        authDef,
 		}
@@ -128,24 +128,24 @@ func (j *RelixyResource) UnmarshalYAML(value *yaml.Node) error {
 			return err
 		}
 
-		j.RelixyResource = &RelixyOpenAPIResource{
+		j.RelyResource = &RelyOpenAPIResource{
 			BaseResourceModel: baseModel,
 			Definition:        oasDef,
 		}
 	default:
-		return fmt.Errorf("%w `%s`", ErrUnsupportedRelixyResourceKind, baseModel.Kind)
+		return fmt.Errorf("%w `%s`", ErrUnsupportedRelyResourceKind, baseModel.Kind)
 	}
 
 	return nil
 }
 
 // JSONSchema defines a custom definition for JSON schema.
-func (RelixyResource) JSONSchema() *jsonschema.Schema {
+func (RelyResource) JSONSchema() *jsonschema.Schema {
 	return &jsonschema.Schema{
 		OneOf: []*jsonschema.Schema{
 			{
 				Description: "Definition of an OpenAPI resource",
-				Ref:         "#/$defs/RelixyOpenAPIResource",
+				Ref:         "#/$defs/RelyOpenAPIResource",
 			},
 			{
 				Description: "Definition of a RelyAuth resource",
