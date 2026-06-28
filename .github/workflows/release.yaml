@@ -5,7 +5,7 @@ on:
       - "v*"
 
 env:
-  DOCKER_REGISTRY: ghcr.io
+  GHCR_REGISTRY: ghcr.io
   DOCKER_IMAGE_NAME: relychan/rely-rest
   DOCKER_IMAGE_DDN_NAME: relychan/rely-rest-ddn
 
@@ -39,7 +39,7 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.DOCKER_REGISTRY }}
+          registry: ${{ env.GHCR_REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -65,8 +65,8 @@ jobs:
           tags: ${{ steps.docker-metadata.outputs.tags }}
           labels: ${{ steps.docker-metadata.outputs.labels }}
           platforms: linux/amd64,linux/arm64
-          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:main-cache
-          cache-to: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:main-cache
+          cache-from: type=registry,ref=${{ env.GHCR_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:main-cache
+          cache-to: type=registry,ref=${{ env.GHCR_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:main-cache
           build-args: |
             VERSION=${{ steps.get-version.outputs.tagged_version }}
 
@@ -74,7 +74,7 @@ jobs:
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "image"
-          image-ref: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.get-version.outputs.tagged_version }}
+          image-ref: ${{ env.GHCR_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.get-version.outputs.tagged_version }}
           format: table
           severity: "CRITICAL,HIGH"
           scanners: vuln
@@ -99,7 +99,7 @@ jobs:
           tags: ${{ steps.docker-metadata-ddn.outputs.tags }}
           labels: ${{ steps.docker-metadata-ddn.outputs.labels }}
           platforms: linux/amd64,linux/arm64
-          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_DDN_NAME }}:main-cache
-          cache-to: type=registry,ref=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_DDN_NAME }}:main-cache
+          cache-from: type=registry,ref=${{ env.GHCR_REGISTRY }}/${{ env.DOCKER_IMAGE_DDN_NAME }}:main-cache
+          cache-to: type=registry,ref=${{ env.GHCR_REGISTRY }}/${{ env.DOCKER_IMAGE_DDN_NAME }}:main-cache
           build-args: |
             VERSION=${{ steps.get-version.outputs.tagged_version }}
