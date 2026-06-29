@@ -6,7 +6,7 @@ Relixy is a monorepo of API gateway services that consists of:
 
 ## Documentation
 
-Read the complete RelyAuth documentation at [relychan.com/docs/rely-rest/](https://relychan.com/docs/rely-rest/)
+Read the complete RelyREST documentation at [relychan.com/docs/rely-rest/](https://relychan.com/docs/rely-rest/)
 
 ## AI Assistance Disclosure
 
