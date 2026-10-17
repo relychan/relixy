@@ -21,11 +21,11 @@ import (
 	"fmt"
 
 	"github.com/invopop/jsonschema"
+	"github.com/pb33f/go-yaml"
 	"github.com/relychan/goutils"
 	"github.com/relychan/openapitools/oaschema"
 	"github.com/relychan/relixy/schema/baseschema"
 	"github.com/relychan/rely-auth/auth"
-	"go.yaml.in/yaml/v4"
 )
 
 var (
