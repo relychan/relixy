@@ -56,7 +56,7 @@ Config loading → metadata parsing → telemetry setup → router creation (Pro
 | `github.com/relychan/openapitools`                       | OpenAPI parsing and proxy client    |
 | `github.com/hasura/gotel` + `go.opentelemetry.io/otel/*` | OpenTelemetry tracing               |
 | `github.com/caarlos0/env/v11`                            | Environment variable config binding |
-| `go.yaml.in/yaml/v4`                                     | YAML parsing                        |
+| `github.com/pb33f/go-yaml`                               | YAML parsing                        |
 | `github.com/invopop/jsonschema`                          | JSON schema generation              |
 | `github.com/relychan/goutils`                            | Shared HTTP error helpers           |
 | `gotest.tools/v3`                                        | Test assertions                     |
